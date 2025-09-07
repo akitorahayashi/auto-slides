@@ -3,22 +3,21 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 
-from src.components.navigations import render_sidebar
 from src.components.pages import (
-    render_main_page,
+    render_download_page,
+    render_gallery_page,
     render_result_page,
-    render_sub_page,
 )
-from src.models.counter import Counter
+from src.protocols.marp_protocol import MarpProtocol
 from src.router import AppRouter, Page
 
 load_dotenv()
 
 st.set_page_config(
-    page_title="My App",
-    page_icon="✨",
+    page_title="Auto Slides",
+    page_icon="📑",
     # "centered"/"wide"
-    layout="centered",
+    layout="wide",
     # "auto"/"expanded"/"collapsed"
     initial_sidebar_state="collapsed",
 )
@@ -32,16 +31,18 @@ def main():
 
     app_router = st.session_state.app_router
 
-    # Render sidebar for navigation
-    render_sidebar()
-
     # Page routing
-    if app_router.current_page == Page.MAIN:
-        render_main_page()
-    elif app_router.current_page == Page.RESULT:
+    current_page = app_router.current_page
+    if current_page == Page.GALLERY:
+        render_gallery_page()
+    elif current_page == Page.DOWNLOAD:
+        render_download_page()
+    elif current_page == Page.RESULT:
         render_result_page()
-    elif app_router.current_page == Page.SUB:
-        render_sub_page()
+    else:
+        st.error(f"Unknown page: {current_page} (type: {type(current_page)})")
+        st.write(f"Available pages: {list(Page)}")
+        st.stop()
 
 
 def initialize_session():
@@ -49,14 +50,21 @@ def initialize_session():
     if "app_router" not in st.session_state:
         st.session_state.app_router = AppRouter()
 
-    if "counter" not in st.session_state:
+    if "marp_service" not in st.session_state:
+        slides_path = "src/templates/sample/content.md"
+        output_dir = "output"
         is_debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes", "on")
-        if is_debug:
-            from dev.mocks.counter import MockCounter
 
-            st.session_state.counter = MockCounter()
+        if is_debug:
+            from dev.mocks.mock_marp_service import MockMarpService
+
+            marp_service: MarpProtocol = MockMarpService(slides_path, output_dir)
         else:
-            st.session_state.counter = Counter()
+            from src.services.marp_service import MarpService
+
+            marp_service: MarpProtocol = MarpService(slides_path, output_dir)
+
+        st.session_state.marp_service = marp_service
 
 
 if __name__ == "__main__":

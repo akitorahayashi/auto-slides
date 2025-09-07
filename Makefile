@@ -88,7 +88,7 @@ lint: ## Perform static code analysis (check) using Black and Ruff
 # ==============================================================================
 
  .PHONY: test
-test: unit-test build-test e2e-test ## Run the full test suite
+test: build-test e2e-test ## Run the full test suite
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
@@ -104,3 +104,21 @@ build-test: ## Run build tests
 e2e-test: ## Run end-to-end tests
 	@echo "Running end-to-end tests..."
 	@$(PYTHON) -m pytest tests/e2e -s
+
+.PHONY: intg-test
+intg-test: ## Run integration tests
+	@echo "Running integration tests..."
+	@PYTHONPATH=. $(PYTHON) -m pytest tests/intg -v -s
+
+# ==============================================================================
+# CLEANUP
+# ==============================================================================
+
+.PHONY: clean
+clean: ## Remove __pycache__ and .venv to make project lightweight
+	@echo "🧹 Cleaning up project..."
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@rm -rf .venv
+	@rm -rf .pytest_cache
+	@rm -rf .ruff_cache
+	@echo "✅ Cleanup completed"

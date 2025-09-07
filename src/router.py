@@ -8,9 +8,9 @@ class Page(Enum):
     Enumeration for the different pages in the application.
     """
 
-    MAIN = auto()
+    GALLERY = auto()
+    DOWNLOAD = auto()
     RESULT = auto()
-    SUB = auto()
 
 
 class AppRouter:
@@ -24,7 +24,7 @@ class AppRouter:
         Sets the default page in the session state if it's not already set.
         """
         if "page" not in st.session_state:
-            st.session_state.page = Page.MAIN
+            st.session_state.page = Page.GALLERY
 
     @property
     def current_page(self) -> Page:
