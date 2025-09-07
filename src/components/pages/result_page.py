@@ -97,24 +97,16 @@ def render_result_page():
         st.divider()
 
         # 3. プレビュー
-        st.subheader("🔍 プレビュー")
-        if selected_format == "PDF":
-            # PDFを画像に変換して表示
-            images = convert_from_bytes(file_data)
-            for i, image in enumerate(images):
-                st.image(image, caption=f"スライド {i+1}")
-        elif selected_format == "HTML":
-            # HTMLの場合、プレビュー用にPDFも生成
-            preview_pdf_data = converter.convert_template_to_pdf(template)
-            images = convert_from_bytes(preview_pdf_data)
-            for i, image in enumerate(images):
-                st.image(image, caption=f"スライド {i+1}")
-        elif selected_format == "PPTX":
-            # PPTXの場合、プレビュー用にPDFも生成
-            preview_pdf_data = converter.convert_template_to_pdf(template)
-            images = convert_from_bytes(preview_pdf_data)
-            for i, image in enumerate(images):
-                st.image(image, caption=f"スライド {i+1}")
+        with st.spinner("プレビューを準備中..."):
+            if selected_format == "PDF":
+                # 既存のPDFデータをプレビュー用に使用
+                preview_data = file_data
+            else:
+                # HTML/PPTXは一度PDFに変換してからプレビュー
+                preview_data = converter.convert_template_to_pdf(template)
+            images = convert_from_bytes(preview_data)
+        for i, image in enumerate(images):
+            st.image(image, caption=f"スライド {i+1}")
 
     except Exception as e:
         st.error(f"❌ {selected_format}生成エラー: {str(e)}")

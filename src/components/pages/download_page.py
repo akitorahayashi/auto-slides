@@ -3,6 +3,23 @@ import streamlit as st
 from src.models.slide_template import TemplateFormat, TemplateRepository
 from src.router import Page
 from src.services.template_converter_service import TemplateConverterService
+  
+@st.dialog("実行確認", width="small", dismissible=True)
+def confirm_execute_dialog():
+    st.write("こちらの実行します\nよろしいですか？")
+    col_yes, col_no = st.columns(2, gap="small")
+    with col_yes:
+        if st.button("はい", use_container_width=True):
+            # セッションに選択した形式を保存し、結果ページへ遷移
+            selected_format = st.session_state.format_selection
+            st.session_state.selected_format = selected_format
+            app_router = st.session_state.app_router
+            app_router.go_to(Page.RESULT)
+            st.rerun()
+    with col_no:
+        if st.button("いいえ", use_container_width=True):
+            # ダイアログを閉じて再描画
+            st.rerun()
 
 
 def render_download_page():
@@ -66,10 +83,7 @@ def render_download_page():
 
     with col2:
         if st.button(
-            "進む →", key="execute_download", type="primary", use_container_width=True
+            "実行 →", key="execute_download", type="primary", use_container_width=True
         ):
-            # セッションに選択した形式を保存
-            st.session_state.selected_format = selected_format
-            app_router = st.session_state.app_router
-            app_router.go_to(Page.RESULT)
-            st.rerun()
+            # 実行確認ダイアログを表示
+            confirm_execute_dialog()
