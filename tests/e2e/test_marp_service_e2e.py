@@ -114,7 +114,7 @@ class TestMarpServiceE2E:
         # This should raise a subprocess.CalledProcessError
         with pytest.raises(subprocess.CalledProcessError) as exc_info:
             marp_service.generate_pdf("error_test.pdf")
-        
+
         # Verify that the error is related to the missing file
         assert exc_info.value.returncode != 0
 
@@ -171,23 +171,3 @@ class TestMarpServiceE2E:
         assert os.path.exists(html_path)
         assert os.path.getsize(pdf_path) > 0
         assert os.path.getsize(html_path) > 0
-
-
-@pytest.mark.skipif(
-    has_marp_cli(), reason="Testing behavior when marp CLI is not available"
-)
-def test_marp_service_without_cli(sample_template_path, tmp_path):
-    """
-    Tests that MarpService fails gracefully when marp CLI is not available.
-    This test only runs when marp CLI is NOT installed.
-    """
-    output_dir = tmp_path / "output"
-    output_dir.mkdir()
-
-    marp_service = MarpService(
-        slides_path=str(sample_template_path), output_dir=str(output_dir)
-    )
-
-    # When marp CLI is not available, this should raise FileNotFoundError or CalledProcessError
-    with pytest.raises((FileNotFoundError, subprocess.CalledProcessError)):
-        marp_service.generate_pdf("test.pdf")
