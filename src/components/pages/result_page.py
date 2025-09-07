@@ -1,9 +1,26 @@
 import streamlit as st
 from pdf2image import convert_from_bytes
 
-from src.models import TemplateRepository
 from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
+
+# app_stateの存在を検証
+if "app_state" not in st.session_state:
+    st.switch_page("src/main.py")
+
+app_state = st.session_state.app_state
+
+# 必須のstateが揃っているか検証
+if app_state.selected_template is None or app_state.user_inputs is None:
+    st.switch_page("src/main.py")
+
+template = app_state.selected_template
+selected_format_enum = app_state.user_inputs.get("selected_format")
+
+if selected_format_enum is None:
+    st.error("形式が選択されていません。")
+    st.switch_page("src/components/pages/implementation_page.py")
+
 
 # ナビゲーションボタンをタイトルの上に配置
 col1, col2 = st.columns(2, gap="small")
@@ -14,66 +31,53 @@ with col1:
         key="back_to_download_top",
         use_container_width=True,
     ):
-        st.switch_page("components/pages/implementation_page.py")
+        st.switch_page("src/components/pages/implementation_page.py")
 
 with col2:
     if st.button(
         "🏠 ギャラリーに戻る", key="back_to_gallery_top", use_container_width=True
     ):
-        st.switch_page("components/pages/gallery_page.py")
+        st.switch_page("src/components/pages/gallery_page.py")
 
 st.title("📄 生成結果")
 
-if (
-    "selected_template_id" not in st.session_state
-    or "selected_format" not in st.session_state
-):
-    st.error("セッション情報が不足しています。ギャラリーからやり直してください。")
-    if st.button("ギャラリーに戻る"):
-        st.switch_page("components/pages/gallery_page.py")
-        st.stop()
-
-template_id = st.session_state.selected_template_id
-selected_format = st.session_state.selected_format
-
-template = TemplateRepository.get_template_by_id(template_id)
-if not template:
-    st.error(f"テンプレート '{template_id}' が見つかりません。")
-    st.stop()
-
 format_options = {
-    "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
-    "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
-    "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
+    TemplateFormat.PDF: {"label": "📄 PDF", "key": "PDF"},
+    TemplateFormat.HTML: {"label": "🌐 HTML", "key": "HTML"},
+    TemplateFormat.PPTX: {"label": "📊 PPTX", "key": "PPTX"},
 }
 
 st.subheader(f"📋 {template.name}")
 
 # 1. 選択した形式を表示
-st.info(f"選択した形式: {format_options[selected_format]['label']}")
+selected_format_info = format_options.get(selected_format_enum)
+st.info(f"選択した形式: {selected_format_info['label']}")
 
 converter = TemplateConverterService()
-selected_format_enum = format_options[selected_format]["format"]
 
 try:
-    if selected_format == "PDF":
+    if selected_format_enum == TemplateFormat.PDF:
         with st.spinner("PDF生成中..."):
             file_data = converter.convert_template_to_pdf(template)
         mime_type = "application/pdf"
-    elif selected_format == "HTML":
+    elif selected_format_enum == TemplateFormat.HTML:
         with st.spinner("HTML生成中..."):
             file_data = converter.convert_template_to_html(template)
         mime_type = "text/html"
-    elif selected_format == "PPTX":
+    elif selected_format_enum == TemplateFormat.PPTX:
         with st.spinner("PPTX生成中..."):
             file_data = converter.convert_template_to_pptx(template)
         mime_type = (
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         )
 
+    # 生成されたマークダウン（この場合は変換後のデータ）をapp_stateに保存
+    # Note: ユーザーの指示にはgenerated_markdownとあったが、ここでは生成されたファイルデータを指すものと解釈
+    st.session_state.app_state.generated_markdown = file_data
+
     # 2. ダウンロードボタン
     st.download_button(
-        label=f"📥 {format_options[selected_format]['label']} ファイルをダウンロード",
+        label=f"📥 {selected_format_info['label']} ファイルをダウンロード",
         data=file_data,
         file_name=converter.get_filename(template, selected_format_enum),
         mime=mime_type,
@@ -86,7 +90,7 @@ try:
 
     # 3. プレビュー
     with st.spinner("プレビューを準備中..."):
-        if selected_format == "PDF":
+        if selected_format_enum == TemplateFormat.PDF:
             # 既存のPDFデータをプレビュー用に使用
             preview_data = file_data
         else:
@@ -97,4 +101,4 @@ try:
         st.image(image, caption=f"スライド {i+1}")
 
 except Exception as e:
-    st.error(f"❌ {selected_format}生成エラー: {str(e)}")
+    st.error(f"❌ {selected_format_info['key']}生成エラー: {str(e)}")

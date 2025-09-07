@@ -1,91 +1,58 @@
 import streamlit as st
 
-from src.models import TemplateRepository
-from src.router import Page
-from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
 
+# app_stateの存在を検証
+if "app_state" not in st.session_state:
+    st.switch_page("src/main.py")
 
-@st.dialog("実行確認", width="small", dismissible=True)
-def confirm_execute_dialog():
-    st.write("こちらの実行します\nよろしいですか？")
-    col_yes, col_no = st.columns(2, gap="small")
-    with col_yes:
-        if st.button("はい", use_container_width=True):
-            # セッションに選択した形式を保存し、結果ページへ遷移
-            selected_format = st.session_state.format_selection
-            st.session_state.selected_format = selected_format
-            app_router = st.session_state.app_router
-            app_router.go_to(Page.RESULT)
-            st.rerun()
-    with col_no:
-        if st.button("いいえ", use_container_width=True):
-            # ダイアログを閉じて再描画
-            st.rerun()
+app_state = st.session_state.app_state
 
+# 必須のstateが揃っているか検証
+if (
+    app_state.selected_template is None
+    or app_state.user_inputs is None
+    or app_state.generated_markdown is None
+):
+    st.switch_page("src/main.py")
 
-def render_download_page():
-    """
-    Renders the download page for slide templates.
-    """
+template = app_state.selected_template
+selected_format_enum = app_state.user_inputs.get("selected_format")
+file_data = app_state.generated_markdown
 
-    if "selected_template_id" not in st.session_state:
-        st.error(
-            "テンプレートが選択されていません。ギャラリーに戻ってテンプレートを選択してください。"
-        )
-        app_router = st.session_state.app_router
-        if st.button("ギャラリーに戻る"):
-            app_router.go_to(Page.GALLERY)
-            st.rerun()
-        return
+st.title("⬇️ ダウンロード")
+st.write("生成されたファイルをダウンロードします。")
 
-    template_id = st.session_state.selected_template_id
-    template = TemplateRepository.get_template_by_id(template_id)
+converter = TemplateConverterService()
 
-    st.title(f"📄 {template.name}")
-
-    st.subheader(template.description)
-
-    if not template:
-        st.error(f"テンプレート '{template_id}' が見つかりません。")
-        return
-
-    st.divider()
-    st.subheader("📦 形式を選択")
-
-    converter = TemplateConverterService()
-
-    # 形式選択のラジオボタン
-    format_options = {
-        "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
-        "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
-        "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
-    }
-
-    selected_format = st.radio(
-        "出力形式を選択してください：",
-        options=list(format_options.keys()),
-        format_func=lambda x: format_options[x]["label"],
-        key="format_selection",
-        horizontal=True,
+# MIMEタイプとファイル名を取得
+mime_type = ""
+if selected_format_enum.value == "pdf":
+    mime_type = "application/pdf"
+elif selected_format_enum.value == "html":
+    mime_type = "text/html"
+elif selected_format_enum.value == "pptx":
+    mime_type = (
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     )
 
-    st.divider()
+file_name = converter.get_filename(template, selected_format_enum)
 
-    # 実行ボタンとナビゲーションボタンを並べる
-    col1, col2 = st.columns(2, gap="small")
+st.download_button(
+    label="ファイルをダウンロード",
+    data=file_data,
+    file_name=file_name,
+    mime=mime_type,
+    type="primary",
+    use_container_width=True,
+)
 
-    with col1:
-        if st.button(
-            "← ギャラリーに戻る", key="back_to_gallery", use_container_width=True
-        ):
-            app_router = st.session_state.app_router
-            app_router.go_to(Page.GALLERY)
-            st.rerun()
+st.divider()
 
-    with col2:
-        if st.button(
-            "実行 →", key="execute_download", type="primary", use_container_width=True
-        ):
-            # 実行確認ダイアログを表示
-            confirm_execute_dialog()
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("結果ページに戻る", use_container_width=True):
+        st.switch_page("src/components/pages/result_page.py")
+with col2:
+    if st.button("ギャラリーに戻る", use_container_width=True):
+        st.switch_page("src/components/pages/gallery_page.py")
