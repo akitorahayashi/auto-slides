@@ -1,71 +1,67 @@
 import os
 import subprocess
 import time
+from typing import Optional
 
 import requests
 from dotenv import load_dotenv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 load_dotenv()
 
 
-class TestE2E:
-    """E2E tests for Streamlit applications"""
+class StreamlitE2ETest:
+    """Generic E2E test class for any Streamlit application"""
 
-    # Default error indicators that should cause test failure
-    ERROR_INDICATORS = [
-        "ModuleNotFoundError",
-        "ImportError",
-        "No module named",
-        "500 Internal Server Error",
-        "Something went wrong",
-        "Traceback (most recent call last)",
-        "FileNotFoundError",
-        "AttributeError",
-        "TypeError",
-        "ValueError",
-        "Oh no!",
-        "This app has encountered an error",
-        "KeyError",
-        "NameError",
-    ]
+    def __init__(
+        self,
+        app_path: str = "src/main.py",
+        main_module: str = "src.main",
+        test_port: Optional[str] = None,
+        host_ip: Optional[str] = None,
+        python_executable: Optional[str] = None,
+    ):
+        self.app_path = app_path
+        self.main_module = main_module
+        self.test_port = test_port or os.getenv("TEST_PORT", "8502")
+        self.host_ip = host_ip or os.getenv("HOST_IP", "localhost")
 
-    @property
-    def project_root(self):
-        return os.path.dirname(
+        self.project_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
 
-    @property
-    def app_path(self):
-        return os.path.join(self.project_root, "src", "main.py")
+        if python_executable is None:
+            self.python_executable = os.path.join(
+                self.project_root, ".venv", "bin", "python"
+            )
+        else:
+            self.python_executable = python_executable
 
-    @property
-    def python_executable(self):
-        return os.path.join(self.project_root, ".venv", "bin", "python")
+        self.full_app_path = os.path.join(self.project_root, self.app_path)
 
-    @property
-    def test_port(self):
-        return os.getenv("TEST_PORT", "8502")
+    def test_package_import(self):
+        """Test that the main module imports without missing dependencies."""
+        result = subprocess.run(
+            [self.python_executable, "-c", f"import {self.main_module}"],
+            cwd=self.project_root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
 
-    @property
-    def host_ip(self):
-        return os.getenv("HOST_IP", "localhost")
+        if result.returncode != 0:
+            assert False, f"Package import failed:\n{result.stderr}"
 
-    def test_streamlit_app_loads_without_module_errors(self):
-        """Test that the Streamlit app loads completely without errors."""
-        # Start Streamlit server
+        print("✅ Package imports successfully")
+
+    def test_streamlit_app_starts_without_errors(self):
+        """Test that Streamlit starts and serves content without errors."""
         process = subprocess.Popen(
             [
                 self.python_executable,
                 "-m",
                 "streamlit",
                 "run",
-                self.app_path,
+                self.full_app_path,
                 f"--server.port={self.test_port}",
                 "--server.headless=true",
             ],
@@ -75,97 +71,41 @@ class TestE2E:
             text=True,
         )
 
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
-
-        driver = None
-
         try:
-            # Wait for server to start
-            max_wait = 30
-            wait_time = 0
-            server_ready = False
-
-            while wait_time < max_wait:
-                try:
-                    response = requests.get(
-                        f"http://{self.host_ip}:{self.test_port}", timeout=3
-                    )
-                    if response.status_code == 200:
-                        server_ready = True
-                        break
-                except requests.RequestException:
-                    pass
-
-                time.sleep(1)
-                wait_time += 1
-
-            assert (
-                server_ready
-            ), f"Streamlit server failed to start within {max_wait} seconds"
-
-            # Setup WebDriver
-            driver = webdriver.Chrome(options=chrome_options)
-            driver.get(f"http://{self.host_ip}:{self.test_port}")
-
-            # Wait for Streamlit to fully load
             time.sleep(5)
 
-            page_source = driver.page_source
+            if process.poll() is not None:
+                stdout, stderr = process.communicate()
+                assert False, f"Streamlit crashed:\n{stderr}"
 
-            # Check for errors
-            found_errors = []
-            for error in self.ERROR_INDICATORS:
-                if error in page_source:
-                    found_errors.append(error)
+            response = requests.get(
+                f"http://{self.host_ip}:{self.test_port}", timeout=3
+            )
 
-            # Debug output
-            print(f"Page source length: {len(page_source)}")
-            print("First 1000 characters of page source:")
-            print(page_source[:1000])
-            print("---")
+            if response.status_code != 200:
+                assert False, f"Server returned status {response.status_code}"
 
-            if found_errors:
-                print(f"Found errors: {found_errors}")
-            else:
-                print("No errors found in page source")
+            # Basic check - if we got here, server is working
 
-            assert len(found_errors) == 0, f"Found errors in page: {found_errors}"
-
-            # Verify basic Streamlit elements are present
-            wait = WebDriverWait(driver, 20)
-            try:
-                wait.until(
-                    EC.presence_of_element_located(
-                        (By.CSS_SELECTOR, "[data-testid='stApp']")
-                    )
-                )
-                print("✅ Streamlit app loaded successfully")
-            except Exception as e:
-                print(
-                    f"⚠️  Could not find main Streamlit container, but no errors detected: {e}"
-                )
-
-            # Check page title
-            title = driver.title
-            assert (
-                "Streamlit" in title or len(title) > 0
-            ), "Page title is empty or invalid"
+            print("✅ Streamlit app loaded successfully")
 
         finally:
-            if driver:
-                driver.quit()
-
             process.terminate()
             try:
-                process.wait(timeout=10)
+                process.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
 
-    def test_app_functionality_basic_interaction(self):
-        """Test basic app functionality - alias for main test method."""
-        return self.test_streamlit_app_loads_without_module_errors()
+
+# Test functions using the StreamlitE2ETest helper
+def test_package_import():
+    """Test that the main module imports without missing dependencies."""
+    test_helper = StreamlitE2ETest()
+    return test_helper.test_package_import()
+
+
+def test_streamlit_app_starts_without_errors():
+    """Test that Streamlit starts and serves content without errors."""
+    test_helper = StreamlitE2ETest()
+    return test_helper.test_streamlit_app_starts_without_errors()

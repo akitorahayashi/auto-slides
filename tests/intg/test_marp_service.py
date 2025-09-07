@@ -5,32 +5,6 @@ import pytest
 from src.services.marp_service import MarpService
 
 
-@pytest.fixture
-def marp_service(tmp_path):
-    """
-    Pytest fixture to create a MarpService instance with a temporary output directory.
-    """
-    # tmp_path is a Path object provided by pytest
-    output_dir = tmp_path / "output"
-    output_dir.mkdir()
-
-    # The slides_path is constant
-    slides_path = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "src",
-            "templates",
-            "sample",
-            "content.md",
-        )
-    )
-
-    service = MarpService(slides_path=slides_path, output_dir=str(output_dir))
-    return service
-
-
 @pytest.mark.parametrize(
     "output_type, generator_method_name, output_filename",
     [
@@ -41,11 +15,20 @@ def marp_service(tmp_path):
     ],
 )
 def test_marp_service_generation(
-    marp_service, output_type, generator_method_name, output_filename
+    sample_template_path, tmp_path, output_type, generator_method_name, output_filename
 ):
     """
     Tests that the MarpService can generate all supported output file types.
     """
+    # Create a temporary output directory
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    # Create MarpService instance with temporary directory
+    marp_service = MarpService(
+        slides_path=str(sample_template_path), output_dir=str(output_dir)
+    )
+
     # Get the generator method from the service instance
     generator_method = getattr(marp_service, generator_method_name)
 
@@ -57,4 +40,4 @@ def test_marp_service_generation(
     assert os.path.basename(output_path) == output_filename
 
     # 2. The file should be in the service's output directory (the temp dir)
-    assert marp_service.output_dir in output_path
+    assert str(output_dir) in output_path

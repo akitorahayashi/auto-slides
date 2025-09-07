@@ -2,7 +2,7 @@ import streamlit as st
 
 from src.models.slide_template import TemplateFormat, TemplateRepository
 from src.router import Page
-from src.services.template_converter import TemplateConverterService
+from src.services.template_converter_service import TemplateConverterService
 
 
 def render_download_page():
