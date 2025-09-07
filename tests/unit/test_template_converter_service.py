@@ -17,9 +17,7 @@ class TestTemplateConverterService:
     def test_init(self, mock_mkdir, mock_gettempdir):
         """Test service initialization"""
         mock_gettempdir.return_value = "/tmp"
-
         service = TemplateConverterService()
-
         assert service.temp_dir == Path("/tmp/auto-slides")
         mock_mkdir.assert_called_once_with(exist_ok=True)
 
@@ -37,25 +35,18 @@ class TestTemplateConverterService:
         mock_subprocess,
     ):
         """Test successful PDF conversion"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         mock_exists.return_value = True
         mock_read_bytes.return_value = b"PDF content"
         mock_subprocess.return_value = MagicMock()
-
-        # Execute
-        result = service.convert_template_to_pdf(mock_template)
-
-        # Verify
+        result = service.convert_template_to_pdf(mock_template, markdown_content)
         assert result == b"PDF content"
-        mock_template.read_markdown_content.assert_called_once()
-        mock_write_text.assert_called_once_with("# Test Slide", encoding="utf-8")
+        mock_write_text.assert_called_once_with(markdown_content, encoding="utf-8")
         mock_subprocess.assert_called_once()
-        assert mock_unlink.call_count == 2  # Clean up both md and pdf files
+        assert mock_unlink.call_count == 2
 
     @patch("subprocess.run")
     @patch("pathlib.Path.read_text")
@@ -66,20 +57,14 @@ class TestTemplateConverterService:
         self, mock_unlink, mock_write_text, mock_exists, mock_read_text, mock_subprocess
     ):
         """Test successful HTML conversion"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         mock_exists.return_value = True
         mock_read_text.return_value = "<html>Test</html>"
         mock_subprocess.return_value = MagicMock()
-
-        # Execute
-        result = service.convert_template_to_html(mock_template)
-
-        # Verify
+        result = service.convert_template_to_html(mock_template, markdown_content)
         assert result == "<html>Test</html>"
         mock_read_text.assert_called_once_with(encoding="utf-8")
         assert mock_unlink.call_count == 2
@@ -98,20 +83,14 @@ class TestTemplateConverterService:
         mock_subprocess,
     ):
         """Test successful PPTX conversion"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         mock_exists.return_value = True
         mock_read_bytes.return_value = b"PPTX content"
         mock_subprocess.return_value = MagicMock()
-
-        # Execute
-        result = service.convert_template_to_pptx(mock_template)
-
-        # Verify
+        result = service.convert_template_to_pptx(mock_template, markdown_content)
         assert result == b"PPTX content"
         assert mock_unlink.call_count == 2
 
@@ -123,21 +102,15 @@ class TestTemplateConverterService:
         self, mock_subprocess, mock_write_text, mock_unlink, mock_exists
     ):
         """Test PDF conversion handles subprocess errors"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         error = subprocess.CalledProcessError(1, "marp")
         error.stderr = "Marp failed"
         mock_subprocess.side_effect = error
-
-        # Execute & Verify
         with pytest.raises(Exception, match="Marp PDF generation failed: Marp failed"):
-            service.convert_template_to_pdf(mock_template)
-
-        # Cleanup should happen (2 files: md and pdf)
+            service.convert_template_to_pdf(mock_template, markdown_content)
         assert mock_unlink.call_count >= 1
 
     @patch("subprocess.run")
@@ -148,18 +121,14 @@ class TestTemplateConverterService:
         self, mock_unlink, mock_write_text, mock_exists, mock_subprocess
     ):
         """Test PDF conversion when output file doesn't exist"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         mock_exists.return_value = False
         mock_subprocess.return_value = MagicMock()
-
-        # Execute & Verify
         with pytest.raises(Exception, match="PDF generation failed"):
-            service.convert_template_to_pdf(mock_template)
+            service.convert_template_to_pdf(mock_template, markdown_content)
 
     @patch("subprocess.run")
     @patch("pathlib.Path.exists")
@@ -169,18 +138,14 @@ class TestTemplateConverterService:
         self, mock_unlink, mock_write_text, mock_exists, mock_subprocess
     ):
         """Test HTML conversion when output file doesn't exist"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         mock_exists.return_value = False
         mock_subprocess.return_value = MagicMock()
-
-        # Execute & Verify
         with pytest.raises(Exception, match="HTML generation failed"):
-            service.convert_template_to_html(mock_template)
+            service.convert_template_to_html(mock_template, markdown_content)
 
     @patch("subprocess.run")
     @patch("pathlib.Path.exists")
@@ -190,18 +155,14 @@ class TestTemplateConverterService:
         self, mock_unlink, mock_write_text, mock_exists, mock_subprocess
     ):
         """Test PPTX conversion when output file doesn't exist"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         mock_exists.return_value = False
         mock_subprocess.return_value = MagicMock()
-
-        # Execute & Verify
         with pytest.raises(Exception, match="PPTX generation failed"):
-            service.convert_template_to_pptx(mock_template)
+            service.convert_template_to_pptx(mock_template, markdown_content)
 
     @pytest.mark.parametrize(
         "format_enum,expected_extension",
@@ -216,9 +177,7 @@ class TestTemplateConverterService:
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-
         result = service.get_filename(mock_template, format_enum)
-
         assert result == f"test_template.{expected_extension}"
 
     @patch("pathlib.Path.exists", return_value=True)
@@ -229,17 +188,11 @@ class TestTemplateConverterService:
         self, mock_subprocess, mock_write_text, mock_unlink, mock_exists
     ):
         """Test that cleanup (unlink) is always called even when exceptions occur"""
-        # Setup
         service = TemplateConverterService()
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
-        mock_template.read_markdown_content.return_value = "# Test Slide"
-
+        markdown_content = "# Test Slide"
         mock_subprocess.side_effect = Exception("Some error")
-
-        # Execute & Verify
         with pytest.raises(Exception):
-            service.convert_template_to_pdf(mock_template)
-
-        # Cleanup should be called (at least for markdown file)
+            service.convert_template_to_pdf(mock_template, markdown_content)
         assert mock_unlink.call_count >= 1

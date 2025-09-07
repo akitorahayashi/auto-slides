@@ -11,8 +11,9 @@ class TemplateConverterService:
         self.temp_dir = Path(tempfile.gettempdir()) / "auto-slides"
         self.temp_dir.mkdir(exist_ok=True)
 
-    def convert_template_to_pdf(self, template: SlideTemplate) -> bytes:
-        markdown_content = template.read_markdown_content()
+    def convert_template_to_pdf(
+        self, template: SlideTemplate, markdown_content: str
+    ) -> bytes:
         temp_md_path = self.temp_dir / f"{template.id}.md"
         temp_pdf_path = self.temp_dir / f"{template.id}.pdf"
 
@@ -41,8 +42,9 @@ class TemplateConverterService:
             if temp_pdf_path.exists():
                 temp_pdf_path.unlink()
 
-    def convert_template_to_html(self, template: SlideTemplate) -> str:
-        markdown_content = template.read_markdown_content()
+    def convert_template_to_html(
+        self, template: SlideTemplate, markdown_content: str
+    ) -> str:
         temp_md_path = self.temp_dir / f"{template.id}.md"
         temp_html_path = self.temp_dir / f"{template.id}.html"
 
@@ -71,8 +73,9 @@ class TemplateConverterService:
             if temp_html_path.exists():
                 temp_html_path.unlink()
 
-    def convert_template_to_pptx(self, template: SlideTemplate) -> bytes:
-        markdown_content = template.read_markdown_content()
+    def convert_template_to_pptx(
+        self, template: SlideTemplate, markdown_content: str
+    ) -> bytes:
         temp_md_path = self.temp_dir / f"{template.id}.md"
         temp_pptx_path = self.temp_dir / f"{template.id}.pptx"
 

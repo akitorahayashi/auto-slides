@@ -1,45 +1,39 @@
 import streamlit as st
 from pdf2image import convert_from_bytes
 
-from src.models import TemplateRepository
 from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
 
-# ナビゲーションボタンをタイトルの上に配置
-col1, col2 = st.columns(2, gap="small")
+# 1. Validation check
+if (
+    "app_state" not in st.session_state
+    or st.session_state.app_state.generated_markdown is None
+):
+    st.switch_page("src/main.py")
 
+# 2. Get data from app_state
+app_state = st.session_state.app_state
+template = app_state.selected_template
+selected_format = app_state.selected_format
+generated_markdown = app_state.generated_markdown
+
+
+# Navigation buttons
+col1, col2 = st.columns(2, gap="small")
 with col1:
     if st.button(
-        "← ダウンロード設定に戻る",
-        key="back_to_download_top",
+        "← 入力ページに戻る",
+        key="back_to_implementation",
         use_container_width=True,
     ):
         st.switch_page("components/pages/implementation_page.py")
-
 with col2:
     if st.button(
         "🏠 ギャラリーに戻る", key="back_to_gallery_top", use_container_width=True
     ):
-        st.switch_page("components/pages/gallery_page.py")
+        st.switch_page("src/main.py")  # Go to main page
 
 st.title("📄 生成結果")
-
-if (
-    "selected_template_id" not in st.session_state
-    or "selected_format" not in st.session_state
-):
-    st.error("セッション情報が不足しています。ギャラリーからやり直してください。")
-    if st.button("ギャラリーに戻る"):
-        st.switch_page("components/pages/gallery_page.py")
-        st.stop()
-
-template_id = st.session_state.selected_template_id
-selected_format = st.session_state.selected_format
-
-template = TemplateRepository.get_template_by_id(template_id)
-if not template:
-    st.error(f"テンプレート '{template_id}' が見つかりません。")
-    st.stop()
 
 format_options = {
     "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
@@ -48,30 +42,28 @@ format_options = {
 }
 
 st.subheader(f"📋 {template.name}")
-
-# 1. 選択した形式を表示
 st.info(f"選択した形式: {format_options[selected_format]['label']}")
 
 converter = TemplateConverterService()
 selected_format_enum = format_options[selected_format]["format"]
 
 try:
+    # 3. Call converter with generated_markdown
     if selected_format == "PDF":
         with st.spinner("PDF生成中..."):
-            file_data = converter.convert_template_to_pdf(template)
+            file_data = converter.convert_template_to_pdf(template, generated_markdown)
         mime_type = "application/pdf"
     elif selected_format == "HTML":
         with st.spinner("HTML生成中..."):
-            file_data = converter.convert_template_to_html(template)
+            file_data = converter.convert_template_to_html(template, generated_markdown)
         mime_type = "text/html"
     elif selected_format == "PPTX":
         with st.spinner("PPTX生成中..."):
-            file_data = converter.convert_template_to_pptx(template)
+            file_data = converter.convert_template_to_pptx(template, generated_markdown)
         mime_type = (
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         )
 
-    # 2. ダウンロードボタン
     st.download_button(
         label=f"📥 {format_options[selected_format]['label']} ファイルをダウンロード",
         data=file_data,
@@ -84,14 +76,14 @@ try:
 
     st.divider()
 
-    # 3. プレビュー
+    # 4. Update preview logic
     with st.spinner("プレビューを準備中..."):
         if selected_format == "PDF":
-            # 既存のPDFデータをプレビュー用に使用
             preview_data = file_data
         else:
-            # HTML/PPTXは一度PDFに変換してからプレビュー
-            preview_data = converter.convert_template_to_pdf(template)
+            preview_data = converter.convert_template_to_pdf(
+                template, generated_markdown
+            )
         images = convert_from_bytes(preview_data)
     for i, image in enumerate(images):
         st.image(image, caption=f"スライド {i+1}")
