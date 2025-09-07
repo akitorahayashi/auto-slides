@@ -1,9 +1,9 @@
 import streamlit as st
 
 from src.models.slide_template import TemplateFormat, TemplateRepository
-from src.router import Page
 from src.services.template_converter_service import TemplateConverterService
-  
+
+
 @st.dialog("実行確認", width="small", dismissible=True)
 def confirm_execute_dialog():
     st.write("こちらの実行します\nよろしいですか？")
@@ -13,28 +13,24 @@ def confirm_execute_dialog():
             # セッションに選択した形式を保存し、結果ページへ遷移
             selected_format = st.session_state.format_selection
             st.session_state.selected_format = selected_format
-            app_router = st.session_state.app_router
-            app_router.go_to(Page.RESULT)
-            st.rerun()
+            st.switch_page("src/components/pages/result_page.py")
     with col_no:
         if st.button("いいえ", use_container_width=True):
             # ダイアログを閉じて再描画
             st.rerun()
 
 
-def render_download_page():
+def render_implementation_page():
     """
-    Renders the download page for slide templates.
+    Renders the implementation page for slide templates.
     """
 
     if "selected_template_id" not in st.session_state:
         st.error(
             "テンプレートが選択されていません。ギャラリーに戻ってテンプレートを選択してください。"
         )
-        app_router = st.session_state.app_router
         if st.button("ギャラリーに戻る"):
-            app_router.go_to(Page.GALLERY)
-            st.rerun()
+            st.switch_page("src/components/pages/gallery_page.py")
         return
 
     template_id = st.session_state.selected_template_id
@@ -77,9 +73,7 @@ def render_download_page():
         if st.button(
             "← ギャラリーに戻る", key="back_to_gallery", use_container_width=True
         ):
-            app_router = st.session_state.app_router
-            app_router.go_to(Page.GALLERY)
-            st.rerun()
+            st.switch_page("src/components/pages/gallery_page.py")
 
     with col2:
         if st.button(

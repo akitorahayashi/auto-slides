@@ -2,7 +2,6 @@ import streamlit as st
 from pdf2image import convert_from_bytes
 
 from src.models.slide_template import TemplateFormat, TemplateRepository
-from src.router import Page
 from src.services.template_converter_service import TemplateConverterService
 
 
@@ -22,17 +21,13 @@ def render_result_page():
             key="back_to_download_top",
             use_container_width=True,
         ):
-            app_router = st.session_state.app_router
-            app_router.go_to(Page.DOWNLOAD)
-            st.rerun()
+            st.switch_page("src/components/pages/implementation_page.py")
 
     with col2:
         if st.button(
             "🏠 ギャラリーに戻る", key="back_to_gallery_top", use_container_width=True
         ):
-            app_router = st.session_state.app_router
-            app_router.go_to(Page.GALLERY)
-            st.rerun()
+            st.switch_page("src/components/pages/gallery_page.py")
 
     st.title("📄 生成結果")
 
@@ -41,10 +36,8 @@ def render_result_page():
         or "selected_format" not in st.session_state
     ):
         st.error("セッション情報が不足しています。ギャラリーからやり直してください。")
-        app_router = st.session_state.app_router
         if st.button("ギャラリーに戻る"):
-            app_router.go_to(Page.GALLERY)
-            st.rerun()
+            st.switch_page("src/components/pages/gallery_page.py")
         return
 
     template_id = st.session_state.selected_template_id

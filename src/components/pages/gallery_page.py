@@ -1,7 +1,6 @@
 import streamlit as st
 
 from src.models.slide_template import TemplateRepository
-from src.router import Page
 
 
 def render_gallery_page():
@@ -59,9 +58,9 @@ def render_gallery_page():
                             use_container_width=True,
                         ):
                             st.session_state.selected_template_id = template.id
-                            app_router = st.session_state.app_router
-                            app_router.go_to(Page.DOWNLOAD)
-                            st.rerun()
+                            st.switch_page(
+                                "src/components/pages/implementation_page.py"
+                            )
 
         # テンプレートが奇数の場合、空のカラムを埋める
         if len(templates) % cols_per_row != 0:
