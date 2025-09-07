@@ -1,6 +1,7 @@
 import streamlit as st
 
-from src.models.slide_template import TemplateFormat, TemplateRepository
+from src.models import TemplateRepository
+from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
 
 
@@ -13,71 +14,64 @@ def confirm_execute_dialog():
             # セッションに選択した形式を保存し、結果ページへ遷移
             selected_format = st.session_state.format_selection
             st.session_state.selected_format = selected_format
-            st.switch_page("src/components/pages/result_page.py")
+            st.switch_page("components/pages/result_page.py")
     with col_no:
         if st.button("いいえ", use_container_width=True):
             # ダイアログを閉じて再描画
             st.rerun()
 
 
-def render_implementation_page():
-    """
-    Renders the implementation page for slide templates.
-    """
-
-    if "selected_template_id" not in st.session_state:
-        st.error(
-            "テンプレートが選択されていません。ギャラリーに戻ってテンプレートを選択してください。"
-        )
-        if st.button("ギャラリーに戻る"):
-            st.switch_page("src/components/pages/gallery_page.py")
-        return
-
-    template_id = st.session_state.selected_template_id
-    template = TemplateRepository.get_template_by_id(template_id)
-
-    st.title(f"📄 {template.name}")
-
-    st.subheader(template.description)
-
-    if not template:
-        st.error(f"テンプレート '{template_id}' が見つかりません。")
-        return
-
-    st.divider()
-    st.subheader("📦 形式を選択")
-
-    converter = TemplateConverterService()
-
-    # 形式選択のラジオボタン
-    format_options = {
-        "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
-        "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
-        "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
-    }
-
-    selected_format = st.radio(
-        "出力形式を選択してください：",
-        options=list(format_options.keys()),
-        format_func=lambda x: format_options[x]["label"],
-        key="format_selection",
-        horizontal=True,
+if "selected_template_id" not in st.session_state:
+    st.error(
+        "テンプレートが選択されていません。ギャラリーに戻ってテンプレートを選択してください。"
     )
+    if st.button("ギャラリーに戻る"):
+        st.switch_page("components/pages/gallery_page.py")
+        st.stop()
 
-    st.divider()
+template_id = st.session_state.selected_template_id
+template = TemplateRepository.get_template_by_id(template_id)
 
-    # 実行ボタンとナビゲーションボタンを並べる
-    col1, col2 = st.columns(2, gap="small")
+st.title(f"📄 {template.name}")
 
-    with col1:
-        if st.button(
-            "← ギャラリーに戻る", key="back_to_gallery", use_container_width=True
-        ):
-            st.switch_page("src/components/pages/gallery_page.py")
+st.subheader(template.description)
 
-    with col2:
-        if st.button(
-            "実行 →", key="execute_download", type="primary", use_container_width=True
-        ):
-            # 実行確認ダイアログを表示
-            confirm_execute_dialog()
+if not template:
+    st.error(f"テンプレート '{template_id}' が見つかりません。")
+    st.stop()
+
+st.divider()
+st.subheader("📦 形式を選択")
+
+converter = TemplateConverterService()
+
+# 形式選択のラジオボタン
+format_options = {
+    "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
+    "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
+    "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
+}
+
+selected_format = st.radio(
+    "出力形式を選択してください：",
+    options=list(format_options.keys()),
+    format_func=lambda x: format_options[x]["label"],
+    key="format_selection",
+    horizontal=True,
+)
+
+st.divider()
+
+# 実行ボタンとナビゲーションボタンを並べる
+col1, col2 = st.columns(2, gap="small")
+
+with col1:
+    if st.button("← ギャラリーに戻る", key="back_to_gallery", use_container_width=True):
+        st.switch_page("components/pages/gallery_page.py")
+
+with col2:
+    if st.button(
+        "実行 →", key="execute_download", type="primary", use_container_width=True
+    ):
+        # 実行確認ダイアログを表示
+        confirm_execute_dialog()

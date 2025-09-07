@@ -4,7 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.models.slide_template import SlideTemplate, TemplateFormat
+from src.models import SlideTemplate
+from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
 
 

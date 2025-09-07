@@ -27,10 +27,10 @@ def main():
     pg = st.navigation(
         [
             st.Page(
-                "src/components/pages/gallery_page.py", title="ギャラリー", default=True
+                "components/pages/gallery_page.py", title="ギャラリー", default=True
             ),
-            st.Page("src/components/pages/implementation_page.py", title="実行"),
-            st.Page("src/components/pages/result_page.py", title="結果"),
+            st.Page("components/pages/implementation_page.py", title="実行"),
+            st.Page("components/pages/result_page.py", title="結果"),
         ],
         position="hidden",
     )

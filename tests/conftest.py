@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.models.slide_template import SlideTemplate
+from src.models import SlideTemplate
 from src.services.marp_service import MarpService
 from src.services.template_converter_service import TemplateConverterService
 

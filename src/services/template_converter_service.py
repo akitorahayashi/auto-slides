@@ -2,7 +2,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from src.models.slide_template import SlideTemplate, TemplateFormat
+from src.models import SlideTemplate
+from src.schemas import TemplateFormat
 
 
 class TemplateConverterService:
