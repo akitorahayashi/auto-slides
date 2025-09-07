@@ -1,0 +1,7 @@
+/*
+  This file can be used for custom styles for the main_page component.
+*/
+
+.highlight-text {
+    color: var(--primary-color);
+}
