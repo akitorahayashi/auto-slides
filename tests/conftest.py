@@ -65,7 +65,7 @@ def mock_template():
 @pytest.fixture
 def mock_streamlit_secrets():
     """Mock streamlit.secrets for consistent testing"""
-    with patch('streamlit.secrets') as mock_secrets:
+    with patch("streamlit.secrets") as mock_secrets:
         mock_secrets.get.return_value = "false"
         yield mock_secrets
 
@@ -74,7 +74,10 @@ def mock_streamlit_secrets():
 def mock_slide_generator(mock_streamlit_secrets):
     """Mock SlideGenerator with mocked Streamlit secrets"""
     from src.services.slide_generator import SlideGenerator
-    with patch('src.services.slide_generator.SlideGenerator._get_client') as mock_get_client:
+
+    with patch(
+        "src.services.slide_generator.SlideGenerator._get_client"
+    ) as mock_get_client:
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
         generator = SlideGenerator()
@@ -85,6 +88,7 @@ def mock_slide_generator(mock_streamlit_secrets):
 def mock_template_repository():
     """Mock TemplateRepository for testing"""
     from src.models.template_repository import TemplateRepository
-    with patch.object(TemplateRepository, '_get_all_templates') as mock_get_all:
+
+    with patch.object(TemplateRepository, "_get_all_templates") as mock_get_all:
         mock_get_all.return_value = []
         yield TemplateRepository

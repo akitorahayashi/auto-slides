@@ -36,7 +36,7 @@ class SlideGenerator:
             debug = debug_value
         else:
             debug = str(debug_value).lower() == "true"
-            
+
         use_demo_value = st.secrets.get(
             "USE_DEMO_RESPONSES", os.getenv("USE_DEMO_RESPONSES", "false")
         )

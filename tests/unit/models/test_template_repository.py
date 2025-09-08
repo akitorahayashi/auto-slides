@@ -23,9 +23,11 @@ class TestTemplateRepository:
         mock_template2.id = "template2"
         mock_template2.exists.return_value = True
 
-        with patch("src.models.template_repository.TemplateRepository._get_all_templates") as mock_get_all:
+        with patch(
+            "src.models.template_repository.TemplateRepository._get_all_templates"
+        ) as mock_get_all:
             mock_get_all.return_value = [mock_template1, mock_template2]
-            
+
             result = TemplateRepository.get_all_templates()
 
             assert len(result) == 2
@@ -39,9 +41,11 @@ class TestTemplateRepository:
         mock_template1.id = "valid_template"
         mock_template1.exists.return_value = True
 
-        with patch("src.models.template_repository.TemplateRepository._get_all_templates") as mock_get_all:
+        with patch(
+            "src.models.template_repository.TemplateRepository._get_all_templates"
+        ) as mock_get_all:
             mock_get_all.return_value = [mock_template1]
-            
+
             result = TemplateRepository.get_all_templates()
 
             # Only the valid template should be returned
@@ -54,9 +58,11 @@ class TestTemplateRepository:
         mock_template.id = "template_dir"
         mock_template.exists.return_value = True
 
-        with patch("src.models.template_repository.TemplateRepository._get_all_templates") as mock_get_all:
+        with patch(
+            "src.models.template_repository.TemplateRepository._get_all_templates"
+        ) as mock_get_all:
             mock_get_all.return_value = [mock_template]
-            
+
             result = TemplateRepository.get_all_templates()
 
             # Only the directory should be processed
@@ -70,9 +76,11 @@ class TestTemplateRepository:
         mock_template.name = "My Awesome Template"
         mock_template.exists.return_value = True
 
-        with patch("src.models.template_repository.TemplateRepository._get_all_templates") as mock_get_all:
+        with patch(
+            "src.models.template_repository.TemplateRepository._get_all_templates"
+        ) as mock_get_all:
             mock_get_all.return_value = [mock_template]
-            
+
             result = TemplateRepository.get_all_templates()
 
             assert len(result) == 1
@@ -87,9 +95,11 @@ class TestTemplateRepository:
         mock_template2 = MagicMock(spec=SlideTemplate)
         mock_template2.id = "template2"
 
-        with patch("src.models.template_repository.TemplateRepository._get_all_templates") as mock_get_all:
+        with patch(
+            "src.models.template_repository.TemplateRepository._get_all_templates"
+        ) as mock_get_all:
             mock_get_all.return_value = [mock_template1, mock_template2]
-            
+
             result = TemplateRepository.get_template_by_id("template2")
 
             assert result == mock_template2
@@ -103,9 +113,11 @@ class TestTemplateRepository:
         mock_template2 = MagicMock(spec=SlideTemplate)
         mock_template2.id = "template2"
 
-        with patch("src.models.template_repository.TemplateRepository._get_all_templates") as mock_get_all:
+        with patch(
+            "src.models.template_repository.TemplateRepository._get_all_templates"
+        ) as mock_get_all:
             mock_get_all.return_value = [mock_template1, mock_template2]
-            
+
             result = TemplateRepository.get_template_by_id("nonexistent")
 
             assert result is None

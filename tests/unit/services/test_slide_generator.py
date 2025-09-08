@@ -1,8 +1,3 @@
-import pytest
-
-from src.services.slide_generator import SlideGenerator
-
-
 class TestSlideGenerator:
     """Unit tests for SlideGenerator methods"""
 

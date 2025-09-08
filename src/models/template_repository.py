@@ -2,8 +2,9 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .slide_template import SlideTemplate
 from src.protocols.template_repository_protocol import TemplateRepositoryProtocol
+
+from .slide_template import SlideTemplate
 
 
 class TemplateRepository(TemplateRepositoryProtocol):
