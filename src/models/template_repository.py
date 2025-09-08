@@ -3,13 +3,20 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from .slide_template import SlideTemplate
+from src.protocols.template_repository_protocol import TemplateRepositoryProtocol
 
 
-class TemplateRepository:
-    def __init__(self, templates_dir: Path = Path("templates")):
+class TemplateRepository(TemplateRepositoryProtocol):
+    def __init__(self, templates_dir: Path = Path("src/templates")):
         self.templates_dir = templates_dir
 
-    def get_all_templates(self) -> List[SlideTemplate]:
+    @classmethod
+    def get_all_templates(cls) -> List[SlideTemplate]:
+        """Get all available slide templates"""
+        instance = cls()
+        return instance._get_all_templates()
+
+    def _get_all_templates(self) -> List[SlideTemplate]:
         templates = []
 
         if not self.templates_dir.exists():
@@ -56,6 +63,12 @@ class TemplateRepository:
             "duration_minutes": 10,
         }
 
-    def get_template_by_id(self, template_id: str) -> Optional[SlideTemplate]:
-        templates = self.get_all_templates()
+    @classmethod
+    def get_template_by_id(cls, template_id: str) -> Optional[SlideTemplate]:
+        """Get a specific template by ID"""
+        instance = cls()
+        return instance._get_template_by_id(template_id)
+
+    def _get_template_by_id(self, template_id: str) -> Optional[SlideTemplate]:
+        templates = self._get_all_templates()
         return next((t for t in templates if t.id == template_id), None)

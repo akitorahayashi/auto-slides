@@ -31,13 +31,19 @@ class SlideGenerator:
 
     def _get_client(self) -> OllamaClientProtocol:
         """Get client (recommended olm-api pattern + demo responses support)"""
-        debug = st.secrets.get("DEBUG", os.getenv("DEBUG", "true")).lower() == "true"
-        use_demo = (
-            st.secrets.get(
-                "USE_DEMO_RESPONSES", os.getenv("USE_DEMO_RESPONSES", "false")
-            ).lower()
-            == "true"
+        debug_value = st.secrets.get("DEBUG", os.getenv("DEBUG", "true"))
+        if isinstance(debug_value, bool):
+            debug = debug_value
+        else:
+            debug = str(debug_value).lower() == "true"
+            
+        use_demo_value = st.secrets.get(
+            "USE_DEMO_RESPONSES", os.getenv("USE_DEMO_RESPONSES", "false")
         )
+        if isinstance(use_demo_value, bool):
+            use_demo = use_demo_value
+        else:
+            use_demo = str(use_demo_value).lower() == "true"
 
         if debug:
             if use_demo:

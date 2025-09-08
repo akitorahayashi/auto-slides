@@ -8,10 +8,10 @@ from dev.mocks.mock_marp_service import MockMarpService
 @pytest.mark.parametrize(
     "output_type, generator_method_name, output_filename",
     [
-        (MockMarpService.OutputType.PDF, "generate_pdf", "test.pdf"),
-        (MockMarpService.OutputType.HTML, "generate_html", "test.html"),
-        (MockMarpService.OutputType.PNG, "generate_png", "test.png"),
-        (MockMarpService.OutputType.PPTX, "generate_pptx", "test.pptx"),
+        (MockMarpService.OutputFormat.PDF, "generate_pdf", "test.pdf"),
+        (MockMarpService.OutputFormat.HTML, "generate_html", "test.html"),
+        (MockMarpService.OutputFormat.PNG, "generate_png", "test.png"),
+        (MockMarpService.OutputFormat.PPTX, "generate_pptx", "test.pptx"),
     ],
 )
 def test_marp_service_generation(

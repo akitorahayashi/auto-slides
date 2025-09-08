@@ -22,10 +22,10 @@ class TestMarpServiceE2E:
     @pytest.mark.parametrize(
         "output_type, generator_method_name, output_filename, expected_extension",
         [
-            (MarpService.OutputType.PDF, "generate_pdf", "test.pdf", ".pdf"),
-            (MarpService.OutputType.HTML, "generate_html", "test.html", ".html"),
-            (MarpService.OutputType.PNG, "generate_png", "test.png", ".png"),
-            (MarpService.OutputType.PPTX, "generate_pptx", "test.pptx", ".pptx"),
+            (MarpService.OutputFormat.PDF, "generate_pdf", "test.pdf", ".pdf"),
+            (MarpService.OutputFormat.HTML, "generate_html", "test.html", ".html"),
+            (MarpService.OutputFormat.PNG, "generate_png", "test.png", ".png"),
+            (MarpService.OutputFormat.PPTX, "generate_pptx", "test.pptx", ".pptx"),
         ],
     )
     def test_marp_service_real_generation(
@@ -67,7 +67,7 @@ class TestMarpServiceE2E:
         assert os.path.getsize(output_path) > 0
 
         # 4. For specific file types, do additional checks
-        if output_type == MarpService.OutputType.HTML:
+        if output_type == MarpService.OutputFormat.HTML:
             # HTML files should contain basic HTML structure
             with open(output_path, "r", encoding="utf-8") as f:
                 content = f.read()
