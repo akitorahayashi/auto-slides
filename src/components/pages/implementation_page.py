@@ -2,6 +2,7 @@ import streamlit as st
 
 from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
+from src.services.presentation_chain import generate_presentation
 
 
 @st.dialog("実行確認", width="small", dismissible=True)
@@ -12,18 +13,28 @@ def confirm_execute_dialog():
     with col_yes:
         if st.button("はい", use_container_width=True):
             # ユーザー入力と生成されたマークダウンをセッションに保存
-            # LLMを使って原稿からプレゼンテーションを生成（Mock実装）
             script_content = st.session_state.get("script_content", "")
+            template = st.session_state.app_state.selected_template
 
-            # Mock LLM処理: 実際にはここでLLMが原稿を解析してプレゼンテーションを生成
-            generated_markdown = f"""---
+            # LLMサービスを使用してプレゼンテーションを生成
+            try:
+                with st.spinner("LLMがプレゼンテーションを生成中..."):
+                    generated_markdown = generate_presentation(
+                        script_content=script_content,
+                        template=template
+                    )
+            except Exception as e:
+                st.error(f"プレゼンテーション生成に失敗しました: {str(e)}")
+                # フォールバック用の基本的なMarkdown
+                generated_markdown = f"""---
 marp: true
 theme: default
 ---
 
 # プレゼンテーション
 
-生成された内容:
+エラーが発生しました。以下は原稿の内容です:
+
 {script_content}
 
 ---
