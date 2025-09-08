@@ -2,14 +2,14 @@
 marp: true
 theme: custom-theme
 paginate: true
-header: 'My Presentation'
-footer: '© 2025 My Company'
+header: '${header_title}'
+footer: '© 2025 ${company_name}'
 ---
 
-# タイトルスライド
+# ${presentation_title}
 
-- 作成者: あなたの名前
-- 日付: 2025年9月5日
+- 作成者: ${author_name}
+- 日付: ${presentation_date}
 
 ---
 
@@ -18,65 +18,55 @@ footer: '© 2025 My Company'
 <!-- _header: '' -->
 <!-- _footer: '' -->
 
-# このスライドだけ特別スタイル
+# ${main_topic}
 
 ---
 
 ## 目次
 
-1.  Marpとは
-2.  使い方
-3.  サンプルスライド
-4.  まとめ
+1. ${topic_1}
+2. ${topic_2}
+3. ${topic_3}
+4. ${topic_4}
 
 ---
 
-## 1. Marpとは
+## 1. ${topic_1}
 
-- Markdownでスライドが作れるツール
-- シンプルで拡張性が高い
-- VS CodeやCLIで利用可能
-
-<!--
-note: ここはスピーカーノートです。
-プレゼン本番で話す内容をここに書きます。
--->
+${topic_1_content}
 
 ---
 
-## 2. 使い方
+## 2. ${topic_2}
 
-1.  Markdownファイルを作成
-2.  `---` でスライドを区切る
-3.  marpコマンドでPDFやHTMLに変換
+${topic_2_content}
 
 ---
 
-## 3. サンプルスライド
+## 3. ${topic_3}
 
-- 画像やコードも挿入可能
+${topic_3_content}
 
 ```python
-print("Hello, Marp!")
+${code_example}
 ```
 
 ---
 
 ## LaTeX数式の例
 
-MarpではLaTeX記法で数式も表示できます。
+${math_description}
 
-インライン: $E = mc^2$
+インライン: ${inline_math}
 
 ブロック:
 
-$
-\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
-$
+$$
+${block_math}
+$$
 
 ---
 
-## まとめ
+## ${topic_4}
 
-- Markdownで簡単にスライド作成
-- Marpを使ってプレゼンを効率化
+${conclusion_content}
