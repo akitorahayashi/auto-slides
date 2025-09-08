@@ -31,18 +31,10 @@ help: ## Display this help message
 # ==============================================================================
 
 .PHONY: setup
-setup: ## Project initial setup: install dependencies and create .env file
+setup: ## Project initial setup: install dependencies
 	@echo "🐍 Installing python dependencies with uv..."
 	@uv sync
-	@echo "📄 Creating environment file..."
-	@if [ ! -f .env ]; then \
-		echo "Creating .env from .env.example..." ; \
-		cp .env.example .env; \
-		echo "✅ .env file created."; \
-	else \
-		echo "✅ .env already exists. Skipping creation."; \
-	fi
-	@echo "💡 You can customize the .env file for your specific needs."
+	@echo "✅ Dependencies installed."
 
 
 # ==============================================================================
@@ -50,22 +42,14 @@ setup: ## Project initial setup: install dependencies and create .env file
 # ==============================================================================
 
 .PHONY: run
-run: ## Launch the Streamlit application with development port
-	@if [ ! -f .env ]; then \
-		echo "❌ Error: .env file not found. Please run 'make setup' first."; \
-		exit 1; \
-	fi
+run: ## Launch the Streamlit application with development port (8503)
 	@echo "🚀 Starting Streamlit app on development port..."
-	@export $$(cat .env | grep -v '^#' | grep -v '^$$' | xargs) && PYTHONPATH=. STREAMLIT_SERVER_PORT=$${DEV_PORT:-8503} streamlit run $(STREAMLIT_APP_FILE)
+	@PYTHONPATH=. streamlit run $(STREAMLIT_APP_FILE) --server.port 8503
 
 .PHONY: run-prod
-run-prod: ## Launch the Streamlit application with production port
-	@if [ ! -f .env ]; then \
-		echo "❌ Error: .env file not found. Please run 'make setup' first."; \
-		exit 1; \
-	fi
+run-prod: ## Launch the Streamlit application with production port (8501)
 	@echo "🚀 Starting Streamlit app on production port..."
-	@export $$(cat .env | grep -v '^#' | grep -v '^$$' | xargs) && PYTHONPATH=. STREAMLIT_SERVER_PORT=$${HOST_PORT:-8501} streamlit run $(STREAMLIT_APP_FILE)
+	@PYTHONPATH=. streamlit run $(STREAMLIT_APP_FILE) --server.port 8501
 
 # ==============================================================================
 # CODE QUALITY

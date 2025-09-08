@@ -1,11 +1,7 @@
-import os
-
 import streamlit as st
-from dotenv import load_dotenv
 
 from src.protocols.marp_protocol import MarpProtocol
-
-load_dotenv()
+from src.state.app_state import AppState
 
 st.set_page_config(
     page_title="Auto Slides",
@@ -44,7 +40,8 @@ def initialize_session():
     if "marp_service" not in st.session_state:
         slides_path = "src/templates/sample/content.md"
         output_dir = "output"
-        is_debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes", "on")
+        is_debug_str = st.secrets["DEBUG"] if "DEBUG" in st.secrets else "false"
+        is_debug = is_debug_str.lower() in ("true", "1", "yes", "on")
 
         if is_debug:
             from dev.mocks.mock_marp_service import MockMarpService
@@ -56,6 +53,9 @@ def initialize_session():
             marp_service: MarpProtocol = MarpService(slides_path, output_dir)
 
         st.session_state.marp_service = marp_service
+
+    if "app_state" not in st.session_state:
+        st.session_state.app_state = AppState()
 
 
 if __name__ == "__main__":

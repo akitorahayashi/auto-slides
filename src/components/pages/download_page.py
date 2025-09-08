@@ -1,6 +1,5 @@
 import streamlit as st
 
-from src.models import TemplateRepository
 from src.router import Page
 from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
@@ -29,7 +28,10 @@ def render_download_page():
     Renders the download page for slide templates.
     """
 
-    if "selected_template_id" not in st.session_state:
+    if (
+        not hasattr(st.session_state, "app_state")
+        or st.session_state.app_state.selected_template is None
+    ):
         st.error(
             "テンプレートが選択されていません。ギャラリーに戻ってテンプレートを選択してください。"
         )
@@ -39,15 +41,14 @@ def render_download_page():
             st.rerun()
         return
 
-    template_id = st.session_state.selected_template_id
-    template = TemplateRepository.get_template_by_id(template_id)
+    template = st.session_state.app_state.selected_template
 
     st.title(f"📄 {template.name}")
 
     st.subheader(template.description)
 
     if not template:
-        st.error(f"テンプレート '{template_id}' が見つかりません。")
+        st.error("テンプレートが見つかりません。")
         return
 
     st.divider()

@@ -1,6 +1,5 @@
 import streamlit as st
 
-from src.models import TemplateRepository
 from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
 
@@ -11,9 +10,17 @@ def confirm_execute_dialog():
     col_yes, col_no = st.columns(2, gap="small")
     with col_yes:
         if st.button("はい", use_container_width=True):
-            # セッションに選択した形式を保存し、結果ページへ遷移
-            selected_format = st.session_state.format_selection
-            st.session_state.selected_format = selected_format
+            # ユーザー入力と生成されたマークダウンをセッションに保存
+            template = st.session_state.app_state.selected_template
+            st.session_state.app_state.user_inputs = {
+                "format": st.session_state.format_selection
+            }
+            st.session_state.app_state.generated_markdown = (
+                template.read_markdown_content()
+            )
+
+            # 選択した形式を保存し、結果ページへ遷移
+            st.session_state.selected_format = st.session_state.format_selection
             st.switch_page("components/pages/result_page.py")
     with col_no:
         if st.button("いいえ", use_container_width=True):
@@ -21,23 +28,25 @@ def confirm_execute_dialog():
             st.rerun()
 
 
-if "selected_template_id" not in st.session_state:
-    st.error(
-        "テンプレートが選択されていません。ギャラリーに戻ってテンプレートを選択してください。"
-    )
+# app_stateまたはselected_templateが存在しない場合、ギャラリーページにリダイレクト
+if (
+    not hasattr(st.session_state, "app_state")
+    or st.session_state.app_state.selected_template is None
+):
+    st.error("テンプレートが選択されていません。")
+    st.info("ギャラリーページに戻って、使用するテンプレートを選択してください。")
     if st.button("ギャラリーに戻る"):
-        st.switch_page("components/pages/gallery_page.py")
-        st.stop()
+        st.switch_page("src/main.py")
+    st.stop()
 
-template_id = st.session_state.selected_template_id
-template = TemplateRepository.get_template_by_id(template_id)
+template = st.session_state.app_state.selected_template
 
 st.title(f"📄 {template.name}")
 
 st.subheader(template.description)
 
 if not template:
-    st.error(f"テンプレート '{template_id}' が見つかりません。")
+    st.error("テンプレートが見つかりません。")
     st.stop()
 
 st.divider()

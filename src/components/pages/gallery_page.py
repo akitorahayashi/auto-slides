@@ -49,7 +49,7 @@ if templates:
                         key=f"select_template_{template.id}",
                         use_container_width=True,
                     ):
-                        st.session_state.selected_template_id = template.id
+                        st.session_state.app_state.selected_template = template
                         st.switch_page("components/pages/implementation_page.py")
 
     # テンプレートが奇数の場合、空のカラムを埋める

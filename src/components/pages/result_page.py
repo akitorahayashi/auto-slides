@@ -1,7 +1,6 @@
 import streamlit as st
 from pdf2image import convert_from_bytes
 
-from src.models import TemplateRepository
 from src.schemas import TemplateFormat
 from src.services.template_converter_service import TemplateConverterService
 
@@ -24,21 +23,23 @@ with col2:
 
 st.title("📄 生成結果")
 
+# 必要なセッション情報が存在しない場合、ギャラリーページにリダイレクト
 if (
-    "selected_template_id" not in st.session_state
+    not hasattr(st.session_state, "app_state")
+    or st.session_state.app_state.selected_template is None
+    or st.session_state.app_state.generated_markdown is None
     or "selected_format" not in st.session_state
 ):
     st.error("セッション情報が不足しています。ギャラリーからやり直してください。")
     if st.button("ギャラリーに戻る"):
-        st.switch_page("components/pages/gallery_page.py")
-        st.stop()
+        st.switch_page("src/main.py")
+    st.stop()
 
-template_id = st.session_state.selected_template_id
+template = st.session_state.app_state.selected_template
 selected_format = st.session_state.selected_format
 
-template = TemplateRepository.get_template_by_id(template_id)
 if not template:
-    st.error(f"テンプレート '{template_id}' が見つかりません。")
+    st.error("テンプレートが見つかりません。")
     st.stop()
 
 format_options = {
