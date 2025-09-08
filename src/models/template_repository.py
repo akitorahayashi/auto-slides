@@ -19,7 +19,7 @@ class TemplateRepository:
                     description=f"Template: {template_id}",
                     template_dir=template_dir,
                 )
-                
+
                 # content.mdとtheme.cssの両方が存在する場合のみ追加
                 if template.exists():
                     templates.append(template)

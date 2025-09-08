@@ -20,8 +20,8 @@ class SlideTemplate:
     def exists(self) -> bool:
         """テンプレートが有効かチェック（content.mdとtheme.cssの両方が必須）"""
         return (
-            self.template_dir.exists() 
-            and self.markdown_path.exists() 
+            self.template_dir.exists()
+            and self.markdown_path.exists()
             and self.css_path.exists()
         )
 

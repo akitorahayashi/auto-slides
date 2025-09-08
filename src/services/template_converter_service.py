@@ -21,10 +21,17 @@ class TemplateConverterService:
         try:
             temp_md_path.write_text(markdown_content, encoding="utf-8")
             temp_css_path.write_text(css_content, encoding="utf-8")
-            
+
             # CSSテーマを必ず適用
-            command = ["marp", str(temp_md_path), "--theme", str(temp_css_path), "-o", str(temp_pdf_path)]
-                
+            command = [
+                "marp",
+                str(temp_md_path),
+                "--theme",
+                str(temp_css_path),
+                "-o",
+                str(temp_pdf_path),
+            ]
+
             result = subprocess.run(
                 command,
                 check=True,
@@ -58,9 +65,16 @@ class TemplateConverterService:
         try:
             temp_md_path.write_text(markdown_content, encoding="utf-8")
             temp_css_path.write_text(css_content, encoding="utf-8")
-            
+
             # CSSテーマを必ず適用
-            command = ["marp", str(temp_md_path), "--theme", str(temp_css_path), "-o", str(temp_html_path)]
+            command = [
+                "marp",
+                str(temp_md_path),
+                "--theme",
+                str(temp_css_path),
+                "-o",
+                str(temp_html_path),
+            ]
 
             result = subprocess.run(
                 command,
@@ -95,9 +109,16 @@ class TemplateConverterService:
         try:
             temp_md_path.write_text(markdown_content, encoding="utf-8")
             temp_css_path.write_text(css_content, encoding="utf-8")
-            
+
             # CSSテーマを必ず適用
-            command = ["marp", str(temp_md_path), "--theme", str(temp_css_path), "-o", str(temp_pptx_path)]
+            command = [
+                "marp",
+                str(temp_md_path),
+                "--theme",
+                str(temp_css_path),
+                "-o",
+                str(temp_pptx_path),
+            ]
 
             result = subprocess.run(
                 command,
