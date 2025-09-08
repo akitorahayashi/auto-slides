@@ -2,6 +2,8 @@ import streamlit as st
 
 from src.protocols.marp_protocol import MarpProtocol
 from src.app_state import AppState
+from src.models.template_repository import TemplateRepository
+
 
 st.set_page_config(
     page_title="Auto Slides",
@@ -38,7 +40,13 @@ def main():
 def initialize_session():
     """Initializes the session state."""
     if "marp_service" not in st.session_state:
-        slides_path = "src/templates/sample/content.md"
+        templates = TemplateRepository.get_all_templates()
+        if not templates:
+            st.error("テンプレートが見つかりません。")
+            st.stop()
+        default_template = templates[0]
+
+        slides_path = default_template.markdown_path
         output_dir = "output"
         is_debug = st.secrets.get("DEBUG", False)
 

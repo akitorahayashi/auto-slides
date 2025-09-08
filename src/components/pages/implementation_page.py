@@ -19,7 +19,8 @@ def confirm_execute_dialog():
             # LLMサービスを使用してプレゼンテーションを生成
             try:
                 with st.spinner("LLMがプレゼンテーションを生成中..."):
-                    generated_markdown = generate_presentation(
+                    generator = SlideGenerator()
+                    generated_markdown = generator.generate(
                         script_content=script_content,
                         template=template
                     )

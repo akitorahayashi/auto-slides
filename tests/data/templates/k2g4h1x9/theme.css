@@ -1,0 +1,295 @@
+/* @theme custom-theme */
+@import 'default';
+
+/* ===== カスタムプロパティ（CSS変数） ===== */
+section {
+  --primary-color: #2c3e50;
+  --secondary-color: #3498db;
+  --accent-color: #e74c3c;
+  --text-color: #2c3e50;
+  --light-gray: #ecf0f1;
+  --medium-gray: #bdc3c7;
+  --background-color: #ffffff;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== 基本レイアウト ===== */
+section {
+  font-family: 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+  background: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  padding: 60px 80px;
+  font-size: 24px;
+}
+
+/* ===== タイトルスライド ===== */
+section.title {
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+section.title h1 {
+  font-size: 3.5em;
+  font-weight: 700;
+  margin-bottom: 0.3em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+section.title h2 {
+  font-size: 1.5em;
+  font-weight: 300;
+  opacity: 0.9;
+  margin-top: 0;
+}
+
+/* ===== 見出し ===== */
+h1 {
+  color: var(--primary-color);
+  font-size: 2.5em;
+  font-weight: 700;
+  margin-bottom: 0.5em;
+  border-bottom: 4px solid var(--secondary-color);
+  padding-bottom: 0.2em;
+}
+
+h2 {
+  color: var(--secondary-color);
+  font-size: 2em;
+  font-weight: 600;
+  margin: 1em 0 0.5em 0;
+  position: relative;
+}
+
+h2::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 1.2em;
+  background: var(--accent-color);
+  border-radius: 2px;
+}
+
+h3 {
+  color: var(--text-color);
+  font-size: 1.4em;
+  font-weight: 500;
+  margin: 0.8em 0 0.4em 0;
+}
+
+/* ===== テキスト要素 ===== */
+p {
+  margin: 0.8em 0;
+  text-align: justify;
+}
+
+strong {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+em {
+  color: var(--secondary-color);
+  font-style: italic;
+}
+
+/* ===== リスト ===== */
+ul,
+ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+li {
+  margin: 0.5em 0;
+  line-height: 1.5;
+}
+
+ul li::marker {
+  color: var(--secondary-color);
+}
+
+ol li::marker {
+  color: var(--secondary-color);
+  font-weight: 600;
+}
+
+/* ===== 引用 ===== */
+blockquote {
+  background: var(--light-gray);
+  border-left: 6px solid var(--secondary-color);
+  margin: 1.5em 0;
+  padding: 1.5em 2em;
+  border-radius: 0 8px 8px 0;
+  box-shadow: var(--shadow);
+  font-style: italic;
+  position: relative;
+}
+
+blockquote::before {
+  content: '"';
+  font-size: 4em;
+  color: var(--secondary-color);
+  position: absolute;
+  top: -10px;
+  left: 15px;
+  opacity: 0.3;
+  font-family: Georgia, serif;
+}
+
+blockquote p {
+  margin: 0;
+  color: var(--text-color);
+}
+
+/* ===== コード ===== */
+code {
+  background: var(--light-gray);
+  color: var(--accent-color);
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+pre {
+  background: var(--primary-color);
+  color: white;
+  padding: 1.5em;
+  border-radius: 8px;
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+  margin: 1.5em 0;
+}
+
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* ===== テーブル ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th {
+  background: var(--primary-color);
+  color: white;
+  padding: 1em;
+  text-align: left;
+  font-weight: 600;
+}
+
+td {
+  padding: 1em;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+tr:nth-child(even) {
+  background: var(--light-gray);
+}
+
+tr:hover {
+  background: #d5dbdb;
+}
+
+/* ===== リンク ===== */
+a {
+  color: var(--secondary-color);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: border-bottom-color 0.3s ease;
+}
+
+a:hover {
+  border-bottom-color: var(--secondary-color);
+}
+
+/* ===== 画像 ===== */
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  margin: 1em 0;
+}
+
+/* ===== フッター ===== */
+footer {
+  position: absolute;
+  bottom: 30px;
+  right: 40px;
+  font-size: 0.8em;
+  color: var(--medium-gray);
+  font-weight: 300;
+}
+
+/* ===== アニメーション ===== */
+section {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== レスポンシブデザイン ===== */
+@media screen and (max-width: 1024px) {
+  section {
+    padding: 40px 60px;
+    font-size: 22px;
+  }
+
+  h1 {
+    font-size: 2.2em;
+  }
+
+  h2 {
+    font-size: 1.8em;
+  }
+}
+
+/* ===== 特別なスライドクラス ===== */
+section.centered {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+section.two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2em;
+  align-items: start;
+}
+
+section.highlight {
+  background: linear-gradient(135deg, var(--light-gray) 0%, white 100%);
+  border-left: 8px solid var(--accent-color);
+}

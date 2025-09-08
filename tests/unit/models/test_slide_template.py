@@ -18,6 +18,7 @@ class TestSlideTemplate:
             name="Test Template",
             description="A test template",
             template_dir=template_dir,
+            duration_minutes=10,
         )
 
         assert template.id == "test_template"
@@ -33,6 +34,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=template_dir,
+            duration_minutes=10,
         )
 
         expected_path = template_dir / "content.md"
@@ -46,6 +48,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=template_dir,
+            duration_minutes=10,
         )
 
         expected_path = template_dir / "theme.css"
@@ -61,6 +64,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         result = template.exists()
@@ -79,6 +83,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         result = template.exists()
@@ -96,6 +101,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         result = template.exists()
@@ -113,6 +119,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         result = template.exists()
@@ -131,6 +138,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         result = template.read_markdown_content()
@@ -148,6 +156,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -168,6 +177,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         result = template.read_css_content()
@@ -185,6 +195,7 @@ class TestSlideTemplate:
             name="Test",
             description="Test",
             template_dir=Path("/test/template"),
+            duration_minutes=10,
         )
 
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -213,6 +224,7 @@ class TestSlideTemplate:
                 name="Test Template",
                 description="A test template",
                 template_dir=template_dir,
+                duration_minutes=10,
             )
 
             # Test existence
@@ -232,6 +244,7 @@ class TestSlideTemplate:
                 name="Test Template",
                 description="A test template",
                 template_dir=template_dir,
+                duration_minutes=10,
             )
 
             # Directory exists but files don't
