@@ -6,6 +6,7 @@ import pytest
 
 from src.models import SlideTemplate
 from src.services import MarpService, TemplateConverterService
+from dev.mocks.mock_template_repository import MockTemplateRepository
 
 
 @pytest.fixture
@@ -15,20 +16,33 @@ def project_root():
 
 
 @pytest.fixture
-def sample_template_path(project_root):
-    """Path to the sample template content.md"""
-    return project_root / "src" / "templates" / "k2g4h1x9" / "content.md"
+def test_template_dir(project_root):
+    """Path to the test template directory"""
+    return project_root / "tests" / "data" / "templates" / "k2g4h1x9"
 
 
 @pytest.fixture
-def sample_template(sample_template_path):
-    """Sample SlideTemplate instance using the actual sample content"""
+def sample_template(test_template_dir):
+    """Sample SlideTemplate instance using the test template"""
     return SlideTemplate(
         id="k2g4h1x9",
-        name="Sample Template",
-        description="Sample template for testing",
-        template_dir=sample_template_path.parent,
+        name="サンプルテンプレート",
+        description="4トピック構成のベーシックなプレゼンテーション",
+        template_dir=test_template_dir,
+        duration_minutes=10,
     )
+
+
+@pytest.fixture
+def mock_template_repository_with_sample(sample_template):
+    """MockTemplateRepository with sample template"""
+    return MockTemplateRepository(mock_templates=[sample_template])
+
+
+@pytest.fixture
+def sample_template_path(test_template_dir):
+    """Path to the sample template content.md (for backward compatibility)"""
+    return test_template_dir / "content.md"
 
 
 @pytest.fixture
@@ -87,8 +101,4 @@ def mock_slide_generator(mock_streamlit_secrets):
 @pytest.fixture
 def mock_template_repository():
     """Mock TemplateRepository for testing"""
-    from src.models.template_repository import TemplateRepository
-
-    with patch.object(TemplateRepository, "_get_all_templates") as mock_get_all:
-        mock_get_all.return_value = []
-        yield TemplateRepository
+    return MockTemplateRepository(mock_templates=[])
