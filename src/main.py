@@ -1,7 +1,7 @@
 import streamlit as st
 
 from src.protocols.marp_protocol import MarpProtocol
-from src.state.app_state import AppState
+from src.app_state import AppState
 
 st.set_page_config(
     page_title="Auto Slides",
