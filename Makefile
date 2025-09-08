@@ -31,18 +31,10 @@ help: ## Display this help message
 # ==============================================================================
 
 .PHONY: setup
-setup: ## Project initial setup: install dependencies and create .env file
+setup: ## Project initial setup: install dependencies
 	@echo "🐍 Installing python dependencies with uv..."
 	@uv sync
-	@echo "📄 Creating environment file..."
-	@if [ ! -f .env ]; then \
-		echo "Creating .env from .env.example..." ; \
-		cp .env.example .env; \
-		echo "✅ .env file created."; \
-	else \
-		echo "✅ .env already exists. Skipping creation."; \
-	fi
-	@echo "💡 You can customize the .env file for your specific needs."
+	@echo "✅ Dependencies installed."
 
 
 # ==============================================================================
@@ -50,23 +42,11 @@ setup: ## Project initial setup: install dependencies and create .env file
 # ==============================================================================
 
 .PHONY: run
-run: ## Launch the Streamlit application with development port
-	@if [ ! -f .env ]; then \
-		echo "❌ Error: .env file not found. Please run 'make setup' first."; \
-		exit 1; \
-	fi
+run: ## Launch the Streamlit application with development port from secrets
 	@echo "🚀 Starting Streamlit app on development port..."
-	@export $$(cat .env | grep -v '^#' | grep -v '^$$' | xargs) && PYTHONPATH=. STREAMLIT_SERVER_PORT=$${DEV_PORT:-8503} streamlit run $(STREAMLIT_APP_FILE)
-
-.PHONY: run-prod
-run-prod: ## Launch the Streamlit application with production port
-	@if [ ! -f .env ]; then \
-		echo "❌ Error: .env file not found. Please run 'make setup' first."; \
-		exit 1; \
-	fi
-	@echo "🚀 Starting Streamlit app on production port..."
-	@export $$(cat .env | grep -v '^#' | grep -v '^$$' | xargs) && PYTHONPATH=. STREAMLIT_SERVER_PORT=$${HOST_PORT:-8501} streamlit run $(STREAMLIT_APP_FILE)
-
+	@DEV_PORT=$$(python -c "import streamlit as st; print(st.secrets.get('DEV_PORT', '8503'))"); \
+	PYTHONPATH=. streamlit run $(STREAMLIT_APP_FILE) --server.port $$DEV_PORT
+	
 # ==============================================================================
 # CODE QUALITY
 # ==============================================================================
@@ -87,20 +67,33 @@ lint: ## Perform static code analysis (check) using Black and Ruff
 # TESTING
 # ==============================================================================
 
- .PHONY: test
-test: unit-test build-test e2e-test ## Run the full test suite
+.PHONY: test
+test: unit-test intg-test e2e-test ## Run the full test suite
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
 	@echo "Running unit tests..."
 	@$(PYTHON) -m pytest tests/unit -s
 
- .PHONY: build-test
-build-test: ## Run build tests
-	@echo "Running build tests..."
-	@$(PYTHON) -m pytest tests/build -s
+.PHONY: intg-test
+intg-test: ## Run integration tests
+	@echo "Running integration tests..."
+	@PYTHONPATH=. $(PYTHON) -m pytest tests/intg -v -s
 
- .PHONY: e2e-test
+.PHONY: e2e-test
 e2e-test: ## Run end-to-end tests
 	@echo "Running end-to-end tests..."
 	@$(PYTHON) -m pytest tests/e2e -s
+
+# ==============================================================================
+# CLEANUP
+# ==============================================================================
+
+.PHONY: clean
+clean: ## Remove __pycache__ and .venv to make project lightweight
+	@echo "🧹 Cleaning up project..."
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@rm -rf .venv
+	@rm -rf .pytest_cache
+	@rm -rf .ruff_cache
+	@echo "✅ Cleanup completed"

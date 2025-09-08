@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        test_target: [unit-test, build-test, e2e-test]
+        test_target: [unit-test, e2e-test, intg-test]
       fail-fast: false
 
     steps:
@@ -20,14 +20,17 @@ jobs:
         with:
           python-version-file: '.python-version'
 
+      - name: Install marp-cli
+        run: npm install -g @marp-team/marp-cli
+
       - name: Install uv
         run: pipx install uv
 
       - name: Install dependencies
         run: uv sync --all-groups --frozen
 
-      - name: Create .env file for CI
-        run: cp .env.example .env
+      - name: Create secrets file from example
+        run: cp .streamlit/secrets.example.toml .streamlit/secrets.toml
 
       - name: Run tests
         env:

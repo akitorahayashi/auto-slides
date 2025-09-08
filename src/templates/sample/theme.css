@@ -1,0 +1,15 @@
+/* @theme custom-theme */
+@import 'default'; /* defaultテーマを継承 */
+
+section {
+  font-family: 'Helvetica Neue', sans-serif;
+}
+
+h1, h2 {
+  color: #d35400;
+}
+
+blockquote {
+  border-left: 5px solid #d35400;
+  background-color: #f9e79f;
+}

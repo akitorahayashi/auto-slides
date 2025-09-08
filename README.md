@@ -1,6 +1,6 @@
 ## Overview
 
-This repository is a template for building Streamlit applications.
+Automatically shaping your draft into structured slides.
 
 ## Setup and Execution
 
