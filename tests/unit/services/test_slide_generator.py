@@ -1,4 +1,5 @@
 import pytest
+
 from src.services.slide_generator import SlideGenerator
 
 
@@ -37,10 +38,7 @@ class TestSlideGenerator:
     def test_fill_template_with_generated_content_key(self, generator):
         """Test that it uses the 'generated_content' dictionary if present"""
         template_content = "# ${title}"
-        data = {
-            "generated_content": {"title": "My Title"},
-            "other_key": "some_value"
-        }
+        data = {"generated_content": {"title": "My Title"}, "other_key": "some_value"}
         result = generator._fill_template(template_content, data)
         assert result == "# My Title"
 

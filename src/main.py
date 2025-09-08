@@ -1,9 +1,8 @@
 import streamlit as st
 
-from src.protocols.marp_protocol import MarpProtocol
 from src.app_state import AppState
 from src.models.template_repository import TemplateRepository
-
+from src.protocols.marp_protocol import MarpProtocol
 
 st.set_page_config(
     page_title="Auto Slides",
@@ -55,7 +54,7 @@ def initialize_session():
 
             marp_service: MarpProtocol = MockMarpService(slides_path, output_dir)
         else:
-            from src.services.marp_service import MarpService
+            from src.services import MarpService
 
             marp_service: MarpProtocol = MarpService(slides_path, output_dir)
 

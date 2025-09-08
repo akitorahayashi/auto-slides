@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.models import SlideTemplate
-from src.schemas import TemplateFormat
+from src.schemas import OutputFormat
 from src.services.template_converter_service import TemplateConverterService
 
 
@@ -220,9 +220,9 @@ class TestTemplateConverterService:
     @pytest.mark.parametrize(
         "format_enum,expected_extension",
         [
-            (TemplateFormat.PDF, "pdf"),
-            (TemplateFormat.HTML, "html"),
-            (TemplateFormat.PPTX, "pptx"),
+            (OutputFormat.PDF, "pdf"),
+            (OutputFormat.HTML, "html"),
+            (OutputFormat.PPTX, "pptx"),
         ],
     )
     def test_get_filename(self, format_enum, expected_extension):

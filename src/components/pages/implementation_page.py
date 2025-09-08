@@ -1,8 +1,8 @@
 import streamlit as st
 
-from src.schemas import TemplateFormat
-from src.services.template_converter_service import TemplateConverterService
-from src.services.presentation_chain import generate_presentation
+from src.schemas import OutputFormat
+from src.services import TemplateConverterService
+from src.services.slide_generator import SlideGenerator
 
 
 @st.dialog("実行確認", width="small", dismissible=True)
@@ -21,8 +21,7 @@ def confirm_execute_dialog():
                 with st.spinner("LLMがプレゼンテーションを生成中..."):
                     generator = SlideGenerator()
                     generated_markdown = generator.generate(
-                        script_content=script_content,
-                        template=template
+                        script_content=script_content, template=template
                     )
             except Exception as e:
                 st.error(f"プレゼンテーション生成に失敗しました: {str(e)}")
@@ -100,9 +99,9 @@ converter = TemplateConverterService()
 
 # 形式選択のラジオボタン
 format_options = {
-    "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
-    "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
-    "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
+    "PDF": {"label": "📄 PDF", "format": OutputFormat.PDF},
+    "HTML": {"label": "🌐 HTML", "format": OutputFormat.HTML},
+    "PPTX": {"label": "📊 PPTX", "format": OutputFormat.PPTX},
 }
 
 selected_format = st.radio(

@@ -4,8 +4,7 @@ from pathlib import Path
 import pytest
 
 from src.models import SlideTemplate
-from src.services.marp_service import MarpService
-from src.services.template_converter_service import TemplateConverterService
+from src.services import MarpService, TemplateConverterService
 
 
 @pytest.fixture

@@ -15,7 +15,6 @@ st.title("🎼 テンプレートギャラリー")
 
 st.write("スライドテンプレートを選択して、ダウンロードページに進んでください。")
 
-from src.models import AppState, TemplateRepository
 
 repo = TemplateRepository()
 templates = repo.get_all_templates()

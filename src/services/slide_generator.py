@@ -1,15 +1,20 @@
+import asyncio
 import json
 import os
-import asyncio
-from string import Template
-from typing import Dict, Any
 from pathlib import Path
+from string import Template
+from typing import Any, Dict
+
 import streamlit as st
 
 from src.models.slide_template import SlideTemplate
 
 try:
-    from sdk.olm_api_client import OllamaApiClient, MockOllamaApiClient, OllamaClientProtocol
+    from sdk.olm_api_client import (
+        MockOllamaApiClient,
+        OllamaApiClient,
+        OllamaClientProtocol,
+    )
 except ImportError:
     raise ImportError("olm-api package is required")
 
@@ -18,6 +23,7 @@ class SlideGenerator:
     """
     Generates presentation slides by running a two-stage LLM chain.
     """
+
     def __init__(self):
         self.client = self._get_client()
         self.model = self._get_model()
@@ -26,12 +32,23 @@ class SlideGenerator:
     def _get_client(self) -> OllamaClientProtocol:
         """Get client (recommended olm-api pattern + demo responses support)"""
         debug = st.secrets.get("DEBUG", os.getenv("DEBUG", "true")).lower() == "true"
-        use_demo = st.secrets.get("USE_DEMO_RESPONSES", os.getenv("USE_DEMO_RESPONSES", "false")).lower() == "true"
-        
+        use_demo = (
+            st.secrets.get(
+                "USE_DEMO_RESPONSES", os.getenv("USE_DEMO_RESPONSES", "false")
+            ).lower()
+            == "true"
+        )
+
         if debug:
             if use_demo:
+
                 def _read_mock_response(filename: str) -> str:
-                    return (Path(__file__).parent.parent / "static" / "mock_responses" / filename).read_text(encoding="utf-8")
+                    return (
+                        Path(__file__).parent.parent
+                        / "static"
+                        / "mock_responses"
+                        / filename
+                    ).read_text(encoding="utf-8")
 
                 responses = [
                     _read_mock_response("stage1_analyze_slides.txt"),
@@ -74,32 +91,34 @@ class SlideGenerator:
         prompt_path = self.prompts_dir / "01_analyze_slides.md"
         if not prompt_path.exists():
             raise FileNotFoundError(f"Prompt not found: {prompt_path}")
-        
+
         prompt_template = prompt_path.read_text(encoding="utf-8")
         template_content = template.read_markdown_content()
-        
+
         filled_prompt = Template(prompt_template).substitute(
             template_content=template_content,
-            duration_minutes=template.duration_minutes
+            duration_minutes=template.duration_minutes,
         )
-        
+
         response = await self.client.gen_batch(prompt=filled_prompt, model=self.model)
         return self._parse_json_response(response)
 
-    async def _generate_content(self, script_content: str, analysis: Dict[str, Any], template: SlideTemplate) -> Dict[str, Any]:
+    async def _generate_content(
+        self, script_content: str, analysis: Dict[str, Any], template: SlideTemplate
+    ) -> Dict[str, Any]:
         """Stage 2: Generate content"""
         prompt_path = self.prompts_dir / "02_generate_content.md"
         if not prompt_path.exists():
             raise FileNotFoundError(f"Prompt not found: {prompt_path}")
-        
+
         prompt_template = prompt_path.read_text(encoding="utf-8")
-        
+
         filled_prompt = Template(prompt_template).substitute(
             script_content=script_content,
             slide_analysis=json.dumps(analysis, ensure_ascii=False, indent=2),
-            duration_minutes=template.duration_minutes
+            duration_minutes=template.duration_minutes,
         )
-        
+
         response = await self.client.gen_batch(prompt=filled_prompt, model=self.model)
         return self._parse_json_response(response)
 
@@ -123,7 +142,7 @@ class SlideGenerator:
             "code_example": "print('Hello, World!')",
             "math_description": "Example mathematical formula",
             "inline_math": "$x = y + z$",
-            "block_math": "E = mc^2"
+            "block_math": "E = mc^2",
         }
         result = defaults.copy()
         if isinstance(data, dict):
@@ -131,12 +150,17 @@ class SlideGenerator:
                 result[key] = str(value) if not isinstance(value, str) else value
         return result
 
-    def _fill_template(self, template_content: str, placeholder_data: Dict[str, Any]) -> str:
+    def _fill_template(
+        self, template_content: str, placeholder_data: Dict[str, Any]
+    ) -> str:
         """Fill the template with placeholders"""
         try:
-            if isinstance(placeholder_data, dict) and "generated_content" in placeholder_data:
+            if (
+                isinstance(placeholder_data, dict)
+                and "generated_content" in placeholder_data
+            ):
                 placeholder_data = placeholder_data["generated_content"]
-            
+
             template = Template(template_content)
             safe_data = self._ensure_placeholder_defaults(placeholder_data)
             return template.safe_substitute(safe_data)
@@ -144,19 +168,21 @@ class SlideGenerator:
             print(f"Template filling failed: {e}")
             return template_content
 
-    async def _run_two_stage_chain(self, script_content: str, template: SlideTemplate) -> str:
+    async def _run_two_stage_chain(
+        self, script_content: str, template: SlideTemplate
+    ) -> str:
         """Run two-stage chain"""
         analysis = await self._analyze_slides(template)
         if "error" in analysis:
             raise RuntimeError(f"Stage 1 failed: {analysis['error']}")
-        
+
         content = await self._generate_content(script_content, analysis, template)
         if "error" in content:
             raise RuntimeError(f"Stage 2 failed: {content['error']}")
-        
+
         template_content = template.read_markdown_content()
         placeholder_data = content.get("generated_content", content)
-        
+
         return self._fill_template(template_content, placeholder_data)
 
     def generate(self, script_content: str, template: SlideTemplate) -> str:

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.protocols.marp_protocol import OutputType
+from src.schemas import OutputFormat
 from src.services.marp_service import MarpService
 
 
@@ -25,11 +25,11 @@ class TestMarpService:
         mock_makedirs.assert_called_once_with("/output", exist_ok=True)
 
     def test_output_type_enum_access(self):
-        """Test that OutputType enum is accessible through service"""
-        assert MarpService.OutputType.PDF == OutputType.PDF
-        assert MarpService.OutputType.HTML == OutputType.HTML
-        assert MarpService.OutputType.PNG == OutputType.PNG
-        assert MarpService.OutputType.PPTX == OutputType.PPTX
+        """Test that OutputFormat enum is accessible through service"""
+        assert MarpService.OutputFormat.PDF == OutputFormat.PDF
+        assert MarpService.OutputFormat.HTML == OutputFormat.HTML
+        assert MarpService.OutputFormat.PNG == OutputFormat.PNG
+        assert MarpService.OutputFormat.PPTX == OutputFormat.PPTX
 
     @patch("os.makedirs")
     @patch("subprocess.run")
@@ -92,10 +92,10 @@ class TestMarpService:
     @pytest.mark.parametrize(
         "method,output_type,default_filename",
         [
-            ("generate_pdf", OutputType.PDF, "slides.pdf"),
-            ("generate_html", OutputType.HTML, "slides.html"),
-            ("generate_png", OutputType.PNG, "slides.png"),
-            ("generate_pptx", OutputType.PPTX, "slides.pptx"),
+            ("generate_pdf", OutputFormat.PDF, "slides.pdf"),
+            ("generate_html", OutputFormat.HTML, "slides.html"),
+            ("generate_png", OutputFormat.PNG, "slides.png"),
+            ("generate_pptx", OutputFormat.PPTX, "slides.pptx"),
         ],
     )
     @patch("os.makedirs")

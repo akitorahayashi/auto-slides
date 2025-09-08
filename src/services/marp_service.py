@@ -1,11 +1,11 @@
 import os
 import subprocess
 
-from src.protocols.marp_protocol import OutputType
+from src.schemas.output_format import OutputFormat
 
 
 class MarpService:
-    OutputType = OutputType
+    OutputFormat = OutputFormat
 
     def __init__(self, slides_path, output_dir=None):
         self.slides_path = slides_path
@@ -14,16 +14,16 @@ class MarpService:
             os.makedirs(self.output_dir, exist_ok=True)
 
     def generate_pdf(self, output_filename="slides.pdf", theme=None):
-        return self._generate(self.OutputType.PDF, output_filename, theme=theme)
+        return self._generate(self.OutputFormat.PDF, output_filename, theme=theme)
 
     def generate_html(self, output_filename="slides.html", theme=None):
-        return self._generate(self.OutputType.HTML, output_filename, theme=theme)
+        return self._generate(self.OutputFormat.HTML, output_filename, theme=theme)
 
     def generate_png(self, output_filename="slides.png", theme=None):
-        return self._generate(self.OutputType.PNG, output_filename, theme=theme)
+        return self._generate(self.OutputFormat.PNG, output_filename, theme=theme)
 
     def generate_pptx(self, output_filename="slides.pptx", theme=None):
-        return self._generate(self.OutputType.PPTX, output_filename, theme=theme)
+        return self._generate(self.OutputFormat.PPTX, output_filename, theme=theme)
 
     def _generate(self, output_type, output_filename, theme=None):
         if not self.output_dir:

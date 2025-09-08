@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 from src.models import SlideTemplate
-from src.schemas import TemplateFormat
+from src.schemas import OutputFormat
 
 
 class TemplateConverterService:
@@ -143,7 +143,7 @@ class TemplateConverterService:
             if temp_pptx_path.exists():
                 temp_pptx_path.unlink()
 
-    def get_filename(self, template: SlideTemplate, format: TemplateFormat) -> str:
+    def get_filename(self, template: SlideTemplate, format: OutputFormat) -> str:
         return f"{template.id}.{format.value}"
 
     def convert_markdown_to_pdf(
