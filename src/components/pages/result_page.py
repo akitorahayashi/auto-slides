@@ -30,10 +30,7 @@ if (
     or st.session_state.app_state.generated_markdown is None
     or "selected_format" not in st.session_state
 ):
-    st.error("セッション情報が不足しています。ギャラリーからやり直してください。")
-    if st.button("ギャラリーに戻る"):
-        st.switch_page("src/main.py")
-    st.stop()
+    st.switch_page("components/pages/gallery_page.py")
 
 template = st.session_state.app_state.selected_template
 selected_format = st.session_state.selected_format
