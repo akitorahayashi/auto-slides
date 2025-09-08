@@ -13,14 +13,16 @@ class TemplateRepository:
         for template_dir in templates_dir.iterdir():
             if template_dir.is_dir():
                 template_id = template_dir.name
-                templates.append(
-                    SlideTemplate(
-                        id=template_id,
-                        name=template_id.replace("_", " ").title(),
-                        description=f"Template: {template_id}",
-                        template_dir=template_dir,
-                    )
+                template = SlideTemplate(
+                    id=template_id,
+                    name=template_id.replace("_", " ").title(),
+                    description=f"Template: {template_id}",
+                    template_dir=template_dir,
                 )
+                
+                # content.mdとtheme.cssの両方が存在する場合のみ追加
+                if template.exists():
+                    templates.append(template)
 
         return templates
 

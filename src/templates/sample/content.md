@@ -1,17 +1,9 @@
 ---
 marp: true
-theme: gaia
+theme: custom-theme
 paginate: true
 header: 'My Presentation'
 footer: '© 2025 My Company'
-style: |
-  section {
-    background-color: #f0f0f0;
-    color: #333;
-  }
-  h1 {
-    color: #007bff;
-  }
 ---
 
 # タイトルスライド
@@ -57,13 +49,6 @@ note: ここはスピーカーノートです。
 1.  Markdownファイルを作成
 2.  `---` でスライドを区切る
 3.  marpコマンドでPDFやHTMLに変換
-
----
-
-<!-- backgroundColor: black -->
-<!-- color: white -->
-
-# このスライド以降は色が反転します
 
 ---
 

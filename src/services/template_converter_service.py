@@ -13,13 +13,18 @@ class TemplateConverterService:
 
     def convert_template_to_pdf(self, template: SlideTemplate) -> bytes:
         markdown_content = template.read_markdown_content()
+        css_content = template.read_css_content()  # 必須なのでエラーハンドリングは不要
         temp_md_path = self.temp_dir / f"{template.id}.md"
+        temp_css_path = self.temp_dir / f"{template.id}.css"
         temp_pdf_path = self.temp_dir / f"{template.id}.pdf"
 
         try:
             temp_md_path.write_text(markdown_content, encoding="utf-8")
-
-            command = ["marp", str(temp_md_path), "-o", str(temp_pdf_path)]
+            temp_css_path.write_text(css_content, encoding="utf-8")
+            
+            # CSSテーマを必ず適用
+            command = ["marp", str(temp_md_path), "--theme", str(temp_css_path), "-o", str(temp_pdf_path)]
+                
             result = subprocess.run(
                 command,
                 check=True,
@@ -38,18 +43,25 @@ class TemplateConverterService:
         finally:
             if temp_md_path.exists():
                 temp_md_path.unlink()
+            if temp_css_path.exists():
+                temp_css_path.unlink()
             if temp_pdf_path.exists():
                 temp_pdf_path.unlink()
 
     def convert_template_to_html(self, template: SlideTemplate) -> str:
         markdown_content = template.read_markdown_content()
+        css_content = template.read_css_content()  # 必須なのでエラーハンドリングは不要
         temp_md_path = self.temp_dir / f"{template.id}.md"
+        temp_css_path = self.temp_dir / f"{template.id}.css"
         temp_html_path = self.temp_dir / f"{template.id}.html"
 
         try:
             temp_md_path.write_text(markdown_content, encoding="utf-8")
+            temp_css_path.write_text(css_content, encoding="utf-8")
+            
+            # CSSテーマを必ず適用
+            command = ["marp", str(temp_md_path), "--theme", str(temp_css_path), "-o", str(temp_html_path)]
 
-            command = ["marp", str(temp_md_path), "-o", str(temp_html_path)]
             result = subprocess.run(
                 command,
                 check=True,
@@ -68,18 +80,25 @@ class TemplateConverterService:
         finally:
             if temp_md_path.exists():
                 temp_md_path.unlink()
+            if temp_css_path.exists():
+                temp_css_path.unlink()
             if temp_html_path.exists():
                 temp_html_path.unlink()
 
     def convert_template_to_pptx(self, template: SlideTemplate) -> bytes:
         markdown_content = template.read_markdown_content()
+        css_content = template.read_css_content()  # 必須なのでエラーハンドリングは不要
         temp_md_path = self.temp_dir / f"{template.id}.md"
+        temp_css_path = self.temp_dir / f"{template.id}.css"
         temp_pptx_path = self.temp_dir / f"{template.id}.pptx"
 
         try:
             temp_md_path.write_text(markdown_content, encoding="utf-8")
+            temp_css_path.write_text(css_content, encoding="utf-8")
+            
+            # CSSテーマを必ず適用
+            command = ["marp", str(temp_md_path), "--theme", str(temp_css_path), "-o", str(temp_pptx_path)]
 
-            command = ["marp", str(temp_md_path), "-o", str(temp_pptx_path)]
             result = subprocess.run(
                 command,
                 check=True,
@@ -98,6 +117,8 @@ class TemplateConverterService:
         finally:
             if temp_md_path.exists():
                 temp_md_path.unlink()
+            if temp_css_path.exists():
+                temp_css_path.unlink()
             if temp_pptx_path.exists():
                 temp_pptx_path.unlink()
 

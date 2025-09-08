@@ -42,6 +42,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         mock_exists.return_value = True
         mock_read_bytes.return_value = b"PDF content"
@@ -53,9 +54,10 @@ class TestTemplateConverterService:
         # Verify
         assert result == b"PDF content"
         mock_template.read_markdown_content.assert_called_once()
-        mock_write_text.assert_called_once_with("# Test Slide", encoding="utf-8")
+        mock_template.read_css_content.assert_called_once()
+        assert mock_write_text.call_count == 2  # markdown and css files
         mock_subprocess.assert_called_once()
-        assert mock_unlink.call_count == 2  # Clean up both md and pdf files
+        assert mock_unlink.call_count == 3  # Clean up md, css, and pdf files
 
     @patch("subprocess.run")
     @patch("pathlib.Path.read_text")
@@ -71,6 +73,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         mock_exists.return_value = True
         mock_read_text.return_value = "<html>Test</html>"
@@ -81,8 +84,11 @@ class TestTemplateConverterService:
 
         # Verify
         assert result == "<html>Test</html>"
+        mock_template.read_markdown_content.assert_called_once()
+        mock_template.read_css_content.assert_called_once()
         mock_read_text.assert_called_once_with(encoding="utf-8")
-        assert mock_unlink.call_count == 2
+        assert mock_write_text.call_count == 2  # markdown and css files
+        assert mock_unlink.call_count == 3  # Clean up md, css, and html files
 
     @patch("subprocess.run")
     @patch("pathlib.Path.read_bytes")
@@ -103,6 +109,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         mock_exists.return_value = True
         mock_read_bytes.return_value = b"PPTX content"
@@ -113,7 +120,10 @@ class TestTemplateConverterService:
 
         # Verify
         assert result == b"PPTX content"
-        assert mock_unlink.call_count == 2
+        mock_template.read_markdown_content.assert_called_once()
+        mock_template.read_css_content.assert_called_once()
+        assert mock_write_text.call_count == 2  # markdown and css files
+        assert mock_unlink.call_count == 3  # Clean up md, css, and pptx files
 
     @patch("pathlib.Path.exists", return_value=True)
     @patch("pathlib.Path.unlink")
@@ -128,6 +138,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         error = subprocess.CalledProcessError(1, "marp")
         error.stderr = "Marp failed"
@@ -137,8 +148,8 @@ class TestTemplateConverterService:
         with pytest.raises(Exception, match="Marp PDF generation failed: Marp failed"):
             service.convert_template_to_pdf(mock_template)
 
-        # Cleanup should happen (2 files: md and pdf)
-        assert mock_unlink.call_count >= 1
+        # Cleanup should happen (2 files: md and css)
+        assert mock_unlink.call_count >= 2
 
     @patch("subprocess.run")
     @patch("pathlib.Path.exists")
@@ -153,6 +164,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         mock_exists.return_value = False
         mock_subprocess.return_value = MagicMock()
@@ -174,6 +186,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         mock_exists.return_value = False
         mock_subprocess.return_value = MagicMock()
@@ -195,6 +208,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         mock_exists.return_value = False
         mock_subprocess.return_value = MagicMock()
@@ -234,6 +248,7 @@ class TestTemplateConverterService:
         mock_template = MagicMock(spec=SlideTemplate)
         mock_template.id = "test_template"
         mock_template.read_markdown_content.return_value = "# Test Slide"
+        mock_template.read_css_content.return_value = "/* CSS content */"
 
         mock_subprocess.side_effect = Exception("Some error")
 
@@ -241,5 +256,5 @@ class TestTemplateConverterService:
         with pytest.raises(Exception):
             service.convert_template_to_pdf(mock_template)
 
-        # Cleanup should be called (at least for markdown file)
-        assert mock_unlink.call_count >= 1
+        # Cleanup should be called (at least for markdown and css files)
+        assert mock_unlink.call_count >= 2
