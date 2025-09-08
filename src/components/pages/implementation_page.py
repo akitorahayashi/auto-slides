@@ -6,7 +6,8 @@ from src.services.template_converter_service import TemplateConverterService
 
 @st.dialog("実行確認", width="small", dismissible=True)
 def confirm_execute_dialog():
-    st.write("こちらの実行します\nよろしいですか？")
+    st.write("こちらの実行します")
+    st.write("よろしいですか？")
     col_yes, col_no = st.columns(2, gap="small")
     with col_yes:
         if st.button("はい", use_container_width=True):
@@ -33,11 +34,7 @@ if (
     not hasattr(st.session_state, "app_state")
     or st.session_state.app_state.selected_template is None
 ):
-    st.error("テンプレートが選択されていません。")
-    st.info("ギャラリーページに戻って、使用するテンプレートを選択してください。")
-    if st.button("ギャラリーに戻る"):
-        st.switch_page("src/main.py")
-    st.stop()
+    st.switch_page("components/pages/gallery_page.py")
 
 template = st.session_state.app_state.selected_template
 
