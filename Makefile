@@ -42,15 +42,11 @@ setup: ## Project initial setup: install dependencies
 # ==============================================================================
 
 .PHONY: run
-run: ## Launch the Streamlit application with development port (8503)
+run: ## Launch the Streamlit application with development port from secrets
 	@echo "🚀 Starting Streamlit app on development port..."
-	@PYTHONPATH=. streamlit run $(STREAMLIT_APP_FILE) --server.port 8503
-
-.PHONY: run-prod
-run-prod: ## Launch the Streamlit application with production port (8501)
-	@echo "🚀 Starting Streamlit app on production port..."
-	@PYTHONPATH=. streamlit run $(STREAMLIT_APP_FILE) --server.port 8501
-
+	@DEV_PORT=$$(python -c "import streamlit as st; print(st.secrets.get('DEV_PORT', '8503'))"); \
+	PYTHONPATH=. streamlit run $(STREAMLIT_APP_FILE) --server.port $$DEV_PORT
+	
 # ==============================================================================
 # CODE QUALITY
 # ==============================================================================

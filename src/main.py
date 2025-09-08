@@ -40,8 +40,7 @@ def initialize_session():
     if "marp_service" not in st.session_state:
         slides_path = "src/templates/sample/content.md"
         output_dir = "output"
-        is_debug_str = st.secrets["DEBUG"] if "DEBUG" in st.secrets else "false"
-        is_debug = is_debug_str.lower() in ("true", "1", "yes", "on")
+        is_debug = st.secrets.get("DEBUG", False)
 
         if is_debug:
             from dev.mocks.mock_marp_service import MockMarpService
