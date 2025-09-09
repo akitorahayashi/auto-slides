@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 from src.models.slide_template import SlideTemplate
-from dev.mocks.mock_template_repository import MockTemplateRepository
 
 
 class TestTemplateRepository:
@@ -23,17 +22,23 @@ class TestTemplateRepository:
         mock_template2.id = "template2"
         mock_template2.name = "Template 2"
 
-        with patch.object(mock_template_repository, 'get_all_templates', return_value=[mock_template1, mock_template2]):
+        with patch.object(
+            mock_template_repository,
+            "get_all_templates",
+            return_value=[mock_template1, mock_template2],
+        ):
             result = mock_template_repository.get_all_templates()
 
             assert len(result) == 2
             assert result[0] == mock_template1
             assert result[1] == mock_template2
 
-    def test_get_all_templates_with_real_sample_template(self, mock_template_repository_with_sample):
+    def test_get_all_templates_with_real_sample_template(
+        self, mock_template_repository_with_sample
+    ):
         """Test get_all_templates with the real sample template"""
         result = mock_template_repository_with_sample.get_all_templates()
-        
+
         assert len(result) == 1
         template = result[0]
         assert template.id == "k2g4h1x9"
@@ -50,7 +55,11 @@ class TestTemplateRepository:
         mock_template2 = MagicMock(spec=SlideTemplate)
         mock_template2.id = "template2"
 
-        with patch.object(mock_template_repository, 'get_all_templates', return_value=[mock_template1, mock_template2]):
+        with patch.object(
+            mock_template_repository,
+            "get_all_templates",
+            return_value=[mock_template1, mock_template2],
+        ):
             result = mock_template_repository.get_template_by_id("template2")
             assert result == mock_template2
 
@@ -63,7 +72,11 @@ class TestTemplateRepository:
         mock_template2 = MagicMock(spec=SlideTemplate)
         mock_template2.id = "template2"
 
-        with patch.object(mock_template_repository, 'get_all_templates', return_value=[mock_template1, mock_template2]):
+        with patch.object(
+            mock_template_repository,
+            "get_all_templates",
+            return_value=[mock_template1, mock_template2],
+        ):
             result = mock_template_repository.get_template_by_id("nonexistent")
             assert result is None
 
@@ -72,14 +85,18 @@ class TestTemplateRepository:
         result = mock_template_repository.get_template_by_id("any_id")
         assert result is None
 
-    def test_get_template_by_id_with_sample_template(self, mock_template_repository_with_sample):
+    def test_get_template_by_id_with_sample_template(
+        self, mock_template_repository_with_sample
+    ):
         """Test get_template_by_id with the real sample template"""
         result = mock_template_repository_with_sample.get_template_by_id("k2g4h1x9")
-        
+
         assert result is not None
         assert result.id == "k2g4h1x9"
         assert result.name == "サンプルテンプレート"
 
         # Test with non-existent ID
-        not_found = mock_template_repository_with_sample.get_template_by_id("nonexistent")
+        not_found = mock_template_repository_with_sample.get_template_by_id(
+            "nonexistent"
+        )
         assert not_found is None

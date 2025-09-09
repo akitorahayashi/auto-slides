@@ -1,9 +1,10 @@
+from pathlib import Path
+
 import streamlit as st
 
 from src.app_state import AppState
 from src.models.template_repository import TemplateRepository
 from src.protocols.marp_protocol import MarpProtocol
-from src.protocols.template_repository_protocol import TemplateRepositoryProtocol
 
 st.set_page_config(
     page_title="Auto Slides",
@@ -37,8 +38,6 @@ def main():
     pg.run()
 
 
-from pathlib import Path
-
 def initialize_session():
     """Initializes the session state."""
     if "marp_service" not in st.session_state:
@@ -46,7 +45,10 @@ def initialize_session():
 
         if is_debug:
             from dev.mocks.mock_template_repository import MockTemplateRepository
-            template_repository = MockTemplateRepository(templates_dir=Path("data/development/templates"))
+
+            template_repository = MockTemplateRepository(
+                templates_dir=Path("data/development/templates")
+            )
         else:
             template_repository = TemplateRepository()
 
@@ -61,9 +63,11 @@ def initialize_session():
 
         if is_debug:
             from dev.mocks.mock_marp_service import MockMarpService
+
             marp_service: MarpProtocol = MockMarpService(slides_path, output_dir)
         else:
             from src.services import MarpService
+
             marp_service: MarpProtocol = MarpService(slides_path, output_dir)
 
         st.session_state.marp_service = marp_service

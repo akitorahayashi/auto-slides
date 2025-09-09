@@ -4,9 +4,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from dev.mocks.mock_template_repository import MockTemplateRepository
 from src.models import SlideTemplate
 from src.services import MarpService, TemplateConverterService
-from dev.mocks.mock_template_repository import MockTemplateRepository
 
 
 @pytest.fixture
