@@ -3,11 +3,11 @@ from typing import Optional
 
 import streamlit as st
 from sdk.olm_api_client import (
-    MockOllamaApiClient,
     OllamaApiClient,
     OllamaClientProtocol,
     OllamaLocalClient,
 )
+
 from dev.mocks.mock_slide_client import MockSlideGeneratorClient
 
 
@@ -63,7 +63,9 @@ class OllamaClientManager:
                 )
 
             if not api_endpoint:
-                print("Warning: OLM_API_ENDPOINT not set, using MockSlideGeneratorClient")
+                print(
+                    "Warning: OLM_API_ENDPOINT not set, using MockSlideGeneratorClient"
+                )
                 return MockSlideGeneratorClient(), model_name
 
             return OllamaApiClient(api_url=api_endpoint), model_name

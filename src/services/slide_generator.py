@@ -1,116 +1,107 @@
-import asyncio
-import json
 from pathlib import Path
 from string import Template
 from typing import Any, Dict
 
 from src.clients.ollama_client import OllamaClientManager
 from src.models.slide_template import SlideTemplate
+from src.services.structured_parser import StructuredResponseParser
+from src.services.template_analyzer import TemplateAnalyzer
 
 
 class SlideGenerator:
     """
-    Generates presentation slides by running a two-stage LLM chain.
-    Uses the unified olm-api SDK v1.4.0 interface.
+    Simplified slide generator using structured natural language approach.
+    Single LLM call + structured parsing instead of complex JSON chains.
     """
 
     def __init__(self):
         self.client, self.model = OllamaClientManager.create_client()
-        self.prompts_dir = Path("src/static/prompts")
+        self.parser = StructuredResponseParser()
+        self.analyzer = TemplateAnalyzer()
 
-    def _parse_json_response(self, text: str) -> Dict[str, Any]:
-        """Parse JSON-formatted response"""
-        try:
-            text = text.strip()
-            if "```json" in text:
-                start = text.find("```json") + 7
-                end = text.find("```", start)
-                if end != -1:
-                    text = text[start:end].strip()
-            elif "```" in text:
-                start = text.find("```") + 3
-                end = text.find("```", start)
-                if end != -1:
-                    text = text[start:end].strip()
-            return json.loads(text)
-        except (json.JSONDecodeError, ValueError) as e:
-            return {"error": f"JSON parse failed: {str(e)}", "raw_text": text}
-
-    async def _analyze_slides(self, template: SlideTemplate) -> Dict[str, Any]:
-        """Stage 1: Analyze slide structure"""
-        prompt_path = self.prompts_dir / "01_analyze_slides.md"
-        if not prompt_path.exists():
-            raise FileNotFoundError(f"Prompt not found: {prompt_path}")
-
-        prompt_template = prompt_path.read_text(encoding="utf-8")
-        template_content = template.read_markdown_content()
-
-        filled_prompt = Template(prompt_template).substitute(
-            template_content=template_content,
-            duration_minutes=template.duration_minutes,
-        )
-
-        response = await self.client.gen_batch(
-            prompt=filled_prompt, model_name=self.model
-        )
-        return self._parse_json_response(response)
-
-    async def _generate_content(
-        self, script_content: str, analysis: Dict[str, Any], template: SlideTemplate
-    ) -> Dict[str, Any]:
-        """Stage 2: Generate content"""
-        prompt_path = self.prompts_dir / "02_generate_content.md"
-        if not prompt_path.exists():
-            raise FileNotFoundError(f"Prompt not found: {prompt_path}")
-
-        prompt_template = prompt_path.read_text(encoding="utf-8")
-
-        filled_prompt = Template(prompt_template).substitute(
-            script_content=script_content,
-            slide_analysis=json.dumps(analysis, ensure_ascii=False, indent=2),
-            duration_minutes=template.duration_minutes,
-        )
-
-        response = await self.client.gen_batch(
-            prompt=filled_prompt, model_name=self.model
-        )
-        return self._parse_json_response(response)
-
-
-    def _fill_template(
-        self, template_content: str, placeholder_data: Dict[str, Any]
-    ) -> str:
-        """Fill the template with placeholders"""
-        try:
-            if (
-                isinstance(placeholder_data, dict)
-                and "generated_content" in placeholder_data
-            ):
-                placeholder_data = placeholder_data["generated_content"]
-
-            template = Template(template_content)
-            return template.safe_substitute(placeholder_data)
-        except Exception as e:
-            print(f"Template filling failed: {e}")
-            return template_content
-
-    async def _run_two_stage_chain(
+    async def generate_content(
         self, script_content: str, template: SlideTemplate
-    ) -> str:
-        """Run two-stage chain"""
-        analysis = await self._analyze_slides(template)
-        if "error" in analysis:
-            raise RuntimeError(f"Stage 1 failed: {analysis['error']}")
+    ) -> Dict[str, Any]:
+        """Generate slide content using dynamic template analysis"""
+        # Analyze template to understand required placeholders
+        analysis = self.analyzer.analyze_template(template)
 
-        content = await self._generate_content(script_content, analysis, template)
-        if "error" in content:
-            raise RuntimeError(f"Stage 2 failed: {content['error']}")
+        if analysis.get("error"):
+            # Fallback to basic prompt if analysis fails
+            prompt = self.create_structured_prompt(script_content, template)
+        else:
+            # Use dynamic prompt based on template analysis
+            prompt = self.analyzer.create_dynamic_prompt(
+                script_content, template, analysis["placeholders"]
+            )
 
+        # Single LLM call
+        response = await self.client.gen_batch(prompt, self.model)
+
+        # Parse structured response with enhanced parser
+        content = self.parser.parse_enhanced_structure(
+            response, analysis.get("placeholders", set())
+        )
+
+        return content
+
+    def fill_template(self, template: SlideTemplate, content: Dict[str, Any]) -> str:
+        """Fill template with generated content"""
         template_content = template.read_markdown_content()
-        placeholder_data = content.get("generated_content", content)
 
-        return self._fill_template(template_content, placeholder_data)
+        # Use safe_substitute to handle missing placeholders gracefully
+        template_obj = Template(template_content)
+        return template_obj.safe_substitute(content)
 
-    def generate(self, script_content: str, template: SlideTemplate) -> str:
-        """Main function: Generate presentation"""
-        return asyncio.run(self._run_two_stage_chain(script_content, template))
+    async def generate(self, script_content: str, template: SlideTemplate) -> str:
+        """Main generation method - simple and fast"""
+        # Step 1: Generate content with single LLM call
+        content = await self.generate_content(script_content, template)
+
+        # Step 2: Fill template
+        result = self.fill_template(template, content)
+
+        return result
+
+    # Sync wrapper for compatibility
+    def generate_sync(self, script_content: str, template: SlideTemplate) -> str:
+        """Synchronous wrapper for generate method"""
+        import asyncio
+
+        return asyncio.run(self.generate(script_content, template))
+
+
+# Test function
+async def test_slide_generator():
+    """Test the slide generator"""
+    generator = SlideGenerator()
+
+    template = SlideTemplate(
+        id="test",
+        name="Test Template",
+        description="Test Description",
+        template_dir=Path("src/templates/k2g4h1x9"),
+        duration_minutes=5,
+    )
+
+    script = """
+    Pythonの非同期プログラミングについて説明します。
+    asyncioライブラリを使用することで、I/Oバウンドなタスクを効率的に処理できます。
+    基本的なasync/await構文から、実際のWebアプリケーションでの活用例まで紹介します。
+    """
+
+    result = await generator.generate(script, template)
+
+    print("=== GENERATED SLIDE ===")
+    print(result[:500] + "..." if len(result) > 500 else result)
+    print("\n=== STATS ===")
+    print(f"Total length: {len(result)}")
+    print(f"Remaining placeholders: {result.count('${')}")
+
+    return result
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(test_slide_generator())

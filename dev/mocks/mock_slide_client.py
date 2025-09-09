@@ -1,51 +1,66 @@
 import json
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator, Dict
 
-from sdk.olm_api_client import OllamaClientProtocol
+from src.models.slide_template import SlideTemplate
+from src.protocols.slide_generation_protocol import SlideGenerationProtocol
 
 
-class MockSlideGeneratorClient:
+class MockSlideGeneratorClient(SlideGenerationProtocol):
     """
     Mock client specifically for SlideGenerator that returns structured JSON responses.
     """
-    
+
     def __init__(self):
         self.mock_dir = Path("dev/mocks/static/mock_responses")
-        self.stage1_file = self.mock_dir / "stage1_analysis.json"
-        self.stage2_file = self.mock_dir / "stage2_content.json"
-    
+        self.structured_response_file = self.mock_dir / "structured_response.txt"
+
+    def _load_mock_response(self) -> str:
+        """Load structured natural language mock response"""
+        if self.structured_response_file.exists():
+            return self.structured_response_file.read_text(encoding="utf-8")
+        else:
+            # Fallback to basic structured response
+            return """TITLE: Default Mock Title
+POINT1: Default first point
+POINT2: Default second point  
+POINT3: Default third point
+CONCLUSION: Default conclusion
+AUTHOR: Mock Author
+DATE: 2024-01-01"""
+
+    async def analyze_slides(self, template: SlideTemplate) -> Dict[str, Any]:
+        """Stage 1: Analyze slide structure"""
+        response = self._load_mock_response("stage1")
+        return json.loads(response)
+
+    async def generate_content(
+        self, script_content: str, analysis: Dict[str, Any], template: SlideTemplate
+    ) -> Dict[str, Any]:
+        """Stage 2: Generate content based on analysis and script"""
+        response = self._load_mock_response("stage2")
+        return json.loads(response)
+
+    # Keep original methods for backward compatibility with olm-api protocol
     def _detect_stage(self, prompt: str) -> str:
-        """Detect which stage based on prompt content"""
-        if "スライド構造分析" in prompt or "analyze_slides" in prompt:
+        """Detect which stage based on prompt file path"""
+        if "01_analyze_slides.md" in prompt:
             return "stage1"
-        elif "コンテンツ生成" in prompt or "generate_content" in prompt:
+        elif "02_generate_content.md" in prompt:
             return "stage2"
         return "stage1"  # default
-    
-    def _load_mock_response(self, stage: str) -> str:
-        """Load appropriate mock response based on stage"""
-        if stage == "stage1":
-            file_path = self.stage1_file
-        else:
-            file_path = self.stage2_file
-        
-        if file_path.exists():
-            return file_path.read_text(encoding="utf-8")
-        else:
-            # Fallback to basic JSON
-            return '{"error": "Mock file not found", "stage": "' + stage + '"}'
-    
-    async def gen_stream(self, prompt: str, model_name: str) -> AsyncGenerator[str, None]:
+
+    async def gen_stream(
+        self, prompt: str, model_name: str
+    ) -> AsyncGenerator[str, None]:
         """Generate streaming response"""
         stage = self._detect_stage(prompt)
         response = self._load_mock_response(stage)
-        
+
         # Stream the response character by character
         for char in response:
             yield char
-    
+
     async def gen_batch(self, prompt: str, model_name: str) -> str:
         """Generate complete response"""
-        stage = self._detect_stage(prompt)
-        return self._load_mock_response(stage)
+        return self._load_mock_response()

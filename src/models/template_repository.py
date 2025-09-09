@@ -8,7 +8,7 @@ from .slide_template import SlideTemplate
 
 
 class TemplateRepository(TemplateRepositoryProtocol):
-    def __init__(self, templates_dir: Path = Path("data/production/templates")):
+    def __init__(self, templates_dir: Path = Path("src/templates")):
         self.templates_dir = templates_dir
 
     def get_all_templates(self) -> List[SlideTemplate]:

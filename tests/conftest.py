@@ -18,7 +18,7 @@ def project_root():
 @pytest.fixture
 def test_template_dir(project_root):
     """Path to the test template directory"""
-    return project_root / "data" / "tests" / "templates" / "k2g4h1x9"
+    return project_root / "tests" / "templates" / "k2g4h1x9"
 
 
 @pytest.fixture
@@ -36,9 +36,7 @@ def sample_template(test_template_dir):
 @pytest.fixture
 def mock_template_repository_with_sample(project_root):
     """MockTemplateRepository with sample template"""
-    return MockTemplateRepository(
-        templates_dir=project_root / "data" / "tests" / "templates"
-    )
+    return MockTemplateRepository(templates_dir=project_root / "tests" / "templates")
 
 
 @pytest.fixture

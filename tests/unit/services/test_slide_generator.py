@@ -1,40 +1,102 @@
 class TestSlideGenerator:
     """Unit tests for SlideGenerator methods"""
 
-    def test_fill_template_success(self, mock_slide_generator):
-        """Test successful placeholder substitution"""
-        template_content = "# ${title}\n\nAuthor: ${author}\nDate: ${date}"
+    def test_template_filling_success(self, mock_slide_generator):
+        """Test successful template filling with SlideTemplate"""
+        from pathlib import Path
+
+        from src.models.slide_template import SlideTemplate
+
+        # Create a simple test template
+        template = SlideTemplate(
+            id="test",
+            name="Test Template",
+            description="Test Description",
+            template_dir=Path("tests/templates/k2g4h1x9"),
+            duration_minutes=5,
+        )
+
         data = {
-            "title": "Test Presentation",
-            "author": "John Doe",
-            "date": "2025-09-08",
+            "presentation_title": "Test Presentation",
+            "author_name": "John Doe",
+            "presentation_date": "2025-09-08",
+            "main_topic": "Test Topic",
         }
-        result = mock_slide_generator._fill_template(template_content, data)
-        expected = "# Test Presentation\n\nAuthor: John Doe\nDate: 2025-09-08"
-        assert result == expected
 
-    def test_fill_template_missing_key(self, mock_slide_generator):
-        """Test that missing placeholders are left as is"""
-        template_content = "# ${title}\n\nAuthor: ${author}\nMissing: ${missing_key}"
-        data = {
-            "title": "Test Presentation",
-            "author": "John Doe",
-        }
-        result = mock_slide_generator._fill_template(template_content, data)
-        # safe_substitute will leave the missing placeholder
-        expected = "# Test Presentation\n\nAuthor: John Doe\nMissing: ${missing_key}"
-        assert result == expected
+        result = mock_slide_generator.fill_template(template, data)
 
-    def test_fill_template_with_generated_content_key(self, mock_slide_generator):
-        """Test that it uses the 'generated_content' dictionary if present"""
-        template_content = "# ${title}"
-        data = {"generated_content": {"title": "My Title"}, "other_key": "some_value"}
-        result = mock_slide_generator._fill_template(template_content, data)
-        assert result == "# My Title"
+        # Check that key placeholders are replaced
+        assert "Test Presentation" in result
+        assert "John Doe" in result
+        assert "2025-09-08" in result
+        assert isinstance(result, str)
+        assert len(result) > 100  # Should have substantial content
 
-    def test_fill_template_non_string_values(self, mock_slide_generator):
-        """Test that non-string values are handled correctly"""
-        template_content = "Number: ${number}, Float: ${float_val}"
-        data = {"number": 123, "float_val": 45.67}
-        result = mock_slide_generator._fill_template(template_content, data)
-        assert result == "Number: 123, Float: 45.67"
+    def test_template_filling_missing_keys(self, mock_slide_generator):
+        """Test template filling with missing placeholders"""
+        from pathlib import Path
+
+        from src.models.slide_template import SlideTemplate
+
+        template = SlideTemplate(
+            id="test",
+            name="Test Template",
+            description="Test Description",
+            template_dir=Path("tests/templates/k2g4h1x9"),
+            duration_minutes=5,
+        )
+
+        # Limited data - some placeholders will be missing
+        data = {"presentation_title": "Test Presentation", "author_name": "John Doe"}
+
+        result = mock_slide_generator.fill_template(template, data)
+
+        # Should still work with missing placeholders (safe_substitute)
+        assert "Test Presentation" in result
+        assert "John Doe" in result
+        assert isinstance(result, str)
+
+    def test_structured_parser(self):
+        """Test structured response parser"""
+        from src.services.structured_parser import StructuredResponseParser
+
+        parser = StructuredResponseParser()
+
+        sample_text = """TITLE: Test Presentation Title
+POINT1: First key point
+POINT2: Second key point  
+POINT3: Third key point
+CONCLUSION: Final summary
+AUTHOR: Test Author
+DATE: 2024-01-01"""
+
+        result = parser.parse_enhanced_structure(sample_text, set())
+
+        assert result["presentation_title"] == "Test Presentation Title"
+        assert "First key point" in result["topic_1_content"]
+        assert "Second key point" in result["topic_2_content"]
+        assert result["author_name"] == "Test Author"
+        assert result["presentation_date"] == "2024-01-01"
+
+    def test_template_analyzer(self):
+        """Test template analyzer"""
+        from pathlib import Path
+
+        from src.models.slide_template import SlideTemplate
+        from src.services.template_analyzer import TemplateAnalyzer
+
+        analyzer = TemplateAnalyzer()
+        template = SlideTemplate(
+            id="test",
+            name="Test Template",
+            description="Test Description",
+            template_dir=Path("tests/templates/k2g4h1x9"),
+            duration_minutes=5,
+        )
+
+        analysis = analyzer.analyze_template(template)
+
+        assert "placeholders" in analysis
+        assert "categories" in analysis
+        assert analysis["total_placeholders"] > 0
+        assert isinstance(analysis["placeholders"], set)

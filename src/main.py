@@ -49,7 +49,7 @@ def initialize_session():
             from dev.mocks.mock_template_repository import MockTemplateRepository
 
             template_repository = MockTemplateRepository(
-                templates_dir=Path("data/development/templates")
+                templates_dir=Path("src/templates")
             )
         else:
             template_repository = TemplateRepository()
