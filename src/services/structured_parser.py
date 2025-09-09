@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 class StructuredResponseParser:
@@ -10,10 +10,8 @@ class StructuredResponseParser:
 
     def remove_think_tags(self, text: str) -> str:
         """Remove <think> tags from response"""
-        if "<think>" in text and "</think>" in text:
-            think_end = text.find("</think>")
-            return text[think_end + 8 :].strip()
-        return text.strip()
+        # Use regex for robust removal of content within and including think tags
+        return re.sub(r"(?s)<think>.*?</think>\s*", "", text).strip()
 
     def parse_basic_structure(self, text: str) -> Dict[str, Any]:
         """Parse basic TITLE/POINT/CONCLUSION structure"""
@@ -54,7 +52,7 @@ class StructuredResponseParser:
         return result
 
     def parse_enhanced_structure(
-        self, text: str, required_placeholders: set
+        self, text: str, required_placeholders: Optional[set] = None
     ) -> Dict[str, Any]:
         """Enhanced parser that handles dynamic template requirements"""
         text = self.remove_think_tags(text)
@@ -68,6 +66,11 @@ class StructuredResponseParser:
             result["presentation_title"] = title_matches[0].strip()
             result["header_title"] = title_matches[0].strip()
             result["main_topic"] = title_matches[0].strip()
+        else:
+            default_title = "Default Title"
+            result["presentation_title"] = default_title
+            result["header_title"] = default_title
+            result["main_topic"] = default_title
 
         # Parse all POINT patterns
         point_matches = re.findall(r"POINT(\d+):\s*(.+?)(?=\n|$)", text, re.MULTILINE)
@@ -84,6 +87,8 @@ class StructuredResponseParser:
         conclusion_match = re.search(r"CONCLUSION:\s*(.+?)(?=\n|$)", text, re.MULTILINE)
         if conclusion_match:
             result["conclusion_content"] = f"- {conclusion_match.group(1).strip()}"
+        elif "conclusion_content" not in result:
+            result["conclusion_content"] = "- Summary"
 
         # Parse META information
         author_match = re.search(r"AUTHOR:\s*(.+?)(?=\n|$)", text, re.MULTILINE)
@@ -105,6 +110,10 @@ class StructuredResponseParser:
                 "block_math": "E = mc^2",
             }
         )
+
+        # Ensure all required placeholders have a default value
+        for key in required_placeholders or []:
+            result.setdefault(key, "")
 
         return result
 

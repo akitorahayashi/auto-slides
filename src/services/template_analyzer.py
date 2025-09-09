@@ -122,7 +122,7 @@ class TemplateAnalyzer:
                 "total_placeholders": len(placeholders),
                 "has_dynamic_content": len(placeholders) > 5,
             }
-        except Exception as e:
+        except (FileNotFoundError, UnicodeDecodeError, OSError) as e:
             return {
                 "error": str(e),
                 "placeholders": set(),

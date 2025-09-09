@@ -43,6 +43,35 @@ class SlideGenerator:
             response, analysis.get("placeholders", set())
         )
 
+        # Map parsed content to dynamic template placeholders
+        categories = analysis.get("categories", {})
+
+        # Map titles
+        if "titles" in categories and "presentation_title" in content:
+            for var in categories["titles"]:
+                content[var] = content["presentation_title"]
+
+        # Map topics
+        topic_vars = sorted(categories.get("topics", []))
+        for i, var in enumerate(topic_vars, 1):
+            key_content = f"topic_{i}_content"
+            if key_content in content:
+                content[var] = content[key_content]
+
+            # Also map the topic title itself if present
+            key_title = f"topic_{i}"
+            if (
+                key_title in content
+                and f"${{{var}}}" in template.read_markdown_content()
+                and not var.endswith("_content")
+            ):
+                content[var] = content[key_title]
+
+        # Map conclusion
+        for var in categories.get("content", []):
+            if "conclusion" in var.lower() and "conclusion_content" in content:
+                content[var] = content["conclusion_content"]
+
         return content
 
     def fill_template(self, template: SlideTemplate, content: Dict[str, Any]) -> str:
