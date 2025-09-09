@@ -3,6 +3,7 @@ import streamlit as st
 from src.app_state import AppState
 from src.models.template_repository import TemplateRepository
 from src.protocols.marp_protocol import MarpProtocol
+from src.protocols.template_repository_protocol import TemplateRepositoryProtocol
 
 st.set_page_config(
     page_title="Auto Slides",
@@ -36,10 +37,20 @@ def main():
     pg.run()
 
 
+from pathlib import Path
+
 def initialize_session():
     """Initializes the session state."""
     if "marp_service" not in st.session_state:
-        templates = TemplateRepository.get_all_templates()
+        is_debug = st.secrets.get("DEBUG", False)
+
+        if is_debug:
+            from dev.mocks.mock_template_repository import MockTemplateRepository
+            template_repository = MockTemplateRepository(templates_dir=Path("data/development/templates"))
+        else:
+            template_repository = TemplateRepository()
+
+        templates = template_repository.get_all_templates()
         if not templates:
             st.error("テンプレートが見つかりません。")
             st.stop()
@@ -47,18 +58,16 @@ def initialize_session():
 
         slides_path = default_template.markdown_path
         output_dir = "output"
-        is_debug = st.secrets.get("DEBUG", False)
 
         if is_debug:
             from dev.mocks.mock_marp_service import MockMarpService
-
             marp_service: MarpProtocol = MockMarpService(slides_path, output_dir)
         else:
             from src.services import MarpService
-
             marp_service: MarpProtocol = MarpService(slides_path, output_dir)
 
         st.session_state.marp_service = marp_service
+        st.session_state.template_repository = template_repository
 
     if "app_state" not in st.session_state:
         st.session_state.app_state = AppState()

@@ -8,16 +8,11 @@ from .slide_template import SlideTemplate
 
 
 class TemplateRepository(TemplateRepositoryProtocol):
-    def __init__(self, templates_dir: Path = Path("src/templates")):
+    def __init__(self, templates_dir: Path = Path("data/production/templates")):
         self.templates_dir = templates_dir
 
-    @classmethod
-    def get_all_templates(cls) -> List[SlideTemplate]:
+    def get_all_templates(self) -> List[SlideTemplate]:
         """Get all available slide templates"""
-        instance = cls()
-        return instance._get_all_templates()
-
-    def _get_all_templates(self) -> List[SlideTemplate]:
         templates = []
 
         if not self.templates_dir.exists():
@@ -64,12 +59,7 @@ class TemplateRepository(TemplateRepositoryProtocol):
             "duration_minutes": 10,
         }
 
-    @classmethod
-    def get_template_by_id(cls, template_id: str) -> Optional[SlideTemplate]:
+    def get_template_by_id(self, template_id: str) -> Optional[SlideTemplate]:
         """Get a specific template by ID"""
-        instance = cls()
-        return instance._get_template_by_id(template_id)
-
-    def _get_template_by_id(self, template_id: str) -> Optional[SlideTemplate]:
-        templates = self._get_all_templates()
+        templates = self.get_all_templates()
         return next((t for t in templates if t.id == template_id), None)

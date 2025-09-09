@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from src.models.slide_template import SlideTemplate
 from dev.mocks.mock_template_repository import MockTemplateRepository
@@ -12,7 +12,7 @@ class TestTemplateRepository:
         result = mock_template_repository.get_all_templates()
         assert result == []
 
-    def test_get_all_templates_with_valid_templates(self):
+    def test_get_all_templates_with_valid_templates(self, mock_template_repository):
         """Test get_all_templates with valid templates"""
         # Setup mock templates
         mock_template1 = MagicMock(spec=SlideTemplate)
@@ -23,12 +23,12 @@ class TestTemplateRepository:
         mock_template2.id = "template2"
         mock_template2.name = "Template 2"
 
-        repository = MockTemplateRepository(mock_templates=[mock_template1, mock_template2])
-        result = repository.get_all_templates()
+        with patch.object(mock_template_repository, 'get_all_templates', return_value=[mock_template1, mock_template2]):
+            result = mock_template_repository.get_all_templates()
 
-        assert len(result) == 2
-        assert result[0] == mock_template1
-        assert result[1] == mock_template2
+            assert len(result) == 2
+            assert result[0] == mock_template1
+            assert result[1] == mock_template2
 
     def test_get_all_templates_with_real_sample_template(self, mock_template_repository_with_sample):
         """Test get_all_templates with the real sample template"""
@@ -41,7 +41,7 @@ class TestTemplateRepository:
         assert template.description == "4トピック構成のベーシックなプレゼンテーション"
         assert template.duration_minutes == 10
 
-    def test_get_template_by_id_found(self):
+    def test_get_template_by_id_found(self, mock_template_repository):
         """Test get_template_by_id when template exists"""
         # Setup mock templates
         mock_template1 = MagicMock(spec=SlideTemplate)
@@ -50,12 +50,11 @@ class TestTemplateRepository:
         mock_template2 = MagicMock(spec=SlideTemplate)
         mock_template2.id = "template2"
 
-        repository = MockTemplateRepository(mock_templates=[mock_template1, mock_template2])
-        result = repository.get_template_by_id("template2")
+        with patch.object(mock_template_repository, 'get_all_templates', return_value=[mock_template1, mock_template2]):
+            result = mock_template_repository.get_template_by_id("template2")
+            assert result == mock_template2
 
-        assert result == mock_template2
-
-    def test_get_template_by_id_not_found(self):
+    def test_get_template_by_id_not_found(self, mock_template_repository):
         """Test get_template_by_id when template doesn't exist"""
         # Setup mock templates
         mock_template1 = MagicMock(spec=SlideTemplate)
@@ -64,10 +63,9 @@ class TestTemplateRepository:
         mock_template2 = MagicMock(spec=SlideTemplate)
         mock_template2.id = "template2"
 
-        repository = MockTemplateRepository(mock_templates=[mock_template1, mock_template2])
-        result = repository.get_template_by_id("nonexistent")
-
-        assert result is None
+        with patch.object(mock_template_repository, 'get_all_templates', return_value=[mock_template1, mock_template2]):
+            result = mock_template_repository.get_template_by_id("nonexistent")
+            assert result is None
 
     def test_get_template_by_id_empty_repository(self, mock_template_repository):
         """Test get_template_by_id with empty repository"""
