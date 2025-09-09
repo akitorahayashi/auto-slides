@@ -15,7 +15,9 @@ st.title("🎼 テンプレートギャラリー")
 
 st.write("スライドテンプレートを選択して、ダウンロードページに進んでください。")
 
-templates = TemplateRepository.get_all_templates()
+
+repo = TemplateRepository()
+templates = repo.get_all_templates()
 if templates:
     # カードをグリッドで表示
     cols_per_row = 2

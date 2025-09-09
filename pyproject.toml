@@ -10,13 +10,15 @@ dependencies = [
 	"pandas>=2.0.0",
 	"numpy>=1.26.0,<2.0",
 	"plotly>=5.17.0",
-	"httpx>=0.28.1",
+	"httpx>=0.27.0,<0.28.0",
 	"beautifulsoup4>=4.12.0",
 	"watchdog>=6.0.0",
 	"weasyprint>=62.0",
 	"python-pptx>=0.6.21",
 	"markdown>=3.5.0",
 	"pdf2image>=1.16.0",
+	"olm-api @ git+https://github.com/akitorahayashi/olm-api.git",
+	"langchain-core>=0.3.0",
 ]
 
 [dependency-groups]
@@ -37,6 +39,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.pytest.ini_options]
 python_files = "test_*.py"

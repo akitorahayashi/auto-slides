@@ -1,11 +1,12 @@
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from dev.mocks.mock_template_repository import MockTemplateRepository
 from src.models import SlideTemplate
-from src.services.marp_service import MarpService
-from src.services.template_converter_service import TemplateConverterService
+from src.services import MarpService, TemplateConverterService
 
 
 @pytest.fixture
@@ -15,20 +16,35 @@ def project_root():
 
 
 @pytest.fixture
-def sample_template_path(project_root):
-    """Path to the sample template content.md"""
-    return project_root / "src" / "templates" / "sample" / "content.md"
+def test_template_dir(project_root):
+    """Path to the test template directory"""
+    return project_root / "data" / "tests" / "templates" / "k2g4h1x9"
 
 
 @pytest.fixture
-def sample_template(sample_template_path):
-    """Sample SlideTemplate instance using the actual sample content"""
+def sample_template(test_template_dir):
+    """Sample SlideTemplate instance using the test template"""
     return SlideTemplate(
-        id="sample",
-        name="Sample Template",
-        description="Sample template for testing",
-        template_dir=sample_template_path.parent,
+        id="k2g4h1x9",
+        name="サンプルテンプレート",
+        description="4トピック構成のベーシックなプレゼンテーション",
+        template_dir=test_template_dir,
+        duration_minutes=10,
     )
+
+
+@pytest.fixture
+def mock_template_repository_with_sample(project_root):
+    """MockTemplateRepository with sample template"""
+    return MockTemplateRepository(
+        templates_dir=project_root / "data" / "tests" / "templates"
+    )
+
+
+@pytest.fixture
+def sample_template_path(test_template_dir):
+    """Path to the sample template content.md (for backward compatibility)"""
+    return test_template_dir / "content.md"
 
 
 @pytest.fixture
@@ -55,10 +71,38 @@ def template_converter_service():
 @pytest.fixture
 def mock_template():
     """Mock SlideTemplate for unit tests"""
-    from unittest.mock import MagicMock
-
     template = MagicMock(spec=SlideTemplate)
     template.id = "test_template"
     template.name = "Test Template"
     template.read_markdown_content.return_value = "# Test Slide\n\nTest content"
     return template
+
+
+@pytest.fixture
+def mock_streamlit_secrets():
+    """Mock streamlit.secrets for consistent testing"""
+    with patch("streamlit.secrets") as mock_secrets:
+        mock_secrets.get.return_value = "false"
+        yield mock_secrets
+
+
+@pytest.fixture
+def mock_slide_generator(mock_streamlit_secrets):
+    """Mock SlideGenerator with mocked Streamlit secrets"""
+    from src.services.slide_generator import SlideGenerator
+
+    with patch(
+        "src.services.slide_generator.SlideGenerator._get_client"
+    ) as mock_get_client:
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        generator = SlideGenerator()
+        yield generator
+
+
+@pytest.fixture
+def mock_template_repository(project_root):
+    """Mock TemplateRepository for testing"""
+    # Create a temporary empty directory for templates
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield MockTemplateRepository(templates_dir=Path(temp_dir))

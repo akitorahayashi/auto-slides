@@ -8,6 +8,7 @@ class SlideTemplate:
     name: str
     description: str
     template_dir: Path
+    duration_minutes: int
 
     @property
     def markdown_path(self) -> Path:
@@ -31,7 +32,7 @@ class SlideTemplate:
         return self.markdown_path.read_text(encoding="utf-8")
 
     def read_css_content(self) -> str:
-        """CSSファイルを読み込み（必須）"""
+        """CSSファイルを読み込み"""
         if not self.css_path.exists():
             raise FileNotFoundError(f"CSS theme file not found: {self.css_path}")
         return self.css_path.read_text(encoding="utf-8")

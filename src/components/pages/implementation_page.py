@@ -1,7 +1,8 @@
 import streamlit as st
 
-from src.schemas import TemplateFormat
-from src.services.template_converter_service import TemplateConverterService
+from src.schemas import OutputFormat
+from src.services import TemplateConverterService
+from src.services.slide_generator import SlideGenerator
 
 
 @st.dialog("実行確認", width="small", dismissible=True)
@@ -12,13 +13,42 @@ def confirm_execute_dialog():
     with col_yes:
         if st.button("はい", use_container_width=True):
             # ユーザー入力と生成されたマークダウンをセッションに保存
+            script_content = st.session_state.get("script_content", "")
             template = st.session_state.app_state.selected_template
+
+            # LLMサービスを使用してプレゼンテーションを生成
+            try:
+                with st.spinner("LLMがプレゼンテーションを生成中..."):
+                    generator = SlideGenerator()
+                    generated_markdown = generator.generate(
+                        script_content=script_content, template=template
+                    )
+            except Exception as e:
+                st.error(f"プレゼンテーション生成に失敗しました: {str(e)}")
+                # フォールバック用の基本的なMarkdown
+                generated_markdown = f"""---
+marp: true
+theme: default
+---
+
+# プレゼンテーション
+
+エラーが発生しました。以下は原稿の内容です:
+
+{script_content}
+
+---
+
+# 終わり
+
+ありがとうございました。
+"""
+
             st.session_state.app_state.user_inputs = {
-                "format": st.session_state.format_selection
+                "format": st.session_state.format_selection,
+                "script_content": script_content,
             }
-            st.session_state.app_state.generated_markdown = (
-                template.read_markdown_content()
-            )
+            st.session_state.app_state.generated_markdown = generated_markdown
 
             # 選択した形式を保存し、結果ページへ遷移
             st.session_state.selected_format = st.session_state.format_selection
@@ -47,15 +77,31 @@ if not template:
     st.stop()
 
 st.divider()
+
+# 原稿入力
+st.subheader("📝 原稿の入力")
+st.write(
+    "プレゼンテーションの原稿を入力してください。LLMが内容を解析してスライドを生成します："
+)
+
+# 原稿入力のテキストエリア
+script_content = st.text_area(
+    "原稿内容",
+    key="script_content",
+    height=200,
+    placeholder="プレゼンテーションの原稿をここに入力してください...\n\n例：\n今日は弊社の新製品についてご紹介いたします。\n\n1. 製品の概要\n新製品は...\n\n2. 主な機能\n- 機能A\n- 機能B\n\n3. まとめ\nこの製品により...",
+)
+
+st.divider()
 st.subheader("📦 形式を選択")
 
 converter = TemplateConverterService()
 
 # 形式選択のラジオボタン
 format_options = {
-    "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
-    "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
-    "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
+    "PDF": {"label": "📄 PDF", "format": OutputFormat.PDF},
+    "HTML": {"label": "🌐 HTML", "format": OutputFormat.HTML},
+    "PPTX": {"label": "📊 PPTX", "format": OutputFormat.PPTX},
 }
 
 selected_format = st.radio(

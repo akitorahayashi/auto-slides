@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import streamlit as st
 
 from src.models import SlideTemplate
-from src.schemas import TemplateFormat
+from src.schemas import OutputFormat
 
 
 class TestResultPageLogic:
@@ -149,9 +149,9 @@ class TestResultPageLogic:
         """Test the format options structure from result_page.py"""
         # This mimics the format_options from the actual implementation
         format_options = {
-            "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
-            "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
-            "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
+            "PDF": {"label": "📄 PDF", "format": OutputFormat.PDF},
+            "HTML": {"label": "🌐 HTML", "format": OutputFormat.HTML},
+            "PPTX": {"label": "📊 PPTX", "format": OutputFormat.PPTX},
         }
 
         # Verify structure
@@ -163,9 +163,9 @@ class TestResultPageLogic:
         assert format_options["HTML"]["label"] == "🌐 HTML"
         assert format_options["PPTX"]["label"] == "📊 PPTX"
 
-        assert format_options["PDF"]["format"] == TemplateFormat.PDF
-        assert format_options["HTML"]["format"] == TemplateFormat.HTML
-        assert format_options["PPTX"]["format"] == TemplateFormat.PPTX
+        assert format_options["PDF"]["format"] == OutputFormat.PDF
+        assert format_options["HTML"]["format"] == OutputFormat.HTML
+        assert format_options["PPTX"]["format"] == OutputFormat.PPTX
 
     def test_conversion_mime_types(self):
         """Test correct MIME types for different formats"""

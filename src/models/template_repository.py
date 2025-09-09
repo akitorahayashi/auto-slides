@@ -1,32 +1,65 @@
+import json
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
+
+from src.protocols.template_repository_protocol import TemplateRepositoryProtocol
 
 from .slide_template import SlideTemplate
 
 
-class TemplateRepository:
-    @staticmethod
-    def get_all_templates() -> List[SlideTemplate]:
-        templates_dir = Path("src/templates")
+class TemplateRepository(TemplateRepositoryProtocol):
+    def __init__(self, templates_dir: Path = Path("data/production/templates")):
+        self.templates_dir = templates_dir
+
+    def get_all_templates(self) -> List[SlideTemplate]:
+        """Get all available slide templates"""
         templates = []
 
-        for template_dir in templates_dir.iterdir():
-            if template_dir.is_dir():
-                template_id = template_dir.name
-                template = SlideTemplate(
-                    id=template_id,
-                    name=template_id.replace("_", " ").title(),
-                    description=f"Template: {template_id}",
-                    template_dir=template_dir,
-                )
+        if not self.templates_dir.exists():
+            return []
 
-                # content.mdとtheme.cssの両方が存在する場合のみ追加
-                if template.exists():
-                    templates.append(template)
+        for template_dir in self.templates_dir.iterdir():
+            if template_dir.is_dir():
+                dir_name = template_dir.name
+                config = self._load_template_config(template_dir)
+
+                if "id" in config and config["id"] == dir_name:
+                    template = SlideTemplate(
+                        id=config["id"],
+                        name=config["name"],
+                        description=config["description"],
+                        template_dir=template_dir,
+                        duration_minutes=config["duration_minutes"],
+                    )
+                    if template.exists():
+                        templates.append(template)
+                else:
+                    print(
+                        f"Warning: Skipping template in '{template_dir}'. "
+                        f"ID in config.json does not match directory name or is missing."
+                    )
 
         return templates
 
-    @staticmethod
-    def get_template_by_id(template_id: str) -> Optional[SlideTemplate]:
-        templates = TemplateRepository.get_all_templates()
+    def _load_template_config(self, template_dir: Path) -> Dict:
+        config_path = template_dir / "config.json"
+        dir_name = template_dir.name
+
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+        return {
+            "id": dir_name,
+            "name": dir_name.replace("_", " ").title(),
+            "description": f"Template: {dir_name}（目安時間: 10分）",
+            "duration_minutes": 10,
+        }
+
+    def get_template_by_id(self, template_id: str) -> Optional[SlideTemplate]:
+        """Get a specific template by ID"""
+        templates = self.get_all_templates()
         return next((t for t in templates if t.id == template_id), None)

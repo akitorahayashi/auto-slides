@@ -1,8 +1,8 @@
 import streamlit as st
 from pdf2image import convert_from_bytes
 
-from src.schemas import TemplateFormat
-from src.services.template_converter_service import TemplateConverterService
+from src.schemas import OutputFormat
+from src.services import TemplateConverterService
 
 # ナビゲーションボタンをタイトルの上に配置
 col1, col2 = st.columns(2, gap="small")
@@ -40,9 +40,9 @@ if not template:
     st.stop()
 
 format_options = {
-    "PDF": {"label": "📄 PDF", "format": TemplateFormat.PDF},
-    "HTML": {"label": "🌐 HTML", "format": TemplateFormat.HTML},
-    "PPTX": {"label": "📊 PPTX", "format": TemplateFormat.PPTX},
+    "PDF": {"label": "📄 PDF", "format": OutputFormat.PDF},
+    "HTML": {"label": "🌐 HTML", "format": OutputFormat.HTML},
+    "PPTX": {"label": "📊 PPTX", "format": OutputFormat.PPTX},
 }
 
 st.subheader(f"📋 {template.name}")
@@ -54,17 +54,27 @@ converter = TemplateConverterService()
 selected_format_enum = format_options[selected_format]["format"]
 
 try:
+    # placeholderが埋められたMarkdownコンテンツとCSSを取得
+    generated_markdown = st.session_state.app_state.generated_markdown
+    css_content = template.read_css_content()
+
     if selected_format == "PDF":
         with st.spinner("PDF生成中..."):
-            file_data = converter.convert_template_to_pdf(template)
+            file_data = converter.convert_markdown_to_pdf(
+                generated_markdown, css_content, template.id
+            )
         mime_type = "application/pdf"
     elif selected_format == "HTML":
         with st.spinner("HTML生成中..."):
-            file_data = converter.convert_template_to_html(template)
+            file_data = converter.convert_markdown_to_html(
+                generated_markdown, css_content, template.id
+            )
         mime_type = "text/html"
     elif selected_format == "PPTX":
         with st.spinner("PPTX生成中..."):
-            file_data = converter.convert_template_to_pptx(template)
+            file_data = converter.convert_markdown_to_pptx(
+                generated_markdown, css_content, template.id
+            )
         mime_type = (
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         )
@@ -82,14 +92,22 @@ try:
 
     st.divider()
 
-    # 3. プレビュー
+    # 3. 生成されたMarkdownコンテンツ表示
+    with st.expander("📝 生成されたMarkdownコンテンツ", expanded=False):
+        st.code(generated_markdown, language="markdown")
+
+    st.divider()
+
+    # 4. プレビュー
     with st.spinner("プレビューを準備中..."):
         if selected_format == "PDF":
             # 既存のPDFデータをプレビュー用に使用
             preview_data = file_data
         else:
             # HTML/PPTXは一度PDFに変換してからプレビュー
-            preview_data = converter.convert_template_to_pdf(template)
+            preview_data = converter.convert_markdown_to_pdf(
+                generated_markdown, css_content, template.id
+            )
         images = convert_from_bytes(preview_data)
     for i, image in enumerate(images):
         st.image(image, caption=f"スライド {i+1}")

@@ -1,12 +1,4 @@
-from enum import Enum
 from typing import Protocol
-
-
-class OutputType(Enum):
-    PDF = "pdf"
-    HTML = "html"
-    PNG = "png"
-    PPTX = "pptx"
 
 
 class MarpProtocol(Protocol):

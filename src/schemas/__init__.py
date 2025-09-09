@@ -1,3 +1,3 @@
-from .template_format import TemplateFormat
+from .output_format import OutputFormat
 
-__all__ = ["TemplateFormat"]
+__all__ = ["OutputFormat"]
