@@ -112,7 +112,7 @@ requires-dist = [
     { name = "langchain-core", specifier = ">=0.3.0" },
     { name = "markdown", specifier = ">=3.5.0" },
     { name = "numpy", specifier = ">=1.26.0,<2.0" },
-    { name = "olm-api", git = "https://github.com/akitorahayashi/olm-api.git" },
+    { name = "olm-api", git = "https://github.com/akitorahayashi/olm-api.git?rev=v1.4.1" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "pdf2image", specifier = ">=1.16.0" },
     { name = "plotly", specifier = ">=5.17.0" },
@@ -879,7 +879,7 @@ wheels = [
 [[package]]
 name = "olm-api"
 version = "1.2.0"
-source = { git = "https://github.com/akitorahayashi/olm-api.git#8ef568f42cf3ec00a4f9c60b75d7271d7da2c584" }
+source = { git = "https://github.com/akitorahayashi/olm-api.git?rev=v1.4.1#7c4672e6263e335d213e17129c6a8bccf73d7c49" }
 dependencies = [
     { name = "alembic" },
     { name = "fastapi" },
