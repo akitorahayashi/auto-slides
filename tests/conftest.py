@@ -92,10 +92,10 @@ def mock_slide_generator(mock_streamlit_secrets):
     from src.services.slide_generator import SlideGenerator
 
     with patch(
-        "src.services.slide_generator.SlideGenerator._get_client"
-    ) as mock_get_client:
+        "src.clients.ollama_client.OllamaClientManager.create_client"
+    ) as mock_create_client:
         mock_client = MagicMock()
-        mock_get_client.return_value = mock_client
+        mock_create_client.return_value = (mock_client, "test_model")
         generator = SlideGenerator()
         yield generator
 

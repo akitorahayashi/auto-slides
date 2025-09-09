@@ -1,78 +1,22 @@
 import asyncio
 import json
-import os
 from pathlib import Path
 from string import Template
 from typing import Any, Dict
 
-import streamlit as st
-
+from src.clients.ollama_client import OllamaClientManager
 from src.models.slide_template import SlideTemplate
-
-try:
-    from sdk.olm_api_client import (
-        MockOllamaApiClient,
-        OllamaApiClient,
-        OllamaClientProtocol,
-    )
-except ImportError:
-    raise ImportError("olm-api package is required")
 
 
 class SlideGenerator:
     """
     Generates presentation slides by running a two-stage LLM chain.
+    Uses the unified olm-api SDK v1.4.0 interface.
     """
 
     def __init__(self):
-        self.client = self._get_client()
-        self.model = self._get_model()
+        self.client, self.model = OllamaClientManager.create_client()
         self.prompts_dir = Path("src/static/prompts")
-
-    def _get_client(self) -> OllamaClientProtocol:
-        """Get client (recommended olm-api pattern + demo responses support)"""
-        debug_value = st.secrets.get("DEBUG", os.getenv("DEBUG", "true"))
-        if isinstance(debug_value, bool):
-            debug = debug_value
-        else:
-            debug = str(debug_value).lower() == "true"
-
-        use_demo_value = st.secrets.get(
-            "USE_DEMO_RESPONSES", os.getenv("USE_DEMO_RESPONSES", "false")
-        )
-        if isinstance(use_demo_value, bool):
-            use_demo = use_demo_value
-        else:
-            use_demo = str(use_demo_value).lower() == "true"
-
-        if debug:
-            if use_demo:
-
-                def _read_mock_response(filename: str) -> str:
-                    return (
-                        Path(__file__).parent.parent
-                        / "static"
-                        / "mock_responses"
-                        / filename
-                    ).read_text(encoding="utf-8")
-
-                responses = [
-                    _read_mock_response("stage1_analyze_slides.txt"),
-                    _read_mock_response("stage2_generate_content.txt"),
-                ]
-                return MockOllamaApiClient(responses=responses, token_delay=0)
-            else:
-                return MockOllamaApiClient(token_delay=0)
-        else:
-            api_url = st.secrets.get("OLM_API_ENDPOINT", os.getenv("OLM_API_ENDPOINT"))
-            if not api_url:
-                print("Warning: OLM_API_ENDPOINT not set, using MockOllamaApiClient")
-                return MockOllamaApiClient(token_delay=0)
-            return OllamaApiClient(api_url=api_url)
-
-    def _get_model(self) -> str:
-        """Get model name"""
-        return st.secrets.get("OLLAMA_MODEL", os.getenv("OLLAMA_MODEL", "qwen3:0.6b"))
 
     def _parse_json_response(self, text: str) -> Dict[str, Any]:
         """Parse JSON-formatted response"""
@@ -106,7 +50,9 @@ class SlideGenerator:
             duration_minutes=template.duration_minutes,
         )
 
-        response = await self.client.gen_batch(prompt=filled_prompt, model=self.model)
+        response = await self.client.gen_batch(
+            prompt=filled_prompt, model_name=self.model
+        )
         return self._parse_json_response(response)
 
     async def _generate_content(
@@ -125,7 +71,9 @@ class SlideGenerator:
             duration_minutes=template.duration_minutes,
         )
 
-        response = await self.client.gen_batch(prompt=filled_prompt, model=self.model)
+        response = await self.client.gen_batch(
+            prompt=filled_prompt, model_name=self.model
+        )
         return self._parse_json_response(response)
 
     def _ensure_placeholder_defaults(self, data: Dict[str, Any]) -> Dict[str, str]:
