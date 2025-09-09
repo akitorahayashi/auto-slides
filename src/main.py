@@ -42,7 +42,8 @@ def main():
 def initialize_session():
     """Initializes the session state."""
     if "marp_service" not in st.session_state:
-        is_debug = st.secrets.get("DEBUG", False)
+        debug_value = st.secrets.get("DEBUG", "false")
+        is_debug = str(debug_value).lower() == "true"
 
         if is_debug:
             from dev.mocks.mock_template_repository import MockTemplateRepository
@@ -79,7 +80,7 @@ def initialize_session():
 
     if "app_state" not in st.session_state:
         st.session_state.app_state = AppState(
-            template_repository=template_repository,
+            template_repository=st.session_state.template_repository,
             slide_generator=st.session_state.slide_generator,
         )
 

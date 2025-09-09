@@ -30,7 +30,7 @@ class OllamaClientManager:
             Tuple of (client, model_name)
         """
         if debug is None:
-            debug_value = st.secrets.get("DEBUG", os.getenv("DEBUG", "true"))
+            debug_value = st.secrets.get("DEBUG", os.getenv("DEBUG", "false"))
             if isinstance(debug_value, bool):
                 debug = debug_value
             else:
