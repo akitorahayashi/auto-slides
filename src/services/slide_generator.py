@@ -6,17 +6,13 @@ from string import Template
 from typing import Any, Dict
 
 import streamlit as st
+from sdk.olm_api_client import (
+    MockOllamaApiClient,
+    OllamaApiClient,
+    OllamaClientProtocol,
+)
 
 from src.models.slide_template import SlideTemplate
-
-try:
-    from sdk.olm_api_client import (
-        MockOllamaApiClient,
-        OllamaApiClient,
-        OllamaClientProtocol,
-    )
-except ImportError:
-    raise ImportError("olm-api package is required")
 
 
 class SlideGenerator:

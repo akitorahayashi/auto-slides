@@ -17,7 +17,7 @@ dependencies = [
 	"python-pptx>=0.6.21",
 	"markdown>=3.5.0",
 	"pdf2image>=1.16.0",
-	"olm-api @ git+https://github.com/akitorahayashi/olm-api.git",
+	"olm-api @ git+https://github.com/akitorahayashi/olm-api.git@v1.3.0",
 	"langchain-core>=0.3.0",
 ]
 
