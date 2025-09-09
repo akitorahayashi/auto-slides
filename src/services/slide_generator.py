@@ -76,33 +76,6 @@ class SlideGenerator:
         )
         return self._parse_json_response(response)
 
-    def _ensure_placeholder_defaults(self, data: Dict[str, Any]) -> Dict[str, str]:
-        """Ensure default placeholder values"""
-        defaults = {
-            "presentation_title": "Title",
-            "author_name": "Presenter",
-            "presentation_date": "2024-01-01",
-            "header_title": "Title",
-            "company_name": "Company Name",
-            "main_topic": "Main Topic",
-            "topic_1": "Introduction",
-            "topic_2": "Content",
-            "topic_3": "Details",
-            "topic_4": "Conclusion",
-            "topic_1_content": "- Content 1",
-            "topic_2_content": "- Content 2",
-            "topic_3_content": "- Content 3",
-            "conclusion_content": "- Conclusion",
-            "code_example": "print('Hello, World!')",
-            "math_description": "Example mathematical formula",
-            "inline_math": "$x = y + z$",
-            "block_math": "E = mc^2",
-        }
-        result = defaults.copy()
-        if isinstance(data, dict):
-            for key, value in data.items():
-                result[key] = str(value) if not isinstance(value, str) else value
-        return result
 
     def _fill_template(
         self, template_content: str, placeholder_data: Dict[str, Any]
@@ -116,8 +89,7 @@ class SlideGenerator:
                 placeholder_data = placeholder_data["generated_content"]
 
             template = Template(template_content)
-            safe_data = self._ensure_placeholder_defaults(placeholder_data)
-            return template.safe_substitute(safe_data)
+            return template.safe_substitute(placeholder_data)
         except Exception as e:
             print(f"Template filling failed: {e}")
             return template_content

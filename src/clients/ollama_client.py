@@ -8,6 +8,7 @@ from sdk.olm_api_client import (
     OllamaClientProtocol,
     OllamaLocalClient,
 )
+from dev.mocks.mock_slide_client import MockSlideGeneratorClient
 
 
 class OllamaClientManager:
@@ -42,7 +43,7 @@ class OllamaClientManager:
             )
 
         if debug:
-            return MockOllamaApiClient(), model_name
+            return MockSlideGeneratorClient(), model_name
 
         if use_local is None:
             use_local_value = st.secrets.get(
@@ -62,7 +63,7 @@ class OllamaClientManager:
                 )
 
             if not api_endpoint:
-                print("Warning: OLM_API_ENDPOINT not set, using MockOllamaApiClient")
-                return MockOllamaApiClient(), model_name
+                print("Warning: OLM_API_ENDPOINT not set, using MockSlideGeneratorClient")
+                return MockSlideGeneratorClient(), model_name
 
             return OllamaApiClient(api_url=api_endpoint), model_name

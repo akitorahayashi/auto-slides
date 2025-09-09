@@ -1,0 +1,17 @@
+{
+  "generated_content": {
+    "presentation_title": "Mock Presentation Title",
+    "author_name": "Test Author",
+    "presentation_date": "2024-01-01",
+    "main_topic": "Mock Main Topic",
+    "topic_1": "Introduction Topic",
+    "topic_1_content": "- Mock introduction content\n- Key point 1\n- Key point 2",
+    "topic_2": "Main Content",
+    "topic_2_content": "- Main content point 1\n- Main content point 2",
+    "conclusion_content": "- Summary of key points\n- Call to action"
+  },
+  "content_strategy": {
+    "main_message": "This is a mock presentation for testing purposes",
+    "adaptation_notes": "Content adapted from mock script to slide structure"
+  }
+}

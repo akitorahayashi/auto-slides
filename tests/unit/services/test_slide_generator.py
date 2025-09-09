@@ -32,22 +32,9 @@ class TestSlideGenerator:
         result = mock_slide_generator._fill_template(template_content, data)
         assert result == "# My Title"
 
-    def test_ensure_placeholder_defaults_known(self, mock_slide_generator):
-        """Test that known placeholders get default values"""
-        data = {"topic_1": "My Topic"}
-        result = mock_slide_generator._ensure_placeholder_defaults(data)
-        assert result["topic_1"] == "My Topic"
-        assert result["presentation_title"] == "Title"
-
-    def test_ensure_placeholder_defaults_unknown(self, mock_slide_generator):
-        """Test that unknown placeholders are added"""
-        data = {"new_field": "new_value"}
-        result = mock_slide_generator._ensure_placeholder_defaults(data)
-        assert result["new_field"] == "new_value"
-        assert result["presentation_title"] == "Title"
-
-    def test_ensure_placeholder_defaults_non_string(self, mock_slide_generator):
-        """Test that non-string values are converted to strings"""
-        data = {"number": 123}
-        result = mock_slide_generator._ensure_placeholder_defaults(data)
-        assert result["number"] == "123"
+    def test_fill_template_non_string_values(self, mock_slide_generator):
+        """Test that non-string values are handled correctly"""
+        template_content = "Number: ${number}, Float: ${float_val}"
+        data = {"number": 123, "float_val": 45.67}
+        result = mock_slide_generator._fill_template(template_content, data)
+        assert result == "Number: 123, Float: 45.67"
