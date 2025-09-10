@@ -3,7 +3,7 @@ from typing import Dict
 from src.backend.models.slide_template import SlideTemplate
 
 
-class TemplateAnalyzer:
+class ScriptAnalyzer:
     """Simplified template analyzer for LangChain-based workflow"""
 
     def analyze_template(self, template: SlideTemplate) -> Dict[str, any]:

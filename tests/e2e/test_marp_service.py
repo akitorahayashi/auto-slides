@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from src.backend.services.marp_service import MarpService
+from src.backend.services import MarpService
 
 
 def has_marp_cli():

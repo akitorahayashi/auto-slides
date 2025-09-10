@@ -6,8 +6,8 @@ from pathlib import Path
 import streamlit as st
 from pdf2image import convert_from_bytes
 
-from src.backend.services.marp_service import MarpService
-from src.protocols.schemas.output_format import OutputFormat
+from src.backend.services import MarpService
+from src.protocols.schemas import OutputFormat
 
 
 class TimeoutError(Exception):

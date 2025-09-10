@@ -308,7 +308,7 @@ ${conclusion}
 
     def test_mock_chain_workflow_output(self):
         """Test that mock chain workflow produces expected output format"""
-        from dev.mocks.mock_slide_generator import MockSlideGenerator
+        from dev.mocks import MockSlideGenerator
 
         # Create a mock template for the test
         mock_template = MagicMock(spec=SlideTemplate)
@@ -333,7 +333,7 @@ ${conclusion}
 
     def test_frontend_with_mock_slide_generator(self):
         """Test full frontend flow with the MockSlideGenerator."""
-        from dev.mocks.mock_slide_generator import MockSlideGenerator
+        from dev.mocks import MockSlideGenerator
 
         # 1. Setup Mocks and Session State
         mock_template = MagicMock(spec=SlideTemplate)

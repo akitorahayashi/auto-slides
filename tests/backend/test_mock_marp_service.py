@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from dev.mocks.mock_marp_service import MockMarpService
+from dev.mocks import MockMarpService
 
 
 @pytest.mark.parametrize(
