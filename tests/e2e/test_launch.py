@@ -4,9 +4,6 @@ import time
 from typing import Optional
 
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 class StreamlitE2ETest:
@@ -22,8 +19,8 @@ class StreamlitE2ETest:
     ):
         self.app_path = app_path
         self.main_module = main_module
-        self.test_port = test_port or os.getenv("TEST_PORT", "8502")
-        self.host_ip = host_ip or os.getenv("HOST_IP", "localhost")
+        self.test_port = test_port or "8502"
+        self.host_ip = host_ip or "localhost"
 
         self.project_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -103,6 +100,29 @@ def test_package_import():
     """Test that the main module imports without missing dependencies."""
     test_helper = StreamlitE2ETest()
     return test_helper.test_package_import()
+
+
+def test_chain_integration_import():
+    """Test that chain integration imports work correctly."""
+    test_helper = StreamlitE2ETest()
+
+    # Test specific chain-related imports
+    result = subprocess.run(
+        [
+            test_helper.python_executable,
+            "-c",
+            "from src.backend.chains.slide_gen_chain import SlideGenChain; print('Chain imports successful')",
+        ],
+        cwd=test_helper.project_root,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    if result.returncode != 0:
+        assert False, f"Chain import failed:\n{result.stderr}"
+
+    print("✅ Chain integration imports successfully")
 
 
 def test_streamlit_app_starts_without_errors():

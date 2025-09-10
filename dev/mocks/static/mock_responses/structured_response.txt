@@ -1,0 +1,7 @@
+TITLE: Mock Presentation Title
+POINT1: First key point about the topic
+POINT2: Second important aspect to cover  
+POINT3: Third crucial element to discuss
+CONCLUSION: Summary and key takeaways from the presentation
+AUTHOR: Test Author
+DATE: 2024-01-01
