@@ -1,37 +1,37 @@
-スライド機能のパラメータを原稿から生成してください。
+${slide_name}スライドのパラメータを生成してください。
 
-# タスク
-指定されたスライド機能に適切なパラメータ値を原稿から抽出・生成してください。
+必須パラメータ：${arguments_list}
 
-# 出力形式
+原稿から抽出してJSON出力（パラメータ名は完全一致必須）：
+
+例1：パラメータが"title, content"の場合
+```json
 {
     "slide_name": "${slide_name}",
     "parameters": {
-        "arg1": "value1",
-        "arg2": "value2"
+        "title": "抽出したタイトル",
+        "content": "抽出した内容"
     }
 }
+```
 
-# 重要な指示
-- 必ずJSON形式のみで回答してください
-- 余分なテキストや説明は含めないでください
-- 全ての必須パラメータを提供してください
+例2：パラメータが"topic, content"の場合
+```json
+{
+    "slide_name": "${slide_name}",
+    "parameters": {
+        "topic": "抽出したトピック",
+        "content": "抽出した内容"
+    }
+}
+```
 
----
-# スライド名
-${slide_name}
+注意：パラメータ名は必要とされているものから絶対に変更しないでください（topic≠topics）
 
-# スライドの目的
-${function_purpose}
+## 参考情報
 
-# 関数の定義形式
-${function_signature}
-
-# 引数情報
-${arguments_list}
-
-# 論の展開
+### 論の展開
 ${analysis_result}
 
-# 原稿
+### 原稿
 ${script_content}

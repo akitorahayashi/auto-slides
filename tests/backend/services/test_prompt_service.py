@@ -34,7 +34,7 @@ class TestPromptService:
         """Create test template files"""
         templates = {
             "analyze_script.md": "Analyze this script: $script_content\nLimit: $argument_flow_limit characters",
-            "compose_slides.md": "Compose slides for: $script_content\nAnalysis: $analysis_result\nFunctions: $slide_functions_summary",
+            "compose_slides.md": "Compose slides for: $script_content\nAnalysis: $analysis_result\nFunctions: $slide_functions_summary\nTarget: $target_slide_count slides",
             "generate_parameters.md": "Generate parameters for: $slide_name\nPurpose: $function_purpose\nSignature: $function_signature\nArgs: $arguments_list\nScript: $script_content\nAnalysis: $analysis_result",
         }
 
@@ -73,7 +73,7 @@ class TestPromptService:
         result = self.service.build_composition_prompt(input_dict)
 
         assert "prompt" in result
-        expected_prompt = 'Compose slides for: Test script\nAnalysis: {"summary": "Analysis"}\nFunctions: Function list'
+        expected_prompt = 'Compose slides for: Test script\nAnalysis: {"summary": "Analysis"}\nFunctions: Function list\nTarget: 2 slides'
         assert result["prompt"] == expected_prompt
 
     def test_build_parameter_prompt(self):

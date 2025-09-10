@@ -61,12 +61,16 @@ class PromptService:
 
     def build_composition_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Build slide composition prompt"""
+        import streamlit as st
+
+        target_slide_count = st.secrets.get("TARGET_SLIDE_COUNT", 10)
         substitutions = {
             "script_content": input_dict["script_content"],
             "analysis_result": json.dumps(
                 input_dict["analysis_result"], ensure_ascii=False
             ),
             "slide_functions_summary": input_dict["slide_functions_summary"],
+            "target_slide_count": str(target_slide_count),
         }
         prompt = self._build_prompt("compose_slides.md", substitutions)
         return {**input_dict, "prompt": prompt}
