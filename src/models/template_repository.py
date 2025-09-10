@@ -19,45 +19,57 @@ class TemplateRepository(TemplateRepositoryProtocol):
             return []
 
         for template_dir in self.templates_dir.iterdir():
-            if template_dir.is_dir():
-                dir_name = template_dir.name
-                config = self._load_template_config(template_dir)
+            if not template_dir.is_dir():
+                continue
 
-                if "id" in config and config["id"] == dir_name:
-                    template = SlideTemplate(
-                        id=config["id"],
-                        name=config["name"],
-                        description=config["description"],
-                        template_dir=template_dir,
-                        duration_minutes=config["duration_minutes"],
-                    )
-                    if template.exists():
-                        templates.append(template)
-                else:
-                    print(
-                        f"Warning: Skipping template in '{template_dir}'. "
-                        f"ID in config.json does not match directory name or is missing."
-                    )
+            dir_name = template_dir.name
+            config = self._load_template_config(template_dir)
+
+            if config is None:
+                print(f"Info: Using default config for template in '{template_dir}'.")
+                config = {
+                    "id": dir_name,
+                    "name": dir_name.replace("_", " ").title(),
+                    "description": f"Template: {dir_name}（目安時間: 10分）",
+                    "duration_minutes": 10,
+                }
+
+            # Validate the config (either loaded or default)
+            if "id" not in config or config["id"] != dir_name:
+                print(
+                    f"Warning: Skipping template in '{template_dir}'. "
+                    f"ID '{config.get('id')}' in config.json does not match directory name '{dir_name}'."
+                )
+                continue
+
+            template = SlideTemplate(
+                id=config["id"],
+                name=config.get("name", dir_name.replace("_", " ").title()),
+                description=config.get("description", ""),
+                template_dir=template_dir,
+                duration_minutes=config.get("duration_minutes", 10),
+            )
+
+            if template.exists():
+                templates.append(template)
+            else:
+                print(
+                    f"Warning: Skipping template '{dir_name}'. Missing content.md or theme.css."
+                )
 
         return templates
 
-    def _load_template_config(self, template_dir: Path) -> Dict:
+    def _load_template_config(self, template_dir: Path) -> Optional[Dict]:
         config_path = template_dir / "config.json"
-        dir_name = template_dir.name
+        if not config_path.exists():
+            return None  # Explicitly return None if file is missing
 
-        if config_path.exists():
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, KeyError):
-                pass
-
-        return {
-            "id": dir_name,
-            "name": dir_name.replace("_", " ").title(),
-            "description": f"Template: {dir_name}（目安時間: 10分）",
-            "duration_minutes": 10,
-        }
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"Warning: Could not parse config.json in '{template_dir}': {e}")
+            return None  # Return None on parsing error too
 
     def get_template_by_id(self, template_id: str) -> Optional[SlideTemplate]:
         """Get a specific template by ID"""

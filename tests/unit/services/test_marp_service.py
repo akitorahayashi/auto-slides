@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.schemas import OutputFormat
-from src.services.marp_service import MarpService
+from src.services import MarpService
 
 
 class TestMarpService:

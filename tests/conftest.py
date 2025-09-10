@@ -1,12 +1,12 @@
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from dev.mocks.mock_template_repository import MockTemplateRepository
 from src.models import SlideTemplate
-from src.services import MarpService, TemplateConverterService
+from src.services import MarpService
 
 
 @pytest.fixture
@@ -60,10 +60,7 @@ def marp_service(sample_template_path, temp_output_dir):
     )
 
 
-@pytest.fixture
-def template_converter_service():
-    """TemplateConverterService instance for testing"""
-    return TemplateConverterService()
+# TemplateConverterService removed - using MarpService instead
 
 
 @pytest.fixture
@@ -77,25 +74,19 @@ def mock_template():
 
 
 @pytest.fixture
-def mock_streamlit_secrets():
-    """Mock streamlit.secrets for consistent testing"""
-    with patch("streamlit.secrets") as mock_secrets:
-        mock_secrets.get.return_value = "false"
-        yield mock_secrets
+def real_prompt_service():
+    """Real PromptService for testing (no external dependencies)"""
+    from src.services import PromptService
+
+    return PromptService()
 
 
 @pytest.fixture
-def mock_slide_generator(mock_streamlit_secrets):
-    """Mock SlideGenerator with mocked Streamlit secrets"""
-    from src.services.slide_generator import SlideGenerator
+def mock_slide_generator():
+    """Mock SlideGenerator for testing"""
+    from dev.mocks.mock_slide_generator import MockSlideGenerator
 
-    with patch(
-        "src.clients.ollama_client.OllamaClientManager.create_client"
-    ) as mock_create_client:
-        mock_client = MagicMock()
-        mock_create_client.return_value = (mock_client, "test_model")
-        generator = SlideGenerator()
-        yield generator
+    return MockSlideGenerator()
 
 
 @pytest.fixture

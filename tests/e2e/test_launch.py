@@ -105,6 +105,31 @@ def test_package_import():
     return test_helper.test_package_import()
 
 
+def test_chain_integration_import():
+    """Test that chain integration imports work correctly."""
+    test_helper = StreamlitE2ETest()
+
+    # Test specific chain-related imports
+    result = subprocess.run(
+        [
+            test_helper.python_executable,
+            "-c",
+            "from src.chains.slide_gen_chain import SlideGenChain; "
+            "from src.services.slide_generator import SlideGenerator; "
+            "print('Chain imports successful')",
+        ],
+        cwd=test_helper.project_root,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+
+    if result.returncode != 0:
+        assert False, f"Chain import failed:\n{result.stderr}"
+
+    print("✅ Chain integration imports successfully")
+
+
 def test_streamlit_app_starts_without_errors():
     """Test that Streamlit starts and serves content without errors."""
     test_helper = StreamlitE2ETest()

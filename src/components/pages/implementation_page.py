@@ -1,8 +1,6 @@
 import streamlit as st
 
 from src.schemas import OutputFormat
-from src.services import TemplateConverterService
-from src.services.slide_generator import SlideGenerator
 
 
 @st.dialog("実行確認", width="small", dismissible=True)
@@ -19,8 +17,8 @@ def confirm_execute_dialog():
             # LLMサービスを使用してプレゼンテーションを生成
             try:
                 with st.spinner("LLMがプレゼンテーションを生成中..."):
-                    generator = SlideGenerator()
-                    generated_markdown = generator.generate(
+                    generator = st.session_state.slide_generator
+                    generated_markdown = generator.generate_sync(
                         script_content=script_content, template=template
                     )
             except Exception as e:
@@ -95,7 +93,7 @@ script_content = st.text_area(
 st.divider()
 st.subheader("📦 形式を選択")
 
-converter = TemplateConverterService()
+# MarpService will be used in result page for conversion
 
 # 形式選択のラジオボタン
 format_options = {

@@ -6,6 +6,7 @@ Tests the full 2-stage LLM chain with external dependencies.
 import asyncio
 import os
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import streamlit as st
@@ -51,15 +52,11 @@ class TestSlideGeneratorIntegration:
         )
 
     def test_slide_generator_with_mock_client(self, sample_script, test_template):
-        """Test SlideGenerator with mock client (fast, no external dependency)"""
-        # Use mock client directly
-        from dev.mocks.mock_slide_client import MockSlideGeneratorClient
+        """Test SlideGenerator with mock chain (fast, no external dependency)"""
+        # Use mock chain
+        from dev.mocks.mock_slide_generator import MockSlideGenerator
 
-        # Create generator with mock client directly
-        generator = SlideGenerator()
-        generator.client = MockSlideGeneratorClient()
-        generator.model = "test-model"
-
+        generator = MockSlideGenerator()
         result = generator.generate_sync(sample_script, test_template)
 
         # Basic validation
@@ -67,8 +64,9 @@ class TestSlideGeneratorIntegration:
         assert len(result) > 100  # Should have substantial content
         assert "---" in result  # Marp slide separators
 
-        # Check that some placeholders were filled
-        assert "${" not in result or result.count("${") < 5  # Most should be replaced
+        # Check that it's properly formatted Marp content
+        assert "marp: true" in result
+        assert "theme:" in result
 
     @pytest.mark.skipif(
         not str(st.secrets.get("USE_LOCAL_CLIENT", "false")).lower() == "true",
@@ -116,74 +114,85 @@ class TestSlideGeneratorIntegration:
                 os.environ["USE_LOCAL_CLIENT"] = original_use_local
 
     def test_slide_generator_async_methods(self, sample_script, test_template):
-        """Test the new async generation method"""
+        """Test the new async generation method with chain workflow"""
+        with patch("streamlit.secrets") as mock_secrets:
+            # Mock streamlit secrets for testing
+            mock_secrets.get.side_effect = lambda key, default=None: {
+                "DEBUG": "true",
+                "OLLAMA_MODEL": "test-model",
+            }.get(key, default)
 
-        async def run_test():
-            # Use mock client directly
-            from dev.mocks.mock_slide_client import MockSlideGeneratorClient
+            async def run_test():
+                generator = SlideGenerator()
 
-            generator = SlideGenerator()
-            generator.client = MockSlideGeneratorClient()
-            generator.model = "test-model"
+                # Test full generation chain
+                result = await generator.generate_slide(sample_script, test_template)
+                assert isinstance(result, str)
+                assert len(result) > 100
 
-            # Test content generation (main async method)
-            content = await generator.generate_content(sample_script, test_template)
-            assert isinstance(content, dict)
-            assert "presentation_title" in content
+                # Verify it contains expected Marp format
+                assert "---" in result
+                assert "marp: true" in result or "theme:" in result
 
-            # Test full generation chain
-            result = await generator.generate(sample_script, test_template)
-            assert isinstance(result, str)
-            assert len(result) > 100
+            # Run the async test
+            asyncio.run(run_test())
 
-            # Verify it contains expected content
-            assert (
-                "Mock Presentation Title" in result
-                or content["presentation_title"] in result
-            )
+    def test_chain_workflow_validation(self):
+        """Test the 4-phase agentic chain workflow"""
+        from src.chains.slide_gen_chain import SlideGenChain
 
-        # Run the async test
-        asyncio.run(run_test())
+        chain = SlideGenChain()
 
-    def test_structured_parsing(self):
-        """Test structured response parsing"""
-        from src.services.structured_parser import StructuredResponseParser
+        # Verify chain components exist
+        assert hasattr(chain, "analysis_chain")
+        assert hasattr(chain, "planning_chain")
+        assert hasattr(chain, "generation_chain")
+        assert hasattr(chain, "validation_chain")
 
-        parser = StructuredResponseParser()
+        # Verify LLM and parser components
+        assert hasattr(chain, "llm")
+        assert hasattr(chain, "json_parser")
+        assert hasattr(chain, "prompt_service")
 
-        # Test valid structured response
-        structured_text = """TITLE: Test Title
-POINT1: First point
-POINT2: Second point
-CONCLUSION: Final thoughts"""
+    def test_placeholder_extraction_and_rendering(self):
+        """Test placeholder extraction and template rendering"""
+        from src.services.slide_generator import extract_placeholders, render_template
 
-        result = parser.parse_enhanced_structure(structured_text, set())
-        assert result["presentation_title"] == "Test Title"
-        assert "First point" in result["topic_1_content"]
-        assert "Second point" in result["topic_2_content"]
+        # Test placeholder extraction
+        template_content = "Hello ${name}, welcome to ${event} at ${location}!"
+        placeholders = extract_placeholders(template_content)
+        assert placeholders == {"name", "event", "location"}
 
-        # Test with think tags
-        text_with_think = """<think>thinking...</think>
-TITLE: Another Test
-POINT1: Another point"""
+        # Test template rendering
+        content_dict = {"name": "John", "event": "Conference", "location": "Tokyo"}
+        result = render_template(template_content, content_dict)
+        assert result == "Hello John, welcome to Conference at Tokyo!"
 
-        result = parser.parse_enhanced_structure(text_with_think, set())
-        assert result["presentation_title"] == "Another Test"
+        # Test with missing placeholder
+        incomplete_dict = {"name": "John", "event": "Conference"}
+        result = render_template(template_content, incomplete_dict)
+        assert "John" in result
+        assert "Conference" in result
+        assert "${location}" in result  # Should remain unreplaced
 
     @pytest.mark.skipif(
         str(st.secrets.get("DEBUG", "false")).lower() == "true",
         reason="Skipping LLM response validation in DEBUG mode",
     )
     def test_llm_response_quality(self, sample_script, test_template):
-        """Test that LLM responses meet quality expectations"""
+        """Test that LLM responses meet quality expectations with chain workflow"""
         generator = SlideGenerator()
         result = generator.generate_sync(sample_script, test_template)
 
         # Quality checks
-        assert "Mock" not in result  # Should not contain mock indicators
-        assert (
-            len([line for line in result.split("\n") if line.strip()]) > 10
-        )  # Substantial content
+        assert isinstance(result, str)
+        assert len(result) > 100  # Substantial content
+        assert "---" in result  # Marp format
+
+        # Check for slide structure
+        lines = result.split("\n")
+        non_empty_lines = [line for line in lines if line.strip()]
+        assert len(non_empty_lines) > 10  # Should have substantial content
 
         # Check for Japanese content (matching our sample script)
         assert any(

@@ -19,7 +19,7 @@ class SlideTemplate:
         return self.template_dir / "theme.css"
 
     def exists(self) -> bool:
-        """テンプレートが有効かチェック（content.mdとtheme.cssの両方が必須）"""
+        """Check if both content.md and theme.css exist"""
         return (
             self.template_dir.exists()
             and self.markdown_path.exists()
@@ -32,7 +32,7 @@ class SlideTemplate:
         return self.markdown_path.read_text(encoding="utf-8")
 
     def read_css_content(self) -> str:
-        """CSSファイルを読み込み"""
+        """Read CSS theme file"""
         if not self.css_path.exists():
             raise FileNotFoundError(f"CSS theme file not found: {self.css_path}")
         return self.css_path.read_text(encoding="utf-8")

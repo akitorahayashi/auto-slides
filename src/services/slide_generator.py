@@ -1,136 +1,93 @@
-from pathlib import Path
-from string import Template
-from typing import Any, Dict
+import re
+from typing import Set
 
-from src.clients.ollama_client import OllamaClientManager
 from src.models.slide_template import SlideTemplate
-from src.services.structured_parser import StructuredResponseParser
-from src.services.template_analyzer import TemplateAnalyzer
 
 
 class SlideGenerator:
-    """
-    Simplified slide generator using structured natural language approach.
-    Single LLM call + structured parsing instead of complex JSON chains.
-    """
+    """LangChain-powered agentic slide generation workflow"""
 
     def __init__(self):
-        self.client, self.model = OllamaClientManager.create_client()
-        self.parser = StructuredResponseParser()
-        self.analyzer = TemplateAnalyzer()
+        from src.chains.slide_gen_chain import SlideGenChain
+        self.chain = SlideGenChain()
 
-    async def generate_content(
-        self, script_content: str, template: SlideTemplate
-    ) -> Dict[str, Any]:
-        """Generate slide content using dynamic template analysis"""
-        # Analyze template to understand required placeholders
-        analysis = self.analyzer.analyze_template(template)
+    async def generate_slide(self, script_content: str, template: SlideTemplate) -> str:
+        """Agentic slide generation workflow with observation and reasoning"""
 
-        if analysis.get("error"):
-            # Fallback to basic prompt if analysis fails
-            prompt = self.create_structured_prompt(script_content, template)
-        else:
-            # Use dynamic prompt based on template analysis
-            prompt = self.analyzer.create_dynamic_prompt(
-                script_content, template, analysis["placeholders"]
+        template_content = template.read_markdown_content()
+        placeholders = extract_placeholders(template_content)
+
+        try:
+            # Phase 1: Analyze Script (Observation)
+            print("🔍 Agent: Analyzing script content...")
+            analysis_result = await self.chain.analysis_chain.ainvoke(
+                {"script_content": script_content}
+            )
+            print(f"📊 Analysis: {analysis_result.get('main_theme', 'Unknown theme')}")
+
+            # Phase 2: Plan Content Strategy (Reasoning)
+            print("🎯 Agent: Planning content strategy...")
+            content_plan = await self.chain.planning_chain.ainvoke(
+                {"analysis_result": analysis_result, "placeholders": list(placeholders)}
+            )
+            print(
+                f"📋 Strategy: {content_plan.get('generation_strategy', 'Default strategy')}"
             )
 
-        # Single LLM call
-        response = await self.client.gen_batch(prompt, self.model)
+            # Phase 3: Generate Content (Action)
+            print("✍️ Agent: Generating slide content...")
+            generated_content = await self.chain.generation_chain.ainvoke(
+                {
+                    "script_content": script_content,
+                    "placeholders": list(placeholders),
+                    "content_plan": content_plan,
+                }
+            )
 
-        # Parse structured response with enhanced parser
-        content = self.parser.parse_enhanced_structure(
-            response, analysis.get("placeholders", set())
-        )
+            # Phase 4: Validate and Improve (Self-reflection)
+            print("✅ Agent: Validating content quality...")
+            validation_result = await self.chain.validation_chain.ainvoke(
+                {
+                    "generated_content": generated_content,
+                    "analysis_result": analysis_result,
+                    "content_plan": content_plan,
+                }
+            )
 
-        # Map parsed content to dynamic template placeholders
-        categories = analysis.get("categories", {})
+            # Use validated content
+            if validation_result.get("approved", False):
+                final_content = generated_content
+                print("🎉 Agent: Content approved!")
+            else:
+                print(
+                    "⚠️ Agent: Content needs improvement, using generated content anyway..."
+                )
+                final_content = generated_content
 
-        # Map titles
-        if "titles" in categories and "presentation_title" in content:
-            for var in categories["titles"]:
-                content[var] = content["presentation_title"]
+        except Exception as e:
+            print(f"🚨 Agent error: {e}")
+            raise e
 
-        # Map topics
-        topic_vars = sorted(categories.get("topics", []))
-        for i, var in enumerate(topic_vars, 1):
-            key_content = f"topic_{i}_content"
-            if key_content in content:
-                content[var] = content[key_content]
+        # Final: Render template
+        return render_template(template_content, final_content)
 
-            # Also map the topic title itself if present
-            key_title = f"topic_{i}"
-            if (
-                key_title in content
-                and f"${{{var}}}" in template.read_markdown_content()
-                and not var.endswith("_content")
-            ):
-                content[var] = content[key_title]
-
-        # Map conclusion
-        for var in categories.get("content", []):
-            if "conclusion" in var.lower() and "conclusion_content" in content:
-                content[var] = content["conclusion_content"]
-
-        return content
-
-    def fill_template(self, template: SlideTemplate, content: Dict[str, Any]) -> str:
-        """Fill template with generated content"""
-        template_content = template.read_markdown_content()
-
-        # Use safe_substitute to handle missing placeholders gracefully
-        template_obj = Template(template_content)
-        return template_obj.safe_substitute(content)
-
-    async def generate(self, script_content: str, template: SlideTemplate) -> str:
-        """Main generation method - simple and fast"""
-        # Step 1: Generate content with single LLM call
-        content = await self.generate_content(script_content, template)
-
-        # Step 2: Fill template
-        result = self.fill_template(template, content)
-
-        return result
-
-    # Sync wrapper for compatibility
     def generate_sync(self, script_content: str, template: SlideTemplate) -> str:
-        """Synchronous wrapper for generate method"""
+        """Synchronous wrapper"""
         import asyncio
 
-        return asyncio.run(self.generate(script_content, template))
+        return asyncio.run(self.generate_slide(script_content, template))
 
 
-# Test function
-async def test_slide_generator():
-    """Test the slide generator"""
-    generator = SlideGenerator()
-
-    template = SlideTemplate(
-        id="test",
-        name="Test Template",
-        description="Test Description",
-        template_dir=Path("src/templates/k2g4h1x9"),
-        duration_minutes=5,
-    )
-
-    script = """
-    Pythonの非同期プログラミングについて説明します。
-    asyncioライブラリを使用することで、I/Oバウンドなタスクを効率的に処理できます。
-    基本的なasync/await構文から、実際のWebアプリケーションでの活用例まで紹介します。
-    """
-
-    result = await generator.generate(script, template)
-
-    print("=== GENERATED SLIDE ===")
-    print(result[:500] + "..." if len(result) > 500 else result)
-    print("\n=== STATS ===")
-    print(f"Total length: {len(result)}")
-    print(f"Remaining placeholders: {result.count('${')}")
-
-    return result
+def extract_placeholders(template_content: str) -> Set[str]:
+    """Extract all ${placeholder} variables from template content"""
+    pattern = r"\$\{([^}]+)\}"
+    matches = re.findall(pattern, template_content)
+    return set(matches)
 
 
-if __name__ == "__main__":
-    import asyncio
+def render_template(template_content: str, content_dict: dict) -> str:
+    """Render template with content dictionary"""
+    from string import Template
 
-    asyncio.run(test_slide_generator())
+    template = Template(template_content)
+    return template.safe_substitute(content_dict)

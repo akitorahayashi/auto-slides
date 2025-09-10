@@ -1,7 +1,13 @@
+import logging
 import os
 import subprocess
 
 from src.schemas.output_format import OutputFormat
+
+# Configure basic logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class MarpService:
@@ -10,6 +16,7 @@ class MarpService:
     def __init__(self, slides_path, output_dir=None):
         self.slides_path = slides_path
         self.output_dir = output_dir
+        self.logger = logging.getLogger(__name__)
         if self.output_dir:
             os.makedirs(self.output_dir, exist_ok=True)
 
@@ -39,12 +46,14 @@ class MarpService:
                 capture_output=True,
                 text=True,
             )
-            print(f"{output_type.value.upper()} generation successful: {output_path}")
-            print(result.stdout)
+            self.logger.info(
+                f"{output_type.value.upper()} generation successful: {output_path}"
+            )
+            self.logger.debug(result.stdout)
             return output_path
         except subprocess.CalledProcessError as e:
-            print(f"{output_type.value.upper()} generation failed")
-            print(e.stderr)
+            self.logger.error(f"{output_type.value.upper()} generation failed")
+            self.logger.error(e.stderr)
             raise e
 
     def preview(self, server=True, watch=True):
@@ -54,12 +63,12 @@ class MarpService:
         if watch:
             command.append("-w")
 
-        print(f"Starting Marp with command: {' '.join(command)}")
+        self.logger.info(f"Starting Marp with command: {' '.join(command)}")
         try:
             subprocess.run(command, check=True)
         except subprocess.CalledProcessError as e:
-            print("Marp preview failed.")
-            print(e.stderr)
+            self.logger.error("Marp preview failed.")
+            self.logger.error(e.stderr)
             raise e
         except KeyboardInterrupt:
-            print("\nStopping Marp preview server.")
+            self.logger.info("\nStopping Marp preview server.")

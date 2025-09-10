@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from src.services.marp_service import MarpService
+from src.services import MarpService
 
 
 def has_marp_cli():
@@ -118,37 +118,27 @@ class TestMarpServiceE2E:
         # Verify that the error is related to the missing file
         assert exc_info.value.returncode != 0
 
-    def test_marp_service_preview_e2e(self, sample_template_path, tmp_path):
+    def test_marp_cli_is_accessible(self, sample_template_path):
         """
-        Tests that MarpService preview works with real marp CLI.
-        Note: This test is marked as slow because it may take time to start/stop the server.
+        Tests that the marp CLI is accessible and can be executed.
+        This test acts as a basic check that the marp command is in the system's PATH.
         """
-        marp_service = MarpService(slides_path=str(sample_template_path))
-
-        # We can't easily test the interactive preview without actually starting a server,
-        # but we can test that the command doesn't immediately fail
-        # For E2E testing, we might want to use a timeout or run in background
-
-        # Test with server=False to avoid starting a web server
+        # We can't easily test the interactive preview, but we can test that the CLI responds.
+        # Running `marp --version` is a quick and reliable way to check if it's installed.
         try:
-            # This should validate the markdown file and potentially show help
-            # We expect this to either succeed or fail with a specific error
             result = subprocess.run(
-                ["marp", str(sample_template_path), "--help"],
+                ["marp", "--version"],
                 capture_output=True,
                 text=True,
                 timeout=10,
+                check=True,
             )
-            # If marp is working, it should show help without error
-            assert (
-                result.returncode == 0
-                or "Usage:" in result.stdout
-                or "help" in result.stdout
-            )
-        except subprocess.TimeoutExpired:
-            pytest.skip(
-                "Marp preview test timed out - this is expected in CI environments"
-            )
+            # If marp is working, it should return a version number.
+            assert result.returncode == 0
+            assert len(result.stdout) > 0
+
+        except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+            pytest.fail(f"Marp CLI does not appear to be installed or accessible: {e}")
 
     def test_marp_service_default_filenames_e2e(self, sample_template_path, tmp_path):
         """

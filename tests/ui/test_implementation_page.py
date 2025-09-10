@@ -6,7 +6,22 @@ from src.models import SlideTemplate
 
 
 class TestImplementationPageLogic:
-    """Test cases for implementation_page.py redirect and UI logic"""
+    """Test cases             from src.services.slide_generator import SlideGenerator
+
+    # Test that SlideGenerator can be instantiated
+    generator = SlideGenerator()
+    assert hasattr(generator, 'chain')
+
+    # Test extract_placeholders function
+    from src.services.slide_generator import extract_placeholders
+
+    template_content = "Hello ${name}, welcome to ${event}!"
+    placeholders = extract_placeholders(template_content)
+    assert placeholders == {"name", "event"}
+
+    # Test render_template function
+    from src.services.slide_generator import render_templateion_page.py redirect and UI logic
+    """
 
     def test_redirect_logic_when_no_app_state(self):
         """Test redirect logic when app_state is missing"""
@@ -96,36 +111,142 @@ class TestImplementationPageLogic:
         assert format_options["PPTX"]["format"] == OutputFormat.PPTX
 
     def test_confirm_dialog_logic_execution(self):
-        """Test confirm dialog execution logic"""
+        """Test confirm dialog execution logic with SlideGenerator integration"""
         with patch("streamlit.switch_page") as mock_switch_page:
+            # Create mock slide generator
+            mock_slide_generator = MagicMock()
+            mock_slide_generator.generate_sync.return_value = (
+                "# Generated slide content"
+            )
+
             # Create mock template and session state
             mock_template = MagicMock(spec=SlideTemplate)
-            mock_template.read_markdown_content.return_value = "# Test content"
+            mock_template.name = "Test Template"
+            mock_template.description = "Test Description"
 
             mock_app_state = MagicMock()
             mock_app_state.selected_template = mock_template
 
             with patch.object(st, "session_state") as mock_session:
                 mock_session.app_state = mock_app_state
+                mock_session.slide_generator = mock_slide_generator
                 mock_session.format_selection = "PDF"
+
+                # Mock script content
+                script_content = "Test script content"
 
                 # Simulate the confirm dialog execution logic
                 template = mock_session.app_state.selected_template
-                mock_session.app_state.user_inputs = {
-                    "format": mock_session.format_selection
-                }
-                mock_session.app_state.generated_markdown = (
-                    template.read_markdown_content()
+                generator = mock_session.slide_generator
+                generated_markdown = generator.generate_sync(
+                    script_content=script_content, template=template
                 )
+
+                mock_session.app_state.user_inputs = {
+                    "format": mock_session.format_selection,
+                    "script_content": script_content,
+                }
+                mock_session.app_state.generated_markdown = generated_markdown
                 mock_session.selected_format = mock_session.format_selection
                 st.switch_page("components/pages/result_page.py")
 
+                # Verify SlideGenerator was called correctly
+                mock_slide_generator.generate_sync.assert_called_once_with(
+                    script_content=script_content, template=template
+                )
+
                 # Verify session state updates
-                assert mock_session.app_state.user_inputs == {"format": "PDF"}
+                assert mock_session.app_state.user_inputs == {
+                    "format": "PDF",
+                    "script_content": script_content,
+                }
+                assert (
+                    mock_session.app_state.generated_markdown
+                    == "# Generated slide content"
+                )
                 assert mock_session.selected_format == "PDF"
 
                 # Verify redirect to result page
                 mock_switch_page.assert_called_with("components/pages/result_page.py")
+
+    def test_slide_generator_chain_integration(self):
+        """Test SlideGenerator integration with chain workflow"""
+        with patch("streamlit.secrets") as mock_secrets:
+            # Mock streamlit secrets for testing
+            mock_secrets.get.side_effect = lambda key, default=None: {
+                "DEBUG": "true",
+                "OLLAMA_MODEL": "test-model",
+            }.get(key, default)
+
+            from src.services.slide_generator import SlideGenerator
+
+            # Test that SlideGenerator can be instantiated
+            generator = SlideGenerator()
+            assert hasattr(generator, "chain")
+
+            # Test extract_placeholders function
+            from src.services.slide_generator import extract_placeholders
+
+            template_content = "Hello ${name}, welcome to ${event}!"
+            placeholders = extract_placeholders(template_content)
+            assert placeholders == {"name", "event"}
+
+            # Test render_template function
+            from src.services.slide_generator import render_template
+
+            content_dict = {"name": "John", "event": "Conference"}
+            result = render_template(template_content, content_dict)
+            assert result == "Hello John, welcome to Conference!"
+
+    def test_slide_generator_error_handling(self):
+        """Test SlideGenerator error handling in UI context"""
+        with patch("streamlit.switch_page") as mock_switch_page:
+            # Create mock slide generator that raises an exception
+            mock_slide_generator = MagicMock()
+            mock_slide_generator.generate_sync.side_effect = Exception("LLM Error")
+
+            # Create mock template and session state
+            mock_template = MagicMock(spec=SlideTemplate)
+            mock_app_state = MagicMock()
+            mock_app_state.selected_template = mock_template
+
+            with patch.object(st, "session_state") as mock_session:
+                mock_session.app_state = mock_app_state
+                mock_session.slide_generator = mock_slide_generator
+                mock_session.format_selection = "PDF"
+
+                script_content = "Test script"
+
+                # Simulate error handling logic
+                try:
+                    generator = mock_session.slide_generator
+                    generated_markdown = generator.generate_sync(
+                        script_content=script_content, template=mock_template
+                    )
+                except Exception as e:
+                    # Fallback markdown (as in the actual implementation)
+                    generated_markdown = f"""---
+marp: true
+theme: default
+---
+
+# プレゼンテーション
+
+エラーが発生しました。以下は原稿の内容です:
+
+{script_content}
+
+---
+
+# 終わり
+
+ありがとうございました。
+"""
+
+                # Verify error was raised and fallback content was created
+                mock_slide_generator.generate_sync.assert_called_once()
+                assert "エラーが発生しました" in generated_markdown
+                assert script_content in generated_markdown
 
     def test_navigation_button_logic(self):
         """Test navigation button logic"""

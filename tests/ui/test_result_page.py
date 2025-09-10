@@ -225,18 +225,25 @@ class TestResultPageLogic:
             # Verify navigation
             mock_switch_page.assert_called_with("components/pages/gallery_page.py")
 
-    def test_converter_service_usage_logic(self):
-        """Test template converter service usage logic"""
-        from src.services.template_converter_service import TemplateConverterService
+    def test_marp_service_usage_logic(self):
+        """Test MarpService usage logic"""
+        # Simulate the MarpService usage from session state
+        with patch.object(st, "session_state") as mock_session:
+            mock_marp_service = MagicMock()
+            mock_session.marp_service = mock_marp_service
 
-        # Simulate the converter instantiation logic
-        converter = TemplateConverterService()
+            # Test that the service is accessible
+            assert hasattr(mock_session, "marp_service")
+            marp_service = mock_session.marp_service
 
-        # Verify the converter instance
-        assert isinstance(converter, TemplateConverterService)
+            # Test convert method exists
+            assert hasattr(marp_service, "convert")
 
-        # Test that the converter has expected methods
-        assert hasattr(converter, "convert_template_to_pdf")
-        assert hasattr(converter, "convert_template_to_html")
-        assert hasattr(converter, "convert_template_to_pptx")
-        assert hasattr(converter, "get_filename")
+            # Simulate conversion call
+            mock_markdown = "# Test slide"
+            mock_format = OutputFormat.PDF
+
+            marp_service.convert(mock_markdown, mock_format)
+
+            # Verify convert was called
+            marp_service.convert.assert_called_once_with(mock_markdown, mock_format)

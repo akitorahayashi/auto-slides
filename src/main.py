@@ -68,7 +68,7 @@ def initialize_session():
 
             marp_service: MarpProtocol = MockMarpService(slides_path, output_dir)
         else:
-            from src.services import MarpService
+            from src.services.marp_service import MarpService
 
             marp_service: MarpProtocol = MarpService(slides_path, output_dir)
 

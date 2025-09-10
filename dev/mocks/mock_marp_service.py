@@ -1,6 +1,11 @@
+import logging
 import os
 
-from src.schemas import OutputFormat
+from src.schemas.output_format import OutputFormat
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class MockMarpService:
@@ -9,6 +14,7 @@ class MockMarpService:
     def __init__(self, slides_path, output_dir=None):
         self.slides_path = slides_path
         self.output_dir = output_dir
+        self.logger = logging.getLogger(__name__)
         if self.output_dir:
             os.makedirs(self.output_dir, exist_ok=True)
 
@@ -36,7 +42,9 @@ class MockMarpService:
             if theme:
                 f.write(f" with theme: {theme}")
 
-        print(f"MOCK {output_type.value.upper()} generation successful: {output_path}")
+        self.logger.info(
+            f"MOCK {output_type.value.upper()} generation successful: {output_path}"
+        )
         return output_path
 
     def preview(self, server=True, watch=True):

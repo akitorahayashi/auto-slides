@@ -203,15 +203,30 @@ class TestDownloadPageLogic:
         assert execute_button_type == "primary"
         assert execute_use_container_width is True
 
-    def test_template_converter_service_integration(self):
-        """Test template converter service integration"""
-        from src.services.template_converter_service import TemplateConverterService
+    def test_marp_service_integration(self):
+        """Test MarpService integration in download page"""
+        # Test that MarpService can be accessed from session state
+        with patch.object(st, "session_state") as mock_session:
+            mock_marp_service = MagicMock()
+            mock_session.marp_service = mock_marp_service
 
-        # Simulate converter instantiation logic
-        converter = TemplateConverterService()
+            # Test that the service is accessible
+            assert hasattr(mock_session, "marp_service")
+            marp_service = mock_session.marp_service
 
-        # Verify the converter instance
-        assert isinstance(converter, TemplateConverterService)
+            # Test convert method exists
+            assert hasattr(marp_service, "convert")
+
+            # Simulate conversion call
+            from src.schemas import OutputFormat
+
+            mock_markdown = "# Test slide"
+            mock_format = OutputFormat.PDF
+
+            marp_service.convert(mock_markdown, mock_format)
+
+            # Verify convert was called
+            marp_service.convert.assert_called_once_with(mock_markdown, mock_format)
 
     def test_template_validation_logic(self):
         """Test template validation logic"""
