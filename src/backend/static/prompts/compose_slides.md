@@ -1,45 +1,36 @@
-You are a presentation composition expert. Based on the script analysis, determine the optimal slide structure.
+スライド構成の専門家として、分析結果に基づいて最適なスライド構造を決定してください。
 
-## Task
-Analyze the provided script and available slide functions to plan the most effective slide composition.
+# タスク
+提供された原稿と利用可能なスライド機能を分析し、効果的なスライド構成を計画してください。
 
-## Input Information
+# 出力形式
+以下のJSON形式で返答してください：
 
-### Script Analysis
-$analysis_result
-
-### Available Slide Functions
-$function_catalog
-
-## Planning Guidelines
-Consider these factors when selecting and ordering slides:
-- Logical flow of information
-- Audience engagement and attention
-- Content type compatibility (text, code, math, etc.)
-- Avoiding unnecessary or redundant slides
-- Maintaining presentation coherence
-
-## Required Output Format
-Output a JSON structure with your composition plan:
-
-```json
 {
     "slides": [
         {
-            "function_name": "title_slide",
-            "reason": "Opening slide needed"
+            "slide_name": "title_slide",
+            "reason": "開始スライドが必要"
         },
         {
-            "function_name": "table_of_contents_slide",
-            "reason": "Multiple topics require overview"
+            "slide_name": "table_of_contents_slide", 
+            "reason": "複数トピックの概要が必要"
         }
     ],
-    "composition_strategy": "Brief explanation of the overall approach"
+    "composition_strategy": "全体的なアプローチの簡潔な説明"
 }
-```
 
-Ensure the JSON is properly formatted and contains only the functions available in the function catalog.
+# 重要な指示
+- 必ずJSON形式のみで回答してください
+- 余分なテキストや説明は含めないでください
+- スライド関数の一覧にある機能のみ使用してください
 
 ---
-### Script Content
-$script_content
+# 論の展開
+${analysis_result}
+
+# 利用可能な機能
+${slide_functions_summary}
+
+# 原稿
+${script_content}

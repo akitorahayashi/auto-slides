@@ -44,7 +44,9 @@ class SlideGenChain(SlideGenerationProtocol):
             | RunnableLambda(
                 lambda prompt_dict: {
                     **prompt_dict,
-                    "prompt": self.prompt_service._truncate_prompt(prompt_dict["prompt"]),
+                    "prompt": self.prompt_service._truncate_prompt(
+                        prompt_dict["prompt"]
+                    ),
                 }
             )
             | ChatPromptTemplate.from_template("{prompt}")
@@ -59,7 +61,9 @@ class SlideGenChain(SlideGenerationProtocol):
         if self.progress_callback:
             # プログレスを0.0-1.0で計算
             progress = min(self.current_request / max(self.total_requests, 1), 1.0)
-            print(f"📊 LLM Request {self.current_request}/{self.total_requests} (progress: {progress:.1%})")
+            print(
+                f"📊 LLM Request {self.current_request}/{self.total_requests} (progress: {progress:.1%})"
+            )
         return None
 
     def _setup_chains(self):
@@ -74,8 +78,8 @@ class SlideGenChain(SlideGenerationProtocol):
             # Phase 2: Composition
             | RunnableLambda(lambda x: self._report_progress("composing") or x)
             | RunnablePassthrough.assign(
-                function_catalog=RunnableLambda(
-                    lambda x: self.slides_loader.create_function_catalog(
+                slide_functions_summary=RunnableLambda(
+                    lambda x: self.slides_loader.create_slide_functions_summary(
                         x["template"].id
                     )
                 )
@@ -100,11 +104,13 @@ class SlideGenChain(SlideGenerationProtocol):
             self._calculate_total_requests(template)
             self._report_progress("analyzing")
             print("🔍 Agent: Analyzing script content...")
-            
+
             input_data = {"script_content": script_content, "template": template}
-            print(f"🔍 Input data: script_length={len(script_content)}, template_id={template.id}")
+            print(
+                f"🔍 Input data: script_length={len(script_content)}, template_id={template.id}"
+            )
             print(f"🔍 Total LLM requests: {self.total_requests}")
-            
+
             result = self.slide_gen_chain.invoke(input_data)
             self._report_progress("completed")
             print("🎉 Agent: Presentation generated successfully!")
@@ -113,7 +119,9 @@ class SlideGenChain(SlideGenerationProtocol):
         except Exception as e:
             print(f"🚨 Agent error: {e}")
             print(f"🚨 Error type: {type(e).__name__}")
-            print(f"🚨 Input was: script_length={len(script_content) if script_content else 0}, template_id={template.id if template else 'None'}")
+            print(
+                f"🚨 Input was: script_length={len(script_content) if script_content else 0}, template_id={template.id if template else 'None'}"
+            )
             raise e
 
     def _calculate_total_requests(self, template: SlideTemplate) -> None:
@@ -121,18 +129,20 @@ class SlideGenChain(SlideGenerationProtocol):
         try:
             # 基本的なリクエスト: 分析(1) + 構成(1) = 2
             base_requests = 2
-            
+
             # テンプレート関数の数を取得
             functions = self.slides_loader.load_template_functions(template.id)
             function_count = len(functions)
-            
+
             # 各スライドのパラメータ生成リクエスト数（推定値として関数数を使用）
             parameter_requests = function_count
-            
+
             self.total_requests = base_requests + parameter_requests
             self.current_request = 0
-            
-            print(f"🔢 Calculated total requests: {self.total_requests} (base: {base_requests}, parameters: {parameter_requests})")
+
+            print(
+                f"🔢 Calculated total requests: {self.total_requests} (base: {base_requests}, parameters: {parameter_requests})"
+            )
         except Exception as e:
             print(f"⚠️ Error calculating requests: {e}")
             # エラー時はデフォルト値を使用
@@ -154,27 +164,27 @@ class SlideGenChain(SlideGenerationProtocol):
 
         # composition_planの構造をデバッグ出力
         print(f"🔍 Composition plan structure: {composition_plan}")
-        
+
         slides_list = composition_plan.get("slides", [])
         print(f"🔍 Slides list: {slides_list}")
-        
+
         for i, slide_plan in enumerate(slides_list):
             print(f"🔍 Processing slide {i}: {slide_plan}")
-            
-            # function_nameの存在確認
+
+            # slide_nameの存在確認
             if not isinstance(slide_plan, dict):
                 print(f"⚠️ Slide plan {i} is not a dictionary: {type(slide_plan)}")
                 continue
-                
-            function_name = slide_plan.get("function_name")
-            if not function_name:
-                print(f"⚠️ Slide plan {i} missing function_name: {slide_plan}")
+
+            slide_name = slide_plan.get("slide_name")
+            if not slide_name:
+                print(f"⚠️ Slide plan {i} missing slide_name: {slide_plan}")
                 continue
-                
-            if function_name not in functions:
-                print(f"⚠️ Function '{function_name}' not available in template functions")
+
+            if slide_name not in functions:
+                print(f"⚠️ Function '{slide_name}' not available in template functions")
                 continue
-                
+
             try:
                 params = self._create_chain_step(
                     self.prompt_service.build_parameter_prompt
@@ -182,14 +192,14 @@ class SlideGenChain(SlideGenerationProtocol):
                     {
                         "script_content": script_content,
                         "analysis_result": analysis_result,
-                        "function_name": function_name,
-                        "function_info": functions[function_name],
+                        "slide_name": slide_name,
+                        "function_info": functions[slide_name],
                     }
                 )
                 slide_parameters.append(params)
-                print(f"✅ Successfully generated parameters for {function_name}")
+                print(f"✅ Successfully generated parameters for {slide_name}")
             except Exception as param_error:
-                print(f"⚠️ Error generating parameters for {function_name}: {param_error}")
+                print(f"⚠️ Error generating parameters for {slide_name}: {param_error}")
                 continue
 
         self._report_progress("building")
@@ -198,19 +208,19 @@ class SlideGenChain(SlideGenerationProtocol):
 
         for i, slide_param in enumerate(slide_parameters):
             print(f"🔍 Processing slide parameter {i}: {slide_param}")
-            
+
             if not isinstance(slide_param, dict):
                 print(f"⚠️ Slide param {i} is not a dictionary: {type(slide_param)}")
                 continue
-                
-            function_name = slide_param.get("function_name")
-            if not function_name:
-                print(f"⚠️ Slide param {i} missing function_name: {slide_param}")
+
+            slide_name = slide_param.get("slide_name")
+            if not slide_name:
+                print(f"⚠️ Slide param {i} missing slide_name: {slide_param}")
                 continue
-                
+
             parameters = slide_param.get("parameters", {})
 
-            func = self.slides_loader.get_function_by_name(template.id, function_name)
+            func = self.slides_loader.get_function_by_name(template.id, slide_name)
 
             if func:
                 try:
@@ -223,7 +233,7 @@ class SlideGenChain(SlideGenerationProtocol):
                             valid_params[param_name] = param_value
                         else:
                             print(
-                                f"🔧 Skipping invalid parameter '{param_name}' for function '{function_name}'"
+                                f"🔧 Skipping invalid parameter '{param_name}' for function '{slide_name}'"
                             )
 
                     # 不足している必須パラメータがないかチェック
@@ -237,14 +247,14 @@ class SlideGenChain(SlideGenerationProtocol):
 
                     if missing_params:
                         print(
-                            f"⚠️ Missing required parameters for {function_name}: {missing_params}"
+                            f"⚠️ Missing required parameters for {slide_name}: {missing_params}"
                         )
                         continue
 
                     slide_content = func(**valid_params)
                     slides.append(slide_content)
                 except Exception as e:
-                    print(f"⚠️ Error executing {function_name}: {e}")
+                    print(f"⚠️ Error executing {slide_name}: {e}")
                     print(f"   Parameters: {parameters}")
                     print(
                         f"   Valid parameters: {valid_params if 'valid_params' in locals() else 'N/A'}"

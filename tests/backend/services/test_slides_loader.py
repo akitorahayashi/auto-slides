@@ -133,7 +133,7 @@ class TestSlidesLoader:
         assert "colon:" in args_info["param2"]
 
     @patch("importlib.import_module")
-    def test_create_function_catalog(self, mock_import):
+    def test_create_slide_functions_summary(self, mock_import):
         """Test creating function catalog"""
 
         def slide_function(title: str, content: str):
@@ -150,7 +150,7 @@ class TestSlidesLoader:
         mock_module.slide_function = slide_function
         mock_import.return_value = mock_module
 
-        catalog = self.loader.create_function_catalog("test_template")
+        catalog = self.loader.create_slide_functions_summary("test_template")
 
         assert "Function: slide_function" in catalog
         assert "Purpose: Create a slide with title and content" in catalog
@@ -160,7 +160,7 @@ class TestSlidesLoader:
         assert "content: The slide content" in catalog
 
     @patch("importlib.import_module")
-    def test_create_function_catalog_no_description(self, mock_import):
+    def test_create_slide_functions_summary_no_description(self, mock_import):
         """Test creating catalog for function without description"""
 
         def no_desc_function():
@@ -171,7 +171,7 @@ class TestSlidesLoader:
         mock_module.no_desc_function = no_desc_function
         mock_import.return_value = mock_module
 
-        catalog = self.loader.create_function_catalog("test_template")
+        catalog = self.loader.create_slide_functions_summary("test_template")
 
         assert "Function: no_desc_function" in catalog
         # Empty purpose should result in empty string, not "No description"
@@ -269,7 +269,7 @@ class TestSlidesLoader:
         assert args_info["param_with_colon"] == "but no description"
 
     @patch("importlib.import_module")
-    def test_create_function_catalog_multiple_functions(self, mock_import):
+    def test_create_slide_functions_summary_multiple_functions(self, mock_import):
         """Test creating catalog with multiple functions"""
 
         def func1():
@@ -286,7 +286,7 @@ class TestSlidesLoader:
         mock_module.func2 = func2
         mock_import.return_value = mock_module
 
-        catalog = self.loader.create_function_catalog("test_template")
+        catalog = self.loader.create_slide_functions_summary("test_template")
 
         assert "Function: func1" in catalog
         assert "Function: func2" in catalog

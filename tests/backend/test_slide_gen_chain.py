@@ -22,8 +22,8 @@ class TestSlideGenChainIntegration:
         """Mock responses for different phases of slide generation"""
         return {
             "analyze": "Analysis completed successfully",
-            "composition": '{"slides": [{"function_name": "title_slide", "order": 1}, {"function_name": "content_slide", "order": 2}]}',
-            "parameter": '{"function_name": "title_slide", "parameters": {"title": "Test Title", "subtitle": "Test Subtitle"}}',
+            "composition": '{"slides": [{"slide_name": "title_slide", "order": 1}, {"slide_name": "content_slide", "order": 2}]}',
+            "parameter": '{"slide_name": "title_slide", "parameters": {"title": "Test Title", "subtitle": "Test Subtitle"}}',
             "default": "Mock response generated successfully",
         }
 
@@ -89,7 +89,9 @@ class TestSlideGenChainIntegration:
         assert "Analysis completed successfully" in full_response
         assert len(chunks) > 1  # Should be split into multiple chunks
 
-    @patch("src.backend.services.slides_loader.SlidesLoader.create_function_catalog")
+    @patch(
+        "src.backend.services.slides_loader.SlidesLoader.create_slide_functions_summary"
+    )
     @patch("src.backend.services.slides_loader.SlidesLoader.load_template_functions")
     @patch("src.backend.services.slides_loader.SlidesLoader.get_function_by_name")
     def test_full_slide_generation_workflow(

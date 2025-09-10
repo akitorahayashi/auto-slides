@@ -18,48 +18,16 @@ class PromptService:
 
     def build_analysis_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Build analysis prompt from template"""
-        substitutions = {"script_content": input_dict["script_content"]}
+        import streamlit as st
+
+        script_content = input_dict["script_content"]
+        divisor = st.secrets.get("ARGUMENT_FLOW_DIVISOR", 4)
+        argument_flow_limit = len(script_content) // divisor
+        substitutions = {
+            "script_content": script_content,
+            "argument_flow_limit": str(argument_flow_limit),
+        }
         prompt = self._build_prompt("analyze_script.md", substitutions)
-        return {**input_dict, "prompt": prompt}
-
-    def build_planning_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Build planning prompt from template"""
-        substitutions = {
-            "analysis_result": json.dumps(
-                input_dict["analysis_result"], ensure_ascii=False
-            ),
-            "placeholders_list": "\n".join(
-                [f"- {p}" for p in input_dict["placeholders"]]
-            ),
-        }
-        prompt = self._build_prompt("plan_content.md", substitutions)
-        return {**input_dict, "prompt": prompt}
-
-    def build_generation_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Build generation prompt from template"""
-        placeholders = input_dict["placeholders"]
-        substitutions = {
-            "script_content": input_dict["script_content"],
-            "placeholders_list": "\n".join([f"- {p}" for p in placeholders]),
-            "json_example": ",\n".join(
-                [f'  \"{p}\": \"対応する内容\"' for p in placeholders]
-            ),
-        }
-        prompt = self._build_prompt("generate_slide_content.md", substitutions)
-        return {**input_dict, "prompt": prompt}
-
-    def build_validation_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
-        """Build validation prompt from template"""
-        substitutions = {
-            "generated_content": json.dumps(
-                input_dict["generated_content"], ensure_ascii=False
-            ),
-            "analysis_result": json.dumps(
-                input_dict["analysis_result"], ensure_ascii=False
-            ),
-            "content_plan": json.dumps(input_dict["content_plan"], ensure_ascii=False),
-        }
-        prompt = self._build_prompt("validate_content.md", substitutions)
         return {**input_dict, "prompt": prompt}
 
     def build_composition_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -69,7 +37,7 @@ class PromptService:
             "analysis_result": json.dumps(
                 input_dict["analysis_result"], ensure_ascii=False
             ),
-            "function_catalog": input_dict["function_catalog"],
+            "slide_functions_summary": input_dict["slide_functions_summary"],
         }
         prompt = self._build_prompt("compose_slides.md", substitutions)
         return {**input_dict, "prompt": prompt}
@@ -82,7 +50,7 @@ class PromptService:
             "analysis_result": json.dumps(
                 input_dict["analysis_result"], ensure_ascii=False
             ),
-            "function_name": input_dict["function_name"],
+            "slide_name": input_dict["slide_name"],
             "function_purpose": (
                 function_info.get("docstring", "").split("\n")[0]
                 if function_info.get("docstring")

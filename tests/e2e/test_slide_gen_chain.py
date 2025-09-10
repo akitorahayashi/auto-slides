@@ -57,7 +57,7 @@ class TestSlideGenChainE2E:
 
             # Mock the slides loader to avoid file dependencies
             with patch(
-                "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
+                "src.backend.services.slides_loader.SlidesLoader.create_slide_functions_summary"
             ) as mock_catalog:
                 with patch(
                     "src.backend.services.slides_loader.SlidesLoader.load_template_functions"
@@ -111,7 +111,7 @@ class TestSlideGenChainE2E:
 
                 # Mock the slides loader to avoid file dependencies
                 with patch(
-                    "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
+                    "src.backend.services.slides_loader.SlidesLoader.create_slide_functions_summary"
                 ) as mock_catalog:
                     with patch(
                         "src.backend.services.slides_loader.SlidesLoader.load_template_functions"
@@ -173,7 +173,7 @@ class TestSlideGenChainE2E:
 
                 # Mock the slides loader to avoid file dependencies
                 with patch(
-                    "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
+                    "src.backend.services.slides_loader.SlidesLoader.create_slide_functions_summary"
                 ) as mock_catalog:
                     with patch(
                         "src.backend.services.slides_loader.SlidesLoader.load_template_functions"
@@ -278,7 +278,7 @@ class TestSlideGenChainE2E:
 
             # Mock the slides loader
             with patch(
-                "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
+                "src.backend.services.slides_loader.SlidesLoader.create_slide_functions_summary"
             ) as mock_catalog:
                 with patch(
                     "src.backend.services.slides_loader.SlidesLoader.load_template_functions"

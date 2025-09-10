@@ -63,9 +63,9 @@ class SlidesLoader:
 
         return args_info
 
-    def create_function_catalog(self, template_id: str) -> str:
+    def create_slide_functions_summary(self, template_id: str) -> str:
         """
-        Create a formatted catalog of functions for LLM consumption.
+        Create a formatted summary of slide functions for LLM consumption.
 
         Args:
             template_id: Template identifier
@@ -74,7 +74,7 @@ class SlidesLoader:
             Formatted string containing function documentation
         """
         functions = self.load_template_functions(template_id)
-        catalog_parts = []
+        summary_parts = []
 
         for func_name, info in functions.items():
             # Extract purpose from docstring first line
@@ -90,14 +90,14 @@ Arguments:"""
             for arg_name, arg_desc in info["args_info"].items():
                 func_doc += f"\n  - {arg_name}: {arg_desc}"
 
-            catalog_parts.append(func_doc)
+            summary_parts.append(func_doc)
 
-        return "\n\n" + "=" * 50 + "\n\n".join(catalog_parts)
+        return "\n\n" + "=" * 50 + "\n\n".join(summary_parts)
 
-    def get_function_by_name(self, template_id: str, function_name: str):
+    def get_function_by_name(self, template_id: str, slide_name: str):
         """Get specific function by name"""
         functions = self.load_template_functions(template_id)
-        return functions.get(function_name, {}).get("function")
+        return functions.get(slide_name, {}).get("function")
 
     def list_available_functions(self, template_id: str) -> list:
         """List all available function names for a template"""

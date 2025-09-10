@@ -33,12 +33,9 @@ class TestPromptService:
     def create_test_templates(self):
         """Create test template files"""
         templates = {
-            "analyze_script.md": "Analyze this script: $script_content",
-            "plan_content.md": "Plan content based on: $analysis_result\nPlaceholders: $placeholders_list",
-            "generate_slide_content.md": "Generate content for: $script_content\nPlaceholders: $placeholders_list\nExample: {$json_example}",
-            "validate_content.md": "Validate: $generated_content\nAgainst: $analysis_result\nPlan: $content_plan",
-            "compose_slides.md": "Compose slides for: $script_content\nAnalysis: $analysis_result\nFunctions: $function_catalog",
-            "generate_parameters.md": "Generate parameters for: $function_name\nPurpose: $function_purpose\nSignature: $function_signature\nArgs: $arguments_list\nScript: $script_content\nAnalysis: $analysis_result",
+            "analyze_script.md": "Analyze this script: $script_content\nLimit: $argument_flow_limit characters",
+            "compose_slides.md": "Compose slides for: $script_content\nAnalysis: $analysis_result\nFunctions: $slide_functions_summary",
+            "generate_parameters.md": "Generate parameters for: $slide_name\nPurpose: $function_purpose\nSignature: $function_signature\nArgs: $arguments_list\nScript: $script_content\nAnalysis: $analysis_result",
         }
 
         for filename, content in templates.items():
@@ -62,43 +59,8 @@ class TestPromptService:
 
         assert "prompt" in result
         assert "script_content" in result
-        assert result["prompt"] == "Analyze this script: This is a test script"
-
-    def test_build_planning_prompt(self):
-        """Test building planning prompt"""
-        input_dict = {
-            "analysis_result": {"summary": "Test analysis"},
-            "placeholders": ["title", "content"],
-        }
-        result = self.service.build_planning_prompt(input_dict)
-
-        assert "prompt" in result
-        expected_prompt = 'Plan content based on: {"summary": "Test analysis"}\nPlaceholders: - title\n- content'
-        assert result["prompt"] == expected_prompt
-
-    def test_build_generation_prompt(self):
-        """Test building generation prompt"""
-        input_dict = {
-            "script_content": "Test script",
-            "placeholders": ["title", "subtitle"],
-        }
-        result = self.service.build_generation_prompt(input_dict)
-
-        assert "prompt" in result
-        expected_prompt = 'Generate content for: Test script\nPlaceholders: - title\n- subtitle\nExample: {  "title": "対応する内容",\n  "subtitle": "対応する内容"}'
-        assert result["prompt"] == expected_prompt
-
-    def test_build_validation_prompt(self):
-        """Test building validation prompt"""
-        input_dict = {
-            "generated_content": {"title": "Test Title"},
-            "analysis_result": {"summary": "Analysis"},
-            "content_plan": {"structure": "Plan"},
-        }
-        result = self.service.build_validation_prompt(input_dict)
-
-        assert "prompt" in result
-        expected_prompt = 'Validate: {"title": "Test Title"}\nAgainst: {"summary": "Analysis"}\nPlan: {"structure": "Plan"}'
+        expected_limit = len("This is a test script") // 4
+        expected_prompt = f"Analyze this script: This is a test script\nLimit: {expected_limit} characters"
         assert result["prompt"] == expected_prompt
 
     def test_build_composition_prompt(self):
@@ -106,7 +68,7 @@ class TestPromptService:
         input_dict = {
             "script_content": "Test script",
             "analysis_result": {"summary": "Analysis"},
-            "function_catalog": "Function list",
+            "slide_functions_summary": "Function list",
         }
         result = self.service.build_composition_prompt(input_dict)
 
@@ -119,7 +81,7 @@ class TestPromptService:
         input_dict = {
             "script_content": "Test script",
             "analysis_result": {"summary": "Analysis"},
-            "function_name": "test_function",
+            "slide_name": "test_function",
             "function_info": {
                 "docstring": "Test function purpose\nMore details",
                 "signature": "test_function(arg1, arg2)",
@@ -137,7 +99,7 @@ class TestPromptService:
         input_dict = {
             "script_content": "Test script",
             "analysis_result": {"summary": "Analysis"},
-            "function_name": "test_function",
+            "slide_name": "test_function",
             "function_info": {
                 "docstring": "",
                 "signature": "test_function()",
@@ -154,7 +116,7 @@ class TestPromptService:
         input_dict = {
             "script_content": "Test script",
             "analysis_result": {"summary": "Analysis"},
-            "function_name": "test_function",
+            "slide_name": "test_function",
             "function_info": {"signature": "test_function()", "args_info": {}},
         }
         result = self.service.build_parameter_prompt(input_dict)
@@ -172,19 +134,6 @@ class TestPromptService:
         assert result["other_key"] == "value"
         # Check that prompt is added
         assert "prompt" in result
-
-    def test_build_prompt_with_unicode_content(self):
-        """Test building prompts with unicode content"""
-        input_dict = {
-            "analysis_result": {"summary": "テスト分析", "emoji": "🎉"},
-            "placeholders": ["タイトル", "内容"],
-        }
-        result = self.service.build_planning_prompt(input_dict)
-
-        assert "prompt" in result
-        assert "テスト分析" in result["prompt"]
-        assert "🎉" in result["prompt"]
-        assert "タイトル" in result["prompt"]
 
     def test_missing_template_file_raises_error(self):
         """Test that missing template file raises FileNotFoundError"""

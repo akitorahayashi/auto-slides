@@ -456,7 +456,9 @@ class TestSlideGenChainProgressIntegration:
 
             def _report_progress(self, stage):
                 if self.progress_callback:
-                    self.progress_callback(stage, self.current_request, self.total_requests)
+                    self.progress_callback(
+                        stage, self.current_request, self.total_requests
+                    )
 
             def invoke_slide_gen_chain(self, content, template):
                 self.current_request = 1
@@ -504,7 +506,9 @@ class TestSlideGenChainProgressIntegration:
 
             def _report_progress(self, stage):
                 if self.progress_callback:
-                    self.progress_callback(stage, self.current_request, self.total_requests)
+                    self.progress_callback(
+                        stage, self.current_request, self.total_requests
+                    )
 
             def invoke_slide_gen_chain(self, content, template):
                 self.current_request = 1

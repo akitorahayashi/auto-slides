@@ -126,7 +126,7 @@ def generate_slides_with_llm():
             progress_text = get_progress_text(
                 stage, st.session_state.progress_animation_count
             )
-        
+
         progress_container.info(progress_text)
         progress_bar_container.progress(progress_value)
 
@@ -155,7 +155,7 @@ def generate_slides_with_llm():
                     # モックの場合はそのまま使用（段階的な表示をシミュレート）
                     # モック用の想定LLMリクエスト数
                     mock_total_requests = 5
-                    
+
                     progress_callback("analyzing", 1, mock_total_requests)
                     time.sleep(0.5)
                     progress_callback("composing", 2, mock_total_requests)
@@ -168,7 +168,9 @@ def generate_slides_with_llm():
                     time.sleep(0.5)
 
                     result = generator.invoke_slide_gen_chain(script_content, template)
-                    progress_callback("completed", mock_total_requests, mock_total_requests)
+                    progress_callback(
+                        "completed", mock_total_requests, mock_total_requests
+                    )
                     return result
             except Exception as gen_error:
                 raise gen_error
@@ -235,12 +237,15 @@ def generate_slides_with_llm():
                 st.info(
                     "- モデルが適切なJSON形式で応答していない可能性があります\n- プロンプトの調整が必要かもしれません"
                 )
-            elif "function_name" in error_message.lower() or "keyerror" in error_type.lower():
+            elif (
+                "slide_name" in error_message.lower()
+                or "keyerror" in error_type.lower()
+            ):
                 st.warning("🔧 **構造エラー**: LLMの応答に必要なキーが不足しています")
                 st.info(
                     """**考えられる原因:**
 - LLMが期待されたJSON構造を生成していない
-- `function_name`などの必須フィールドが欠落している
+- `slide_name`などの必須フィールドが欠落している
 - より具体的なプロンプトが必要な可能性があります
 - モデルの能力不足の可能性があります"""
                 )
