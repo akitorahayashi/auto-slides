@@ -1,18 +1,18 @@
-"""Tests for TemplateAnalyzer"""
+"""Tests for ScriptAnalyzer"""
 
 import tempfile
 from pathlib import Path
 
 from src.backend.models.slide_template import SlideTemplate
-from src.backend.services.script_analyzer import TemplateAnalyzer
+from src.backend.services import ScriptAnalyzer
 
 
-class TestTemplateAnalyzer:
-    """Test TemplateAnalyzer functionality"""
+class TestScriptAnalyzer:
+    """Test ScriptAnalyzer functionality"""
 
     def setup_method(self):
         """Set up test fixtures"""
-        self.analyzer = TemplateAnalyzer()
+        self.analyzer = ScriptAnalyzer()
         # Create temporary directory for test templates
         self.temp_dir = tempfile.mkdtemp()
         self.template_dir = Path(self.temp_dir) / "template"

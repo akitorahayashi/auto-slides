@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import streamlit as st
 
-from dev.mocks.mock_slide_generator import MockSlideGenerator
+from dev.mocks import MockSlideGenerator
 from src.backend.chains.slide_gen_chain import SlideGenChain
 from src.frontend.app_state import AppState
 from src.main import initialize_session

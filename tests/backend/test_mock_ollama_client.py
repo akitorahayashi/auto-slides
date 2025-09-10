@@ -1,6 +1,6 @@
 import pytest
 
-from dev.mocks.mock_olm_client import MockOlmClient
+from dev.mocks import MockOlmClient
 
 
 class TestMockOlmClient:

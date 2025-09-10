@@ -1,6 +1,6 @@
 import streamlit as st
 
-from src.protocols.schemas.output_format import OutputFormat
+from src.protocols.schemas import OutputFormat
 
 
 @st.dialog("実行確認", width="small", dismissible=True)

@@ -74,7 +74,7 @@ class TestImplementationPageLogic:
 
     def test_format_options_structure(self):
         """Test the format options structure from implementation_page.py"""
-        from src.protocols.schemas.output_format import OutputFormat
+        from src.protocols.schemas import OutputFormat
 
         # This mimics the format_options from the actual implementation
         format_options = {

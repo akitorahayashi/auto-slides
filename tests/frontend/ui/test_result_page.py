@@ -4,7 +4,7 @@ import pytest
 import streamlit as st
 
 from src.backend.models.slide_template import SlideTemplate
-from src.protocols.schemas.output_format import OutputFormat
+from src.protocols.schemas import OutputFormat
 
 # Test the progress functionality without direct imports to avoid streamlit issues
 

@@ -11,11 +11,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 import streamlit as st
 
-from dev.mocks.mock_slide_generator import MockSlideGenerator
+from dev.mocks import MockSlideGenerator
 from src.backend.chains.slide_gen_chain import SlideGenChain
 from src.backend.models.slide_template import SlideTemplate
 from src.frontend.app_state import AppState
-from src.protocols.schemas.output_format import OutputFormat
+from src.protocols.schemas import OutputFormat
 
 
 class TestExecutionFlowIntegration:
