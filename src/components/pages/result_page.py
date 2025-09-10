@@ -29,7 +29,7 @@ def generate_slides_with_llm():
             # 本番モードでは既存のSlideGeneratorを使用
             from src.services.slide_generator import SlideGenerator
 
-            with st.status("LLMがプレゼンテーションを生成中...", expanded=True) as main_status:
+            with st.status("プレゼンテーションスライドを生成中...", expanded=True) as main_status:
                 generator = SlideGenerator()
                 generated_markdown = generator.generate_sync(script_content, template)
                 main_status.update(label="スライド生成完了", state="complete")
@@ -106,7 +106,21 @@ selected_format_enum = format_options[selected_format]["format"]
 try:
     # 生成されたMarkdownコンテンツとCSSを取得
     generated_markdown = st.session_state.app_state.generated_markdown
+    
+    # 生成されたMarkdownコンテンツの検証
+    if not generated_markdown or generated_markdown.strip() == "":
+        st.error("❌ 生成されたMarkdownコンテンツが空です。")
+        st.error("設定画面に戻って再度お試しください。")
+        if st.button("設定画面に戻る", type="primary"):
+            st.switch_page("components/pages/implementation_page.py")
+        st.stop()
+    
     css_content = template.read_css_content()
+    
+    # CSSコンテンツの検証
+    if not css_content:
+        st.warning("⚠️ CSSコンテンツが見つかりません。デフォルトスタイルを使用します。")
+        css_content = "/* Default CSS */"
 
     # 一時ファイルを作成してMarpServiceを使用
     temp_dir = Path(tempfile.gettempdir()) / "auto-slides"
@@ -117,10 +131,15 @@ try:
 
     # マークダウンファイルを作成
     with open(temp_md_path, "w", encoding="utf-8") as f:
+        if generated_markdown is None:
+            st.error("❌ 生成されたMarkdownコンテンツがNoneです。")
+            st.stop()
         f.write(generated_markdown)
 
     # CSSファイルを作成
     with open(temp_css_path, "w", encoding="utf-8") as f:
+        if css_content is None:
+            css_content = "/* Default CSS */"
         f.write(css_content)
 
     # MarpServiceを使用して変換

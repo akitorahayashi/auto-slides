@@ -20,7 +20,7 @@ class SlideGenChain:
     def _setup_chains(self):
         """Setup LangChain LCEL chains using OllamaClientManager"""
 
-        # Phase 1: Script Analysis Chain (テキスト出力)
+        # Phase 1: Script Analysis Chain (JSON出力)
         self.analysis_chain = (
             RunnablePassthrough.assign(
                 prompt=RunnableLambda(self.prompt_service.build_analysis_prompt)
@@ -28,7 +28,7 @@ class SlideGenChain:
             | RunnableLambda(lambda x: x["prompt"])
             | ChatPromptTemplate.from_template("{prompt}")
             | self.llm
-            | self.str_parser
+            | self.json_parser
         )
 
         # Phase 2: Content Planning Chain
