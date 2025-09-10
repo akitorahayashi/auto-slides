@@ -4,11 +4,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
-from src.models.slide_template import SlideTemplate
-from src.protocols.olm_client_protocol import OlmClientProtocol
-from src.services.json_parser import JsonParser
-from src.services.prompt_service import PromptService
-from src.services.slides_loader import SlidesLoader
+from src.models import SlideTemplate
+from src.protocols import OlmClientProtocol
+from src.services import JsonParser, PromptService, SlidesLoader
 
 
 class SlideGenChain:

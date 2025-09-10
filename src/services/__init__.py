@@ -1,15 +1,13 @@
-"""
-Services module for auto-slides application.
-
-This module provides various services for slide generation and conversion:
-- MarpService: Handles Marp CLI operations for slide generation
-- PromptService: Handles prompt template management
-"""
-
+from .json_parser import JsonParser
 from .marp_service import MarpService
 from .prompt_service import PromptService
+from .script_analyzer import TemplateAnalyzer
+from .slides_loader import SlidesLoader
 
 __all__ = [
+    "JsonParser",
     "MarpService",
     "PromptService",
+    "TemplateAnalyzer",
+    "SlidesLoader",
 ]

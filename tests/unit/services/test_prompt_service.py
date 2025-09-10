@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.services.prompt_service import PromptService
+from src.services import PromptService
 
 
 class TestPromptService:

@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.schemas.output_format import OutputFormat
-from src.services.marp_service import MarpService
+from src.schemas import OutputFormat
+from src.services import MarpService
 
 
 class TestMarpService:

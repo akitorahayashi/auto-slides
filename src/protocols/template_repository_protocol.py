@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, List, Optional, Protocol
 
 if TYPE_CHECKING:
-    from src.models.slide_template import SlideTemplate
+    from src.models import SlideTemplate
 
 
 class TemplateRepositoryProtocol(Protocol):

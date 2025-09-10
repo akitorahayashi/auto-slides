@@ -63,9 +63,7 @@ Thank you for your attention.
                 script_content = "Test script for chain workflow"
 
                 # Simulate the actual workflow from result_page.py
-                with patch(
-                    "src.chains.slide_gen_chain.SlideGenChain"
-                ) as mock_slide_gen_class:
+                with patch("src.chains.SlideGenChain") as mock_slide_gen_class:
                     mock_slide_gen_class.return_value = mock_chain
 
                     # Simulate SlideGenChain invocation
@@ -111,7 +109,7 @@ Thank you for your attention.
 
             from unittest.mock import Mock
 
-            from src.chains.slide_gen_chain import SlideGenChain
+            from src.chains import SlideGenChain
 
             # Create mock LLM
             mock_llm = Mock()
@@ -140,7 +138,7 @@ Thank you for your attention.
                 # Mock the session state initialization logic from main.py
                 from unittest.mock import Mock
 
-                from src.chains.slide_gen_chain import SlideGenChain
+                from src.chains import SlideGenChain
 
                 # Create mock LLM
                 mock_llm = Mock()
@@ -176,9 +174,7 @@ Thank you for your attention.
             script_content = "Test script"
 
             # Simulate error handling from result_page.py
-            with patch(
-                "src.chains.slide_gen_chain.SlideGenChain"
-            ) as mock_slide_gen_class:
+            with patch("src.chains.SlideGenChain") as mock_slide_gen_class:
                 mock_slide_gen_class.return_value = mock_chain
 
                 try:

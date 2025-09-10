@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from src.protocols.template_repository_protocol import TemplateRepositoryProtocol
+from src.protocols import TemplateRepositoryProtocol
 
 from .slide_template import SlideTemplate
 

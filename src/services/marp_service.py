@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 
-from src.schemas.output_format import OutputFormat
+from src.schemas import OutputFormat
 
 # Configure basic logging
 logging.basicConfig(

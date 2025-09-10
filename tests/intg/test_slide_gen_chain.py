@@ -9,9 +9,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dev.mocks.mock_olm_client import MockOlmClient
-from src.chains.slide_gen_chain import SlideGenChain
-from src.models.slide_template import SlideTemplate
+from dev.mocks import MockOlmClient
+from src.chains import SlideGenChain
+from src.models import SlideTemplate
 
 
 class TestSlideGenChainIntegration:

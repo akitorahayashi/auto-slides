@@ -7,22 +7,7 @@ from src.models import SlideTemplate
 
 
 class TestImplementationPageLogic:
-    """Test cases             from src.services.slide_generator import SlideGenerator
-
-    # Test that SlideGenerator can be instantiated
-    generator = SlideGenerator()
-    assert hasattr(generator, 'chain')
-
-    # Test extract_placeholders function
-    from src.services.slide_generator import extract_placeholders
-
-    template_content = "Hello ${name}, welcome to ${event}!"
-    placeholders = extract_placeholders(template_content)
-    assert placeholders == {"name", "event"}
-
-    # Test render_template function
-    from src.services.slide_generator import render_templateion_page.py redirect and UI logic
-    """
+    """Test cases for implementation_page.py redirect and UI logic"""
 
     def test_redirect_logic_when_no_app_state(self):
         """Test redirect logic when app_state is missing"""

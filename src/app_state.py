@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from src.models.slide_template import SlideTemplate
+from src.models import SlideTemplate
 from src.protocols import TemplateRepositoryProtocol
 
 

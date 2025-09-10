@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from dev.mocks.mock_template_repository import MockTemplateRepository
+from dev.mocks import MockTemplateRepository
 from src.models import SlideTemplate
 from src.services import MarpService
 
@@ -79,14 +79,6 @@ def real_prompt_service():
     from src.services import PromptService
 
     return PromptService()
-
-
-@pytest.fixture
-def mock_slide_generator():
-    """Mock SlideGenerator for testing"""
-    from dev.mocks.mock_slide_generator import MockSlideGenerator
-
-    return MockSlideGenerator()
 
 
 @pytest.fixture

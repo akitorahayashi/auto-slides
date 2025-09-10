@@ -114,8 +114,7 @@ def test_chain_integration_import():
         [
             test_helper.python_executable,
             "-c",
-            "from src.chains.slide_gen_chain import SlideGenChain; "
-            "print('Chain imports successful')",
+            "from src.chains import SlideGenChain; print('Chain imports successful')",
         ],
         cwd=test_helper.project_root,
         capture_output=True,

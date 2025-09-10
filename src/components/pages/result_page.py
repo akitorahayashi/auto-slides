@@ -5,7 +5,7 @@ import streamlit as st
 from pdf2image import convert_from_bytes
 
 from src.schemas import OutputFormat
-from src.services.marp_service import MarpService
+from src.services import MarpService
 
 
 def generate_slides_with_llm():
@@ -20,8 +20,8 @@ def generate_slides_with_llm():
     try:
         if is_debug:
             # DEBUGモードではMockLLMクライアントを使用
-            from dev.mocks.mock_olm_client import MockOlmClient
-            from src.chains.slide_gen_chain import SlideGenChain
+            from dev.mocks import MockOlmClient
+            from src.chains import SlideGenChain
 
             with st.spinner("モックサービスでスライドを生成中..."):
                 mock_llm = MockOlmClient()
@@ -31,8 +31,8 @@ def generate_slides_with_llm():
                 )
         else:
             # 本番モードではSlideGenChainを使用
-            from src.chains.slide_gen_chain import SlideGenChain
-            from src.clients.olm_client import OlmClient
+            from src.chains import SlideGenChain
+            from src.clients import OlmClient
 
             llm = OlmClient()
             generator = SlideGenChain(llm=llm)

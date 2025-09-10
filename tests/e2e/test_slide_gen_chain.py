@@ -11,9 +11,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.chains.slide_gen_chain import SlideGenChain
-from src.clients.olm_client import OlmClient
-from src.models.slide_template import SlideTemplate
+from src.chains import SlideGenChain
+from src.clients import OlmClient
+from src.models import SlideTemplate
 
 
 class TestSlideGenChainE2E:

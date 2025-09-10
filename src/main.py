@@ -3,8 +3,8 @@ from pathlib import Path
 import streamlit as st
 
 from src.app_state import AppState
-from src.models.template_repository import TemplateRepository
-from src.protocols.marp_protocol import MarpProtocol
+from src.models import TemplateRepository
+from src.protocols import MarpProtocol
 
 st.set_page_config(
     page_title="Auto Slides",
@@ -45,7 +45,7 @@ def initialize_session():
         is_debug = str(debug_value).lower() == "true"
 
         if is_debug:
-            from dev.mocks.mock_template_repository import MockTemplateRepository
+            from dev.mocks import MockTemplateRepository
 
             template_repository = MockTemplateRepository(
                 templates_dir=Path("src/templates")
@@ -63,11 +63,11 @@ def initialize_session():
         output_dir = "output"
 
         if is_debug:
-            from dev.mocks.mock_marp_service import MockMarpService
+            from dev.mocks import MockMarpService
 
             marp_service: MarpProtocol = MockMarpService(slides_path, output_dir)
         else:
-            from src.services.marp_service import MarpService
+            from src.services import MarpService
 
             marp_service: MarpProtocol = MarpService(slides_path, output_dir)
 

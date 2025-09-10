@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.services.slides_loader import SlidesLoader
+from src.services import SlidesLoader
 
 
 class TestSlidesLoader:
