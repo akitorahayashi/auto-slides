@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.models import SlideTemplate
+from src.backend.models.slide_template import SlideTemplate
 
 
 class TestSlideTemplate:

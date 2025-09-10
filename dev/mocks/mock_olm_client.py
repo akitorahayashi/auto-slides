@@ -3,7 +3,7 @@ from typing import Any, AsyncGenerator, Dict, Union
 
 from langchain_core.runnables import Runnable
 
-from src.protocols.olm_client_protocol import OlmClientProtocol
+from src.protocols.protocols.olm_client_protocol import OlmClientProtocol
 
 
 class MockOlmClient(Runnable, OlmClientProtocol):

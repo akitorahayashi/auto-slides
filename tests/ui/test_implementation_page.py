@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import streamlit as st
 
-from src.models import SlideTemplate
+from src.backend.models.slide_template import SlideTemplate
 
 
 class TestImplementationPageLogic:
@@ -22,11 +22,11 @@ class TestImplementationPageLogic:
                     not hasattr(st.session_state, "app_state")
                     or st.session_state.app_state.selected_template is None
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify redirect was called
                 mock_switch_page.assert_called_once_with(
-                    "components/pages/gallery_page.py"
+                    "src/frontend/components/pages/gallery_page.py"
                 )
 
     def test_redirect_logic_when_no_selected_template(self):
@@ -44,11 +44,11 @@ class TestImplementationPageLogic:
                     not hasattr(st.session_state, "app_state")
                     or st.session_state.app_state.selected_template is None
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify redirect was called
                 mock_switch_page.assert_called_once_with(
-                    "components/pages/gallery_page.py"
+                    "src/frontend/components/pages/gallery_page.py"
                 )
 
     def test_no_redirect_with_valid_template(self):
@@ -67,14 +67,14 @@ class TestImplementationPageLogic:
                     not hasattr(st.session_state, "app_state")
                     or st.session_state.app_state.selected_template is None
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify no redirect occurred
                 mock_switch_page.assert_not_called()
 
     def test_format_options_structure(self):
         """Test the format options structure from implementation_page.py"""
-        from src.schemas import OutputFormat
+        from src.protocols.schemas.output_format import OutputFormat
 
         # This mimics the format_options from the actual implementation
         format_options = {
@@ -134,7 +134,7 @@ class TestImplementationPageLogic:
                 }
                 mock_session.app_state.generated_markdown = generated_markdown
                 mock_session.selected_format = mock_session.format_selection
-                st.switch_page("components/pages/result_page.py")
+                st.switch_page("src/frontend/components/pages/result_page.py")
 
                 # Verify SlideGenerator was called correctly
                 mock_slide_generator.generate_sync.assert_called_once_with(
@@ -153,13 +153,15 @@ class TestImplementationPageLogic:
                 assert mock_session.selected_format == "PDF"
 
                 # Verify redirect to result page
-                mock_switch_page.assert_called_with("components/pages/result_page.py")
+                mock_switch_page.assert_called_with(
+                    "src/frontend/components/pages/result_page.py"
+                )
 
     def test_template_placeholder_extraction(self):
         """Test template placeholder extraction in implementation workflow"""
         from pathlib import Path
 
-        from src.models import SlideTemplate
+        from src.backend.models.slide_template import SlideTemplate
 
         template = SlideTemplate(
             id="test_template",
@@ -242,7 +244,9 @@ theme: default
         """Test navigation button logic"""
         with patch("streamlit.switch_page") as mock_switch_page:
             # Simulate gallery navigation button click
-            st.switch_page("components/pages/gallery_page.py")
+            st.switch_page("src/frontend/components/pages/gallery_page.py")
 
             # Verify navigation
-            mock_switch_page.assert_called_with("components/pages/gallery_page.py")
+            mock_switch_page.assert_called_with(
+                "src/frontend/components/pages/gallery_page.py"
+            )

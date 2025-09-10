@@ -11,9 +11,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.chains import SlideGenChain
-from src.clients import OlmClient
-from src.models import SlideTemplate
+from src.backend.chains.slide_gen_chain import SlideGenChain
+from src.backend.clients.olm_client import OlmClient
+from src.backend.models.slide_template import SlideTemplate
 
 
 class TestSlideGenChainE2E:
@@ -57,13 +57,13 @@ class TestSlideGenChainE2E:
 
             # Mock the slides loader to avoid file dependencies
             with patch(
-                "src.services.slides_loader.SlidesLoader.create_function_catalog"
+                "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
             ) as mock_catalog:
                 with patch(
-                    "src.services.slides_loader.SlidesLoader.load_template_functions"
+                    "src.backend.services.slides_loader.SlidesLoader.load_template_functions"
                 ) as mock_functions:
                     with patch(
-                        "src.services.slides_loader.SlidesLoader.get_function_by_name"
+                        "src.backend.services.slides_loader.SlidesLoader.get_function_by_name"
                     ) as mock_get_function:
 
                         mock_catalog.return_value = "Function catalog for testing"
@@ -111,13 +111,13 @@ class TestSlideGenChainE2E:
 
                 # Mock the slides loader to avoid file dependencies
                 with patch(
-                    "src.services.slides_loader.SlidesLoader.create_function_catalog"
+                    "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
                 ) as mock_catalog:
                     with patch(
-                        "src.services.slides_loader.SlidesLoader.load_template_functions"
+                        "src.backend.services.slides_loader.SlidesLoader.load_template_functions"
                     ) as mock_functions:
                         with patch(
-                            "src.services.slides_loader.SlidesLoader.get_function_by_name"
+                            "src.backend.services.slides_loader.SlidesLoader.get_function_by_name"
                         ) as mock_get_function:
 
                             mock_catalog.return_value = "Function catalog for testing"
@@ -173,13 +173,13 @@ class TestSlideGenChainE2E:
 
                 # Mock the slides loader to avoid file dependencies
                 with patch(
-                    "src.services.slides_loader.SlidesLoader.create_function_catalog"
+                    "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
                 ) as mock_catalog:
                     with patch(
-                        "src.services.slides_loader.SlidesLoader.load_template_functions"
+                        "src.backend.services.slides_loader.SlidesLoader.load_template_functions"
                     ) as mock_functions:
                         with patch(
-                            "src.services.slides_loader.SlidesLoader.get_function_by_name"
+                            "src.backend.services.slides_loader.SlidesLoader.get_function_by_name"
                         ) as mock_get_function:
 
                             mock_catalog.return_value = "Function catalog for testing"
@@ -278,13 +278,13 @@ class TestSlideGenChainE2E:
 
             # Mock the slides loader
             with patch(
-                "src.services.slides_loader.SlidesLoader.create_function_catalog"
+                "src.backend.services.slides_loader.SlidesLoader.create_function_catalog"
             ) as mock_catalog:
                 with patch(
-                    "src.services.slides_loader.SlidesLoader.load_template_functions"
+                    "src.backend.services.slides_loader.SlidesLoader.load_template_functions"
                 ) as mock_functions:
                     with patch(
-                        "src.services.slides_loader.SlidesLoader.get_function_by_name"
+                        "src.backend.services.slides_loader.SlidesLoader.get_function_by_name"
                     ) as mock_get_function:
 
                         mock_catalog.return_value = "Function catalog"

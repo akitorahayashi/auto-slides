@@ -2,13 +2,14 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from src.protocols import TemplateRepositoryProtocol
-
-from .slide_template import SlideTemplate
+from src.backend.models.slide_template import SlideTemplate
+from src.protocols.protocols.template_repository_protocol import (
+    TemplateRepositoryProtocol,
+)
 
 
 class TemplateRepository(TemplateRepositoryProtocol):
-    def __init__(self, templates_dir: Path = Path("src/templates")):
+    def __init__(self, templates_dir: Path = Path("src/backend/templates")):
         self.templates_dir = templates_dir
 
     def get_all_templates(self) -> List[SlideTemplate]:

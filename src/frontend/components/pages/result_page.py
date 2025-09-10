@@ -4,38 +4,18 @@ from pathlib import Path
 import streamlit as st
 from pdf2image import convert_from_bytes
 
-from src.schemas import OutputFormat
-from src.services import MarpService
+from src.backend.services.marp_service import MarpService
+from src.protocols.schemas.output_format import OutputFormat
 
 
 def generate_slides_with_llm():
     """LLMを使用してスライドを生成する"""
     script_content = st.session_state.app_state.user_inputs["script_content"]
     template = st.session_state.app_state.selected_template
-
-    # DEBUGモードに応じてモックまたは実際のサービスを使用
-    debug_value = st.secrets.get("DEBUG", "false")
-    is_debug = str(debug_value).lower() == "true"
+    generator = st.session_state.app_state.slide_generator
 
     try:
-        if is_debug:
-            # DEBUGモードではMockLLMクライアントを使用
-            from dev.mocks import MockOlmClient
-            from src.chains import SlideGenChain
-
-            with st.spinner("モックサービスでスライドを生成中..."):
-                mock_llm = MockOlmClient()
-                generator = SlideGenChain(llm=mock_llm)
-                generated_markdown = generator.invoke_slide_gen_chain(
-                    script_content, template
-                )
-        else:
-            # 本番モードではSlideGenChainを使用
-            from src.chains import SlideGenChain
-            from src.clients import OlmClient
-
-            llm = OlmClient()
-            generator = SlideGenChain(llm=llm)
+        with st.spinner("スライドを生成中..."):
             generated_markdown = generator.invoke_slide_gen_chain(
                 script_content, template
             )
@@ -52,7 +32,7 @@ def generate_slides_with_llm():
         st.error(f"❌ プレゼンテーション生成に失敗しました: {str(e)}")
         st.error("設定画面に戻って再度お試しください。")
         if st.button("設定画面に戻る", type="primary"):
-            st.switch_page("components/pages/implementation_page.py")
+            st.switch_page("src/frontend/components/pages/implementation_page.py")
 
 
 # ナビゲーションボタンをタイトルの上に配置（処理中は非表示）
@@ -67,13 +47,13 @@ if not is_processing:
             key="back_to_download_top",
             use_container_width=True,
         ):
-            st.switch_page("components/pages/implementation_page.py")
+            st.switch_page("src/frontend/components/pages/implementation_page.py")
 
     with col2:
         if st.button(
             "🏠 ギャラリーに戻る", key="back_to_gallery_top", use_container_width=True
         ):
-            st.switch_page("components/pages/gallery_page.py")
+            st.switch_page("src/frontend/components/pages/gallery_page.py")
 else:
     # 処理中は非表示にして、処理中メッセージを表示
     st.info("⏳ スライドを生成中です。しばらくお待ちください...")
@@ -86,7 +66,7 @@ if (
     or st.session_state.app_state.selected_template is None
     or "selected_format" not in st.session_state
 ):
-    st.switch_page("components/pages/gallery_page.py")
+    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
 # LLM処理を開始する必要がある場合
 if st.session_state.get("should_start_generation", False):
@@ -119,7 +99,7 @@ try:
         st.error("❌ 生成されたMarkdownコンテンツが空です。")
         st.error("設定画面に戻って再度お試しください。")
         if st.button("設定画面に戻る", type="primary"):
-            st.switch_page("components/pages/implementation_page.py")
+            st.switch_page("src/frontend/components/pages/implementation_page.py")
         st.stop()
 
     css_content = template.read_css_content()

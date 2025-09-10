@@ -11,7 +11,7 @@ from sdk.olm_api_client import (
     OllamaLocalClient,
 )
 
-from src.protocols import OlmClientProtocol
+from src.protocols.protocols.olm_client_protocol import OlmClientProtocol
 
 
 class OlmClient(LLM):

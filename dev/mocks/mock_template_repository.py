@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.models import TemplateRepository
+from src.backend.models.template_repository import TemplateRepository
 
 
 class MockTemplateRepository(TemplateRepository):

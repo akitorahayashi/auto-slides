@@ -1,7 +1,7 @@
 import logging
 import os
 
-from src.schemas.output_format import OutputFormat
+from src.protocols.schemas.output_format import OutputFormat
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

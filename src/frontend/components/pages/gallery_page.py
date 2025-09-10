@@ -1,10 +1,10 @@
 import streamlit as st
 
-from src.models import TemplateRepository
+from src.backend.models.template_repository import TemplateRepository
 
 # Load and apply custom CSS for this component
 try:
-    with open("src/static/css/main_page.css", "r", encoding="utf-8") as f:
+    with open("src/backend/static/css/main_page.css", "r", encoding="utf-8") as f:
         css_content = f.read()
     st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
 except FileNotFoundError:
@@ -52,7 +52,9 @@ if templates:
                         use_container_width=True,
                     ):
                         st.session_state.app_state.selected_template = template
-                        st.switch_page("components/pages/implementation_page.py")
+                        st.switch_page(
+                            "src/frontend/components/pages/implementation_page.py"
+                        )
 
     # テンプレートが奇数の場合、空のカラムを埋める
     if len(templates) % cols_per_row != 0:

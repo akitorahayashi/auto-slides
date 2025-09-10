@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.services import JsonParser
+from src.backend.services.json_parser import JsonParser
 
 
 class TestJsonParser:

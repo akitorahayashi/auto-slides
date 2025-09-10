@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.models import SlideTemplate
+from src.backend.models.slide_template import SlideTemplate
 
 
 class TestTemplateRepository:

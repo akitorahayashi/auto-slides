@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.services import PromptService
+from src.backend.services.prompt_service import PromptService
 
 
 class TestPromptService:
@@ -47,7 +47,7 @@ class TestPromptService:
     def test_init_with_default_template_dir(self):
         """Test initialization with default template directory"""
         service = PromptService()
-        assert service.template_dir == Path("src/static/prompts")
+        assert service.template_dir == Path("src/backend/static/prompts")
 
     def test_init_with_custom_template_dir(self):
         """Test initialization with custom template directory"""

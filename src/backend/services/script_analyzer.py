@@ -1,6 +1,6 @@
 from typing import Dict
 
-from src.models.slide_template import SlideTemplate
+from src.backend.models.slide_template import SlideTemplate
 
 
 class TemplateAnalyzer:

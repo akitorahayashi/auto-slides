@@ -7,7 +7,7 @@ from typing import Any, Dict
 class PromptService:
     """Service for building and managing prompts from templates"""
 
-    def __init__(self, template_dir: str = "src/static/prompts"):
+    def __init__(self, template_dir: str = "src/backend/static/prompts"):
         self.template_dir = Path(template_dir)
 
     def _build_prompt(self, template_name: str, substitutions: Dict[str, Any]) -> str:

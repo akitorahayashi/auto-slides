@@ -4,12 +4,13 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
-from src.models import SlideTemplate
-from src.protocols import OlmClientProtocol
-from src.services import JsonParser, PromptService, SlidesLoader
+from src.backend.models.slide_template import SlideTemplate
+from src.backend.services import JsonParser, PromptService, SlidesLoader
+from src.protocols.protocols.olm_client_protocol import OlmClientProtocol
+from src.protocols.slide_generation_protocol import SlideGenerationProtocol
 
 
-class SlideGenChain:
+class SlideGenChain(SlideGenerationProtocol):
     """LangChain LCEL chains for slide generation workflow"""
 
     def __init__(self, llm: OlmClientProtocol):

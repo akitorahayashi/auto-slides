@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import streamlit as st
 
-from src.models import SlideTemplate
-from src.schemas import OutputFormat
+from src.backend.models.slide_template import SlideTemplate
+from src.protocols.schemas.output_format import OutputFormat
 
 
 class TestResultPageLogic:
@@ -25,11 +25,11 @@ class TestResultPageLogic:
                     or st.session_state.app_state.generated_markdown is None
                     or "selected_format" not in st.session_state
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify redirect was called
                 mock_switch_page.assert_called_once_with(
-                    "components/pages/gallery_page.py"
+                    "src/frontend/components/pages/gallery_page.py"
                 )
 
     def test_redirect_logic_when_no_selected_template(self):
@@ -51,11 +51,11 @@ class TestResultPageLogic:
                     or st.session_state.app_state.generated_markdown is None
                     or "selected_format" not in st.session_state
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify redirect was called
                 mock_switch_page.assert_called_once_with(
-                    "components/pages/gallery_page.py"
+                    "src/frontend/components/pages/gallery_page.py"
                 )
 
     def test_redirect_logic_when_no_generated_markdown(self):
@@ -78,11 +78,11 @@ class TestResultPageLogic:
                     or st.session_state.app_state.generated_markdown is None
                     or "selected_format" not in st.session_state
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify redirect was called
                 mock_switch_page.assert_called_once_with(
-                    "components/pages/gallery_page.py"
+                    "src/frontend/components/pages/gallery_page.py"
                 )
 
     def test_redirect_logic_when_no_selected_format(self):
@@ -108,11 +108,11 @@ class TestResultPageLogic:
                     or st.session_state.app_state.generated_markdown is None
                     or not has_selected_format
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify redirect was called
                 mock_switch_page.assert_called_once_with(
-                    "components/pages/gallery_page.py"
+                    "src/frontend/components/pages/gallery_page.py"
                 )
 
     def test_no_redirect_with_valid_session_data(self):
@@ -141,7 +141,7 @@ class TestResultPageLogic:
                     or st.session_state.app_state.generated_markdown is None
                     or not has_selected_format
                 ):
-                    st.switch_page("components/pages/gallery_page.py")
+                    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
                 # Verify no redirect occurred
                 mock_switch_page.assert_not_called()
@@ -199,21 +199,23 @@ class TestResultPageLogic:
         """Test navigation button logic"""
         with patch("streamlit.switch_page") as mock_switch_page:
             # Simulate implementation page navigation button click
-            st.switch_page("components/pages/implementation_page.py")
+            st.switch_page("src/frontend/components/pages/implementation_page.py")
 
             # Verify navigation
             mock_switch_page.assert_called_with(
-                "components/pages/implementation_page.py"
+                "src/frontend/components/pages/implementation_page.py"
             )
 
             # Reset mock
             mock_switch_page.reset_mock()
 
             # Simulate gallery navigation button click
-            st.switch_page("components/pages/gallery_page.py")
+            st.switch_page("src/frontend/components/pages/gallery_page.py")
 
             # Verify navigation
-            mock_switch_page.assert_called_with("components/pages/gallery_page.py")
+            mock_switch_page.assert_called_with(
+                "src/frontend/components/pages/gallery_page.py"
+            )
 
     def test_marp_service_usage_logic(self):
         """Test MarpService usage logic"""

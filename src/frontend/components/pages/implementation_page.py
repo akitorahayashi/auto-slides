@@ -1,6 +1,6 @@
 import streamlit as st
 
-from src.schemas import OutputFormat
+from src.protocols.schemas.output_format import OutputFormat
 
 
 @st.dialog("実行確認", width="small", dismissible=True)
@@ -32,7 +32,7 @@ def confirm_execute_dialog():
             st.session_state.selected_format = st.session_state.format_selection
             # LLM処理開始フラグを設定
             st.session_state.should_start_generation = True
-            st.switch_page("components/pages/result_page.py")
+            st.switch_page("src/frontend/components/pages/result_page.py")
 
 
 @st.dialog("エラー", width="medium", dismissible=True)
@@ -51,7 +51,7 @@ if (
     not hasattr(st.session_state, "app_state")
     or st.session_state.app_state.selected_template is None
 ):
-    st.switch_page("components/pages/gallery_page.py")
+    st.switch_page("src/frontend/components/pages/gallery_page.py")
 
 # エラーダイアログの表示処理
 if "generation_error" in st.session_state:
@@ -110,7 +110,7 @@ col1, col2 = st.columns(2, gap="small")
 
 with col1:
     if st.button("← ギャラリーに戻る", key="back_to_gallery", use_container_width=True):
-        st.switch_page("components/pages/gallery_page.py")
+        st.switch_page("src/frontend/components/pages/gallery_page.py")
 
 with col2:
     if st.button(

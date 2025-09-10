@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from dev.mocks import MockTemplateRepository
-from src.models import SlideTemplate
-from src.services import MarpService
+from src.backend.models.slide_template import SlideTemplate
+from src.backend.services.marp_service import MarpService
 
 
 @pytest.fixture
@@ -76,7 +76,7 @@ def mock_template():
 @pytest.fixture
 def real_prompt_service():
     """Real PromptService for testing (no external dependencies)"""
-    from src.services import PromptService
+    from src.backend.services.prompt_service import PromptService
 
     return PromptService()
 

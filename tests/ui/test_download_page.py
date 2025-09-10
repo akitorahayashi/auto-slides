@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import streamlit as st
 
-from src.models import SlideTemplate
+from src.backend.models.slide_template import SlideTemplate
 
 
 class TestDownloadPageLogic:
@@ -104,7 +104,7 @@ class TestDownloadPageLogic:
 
     def test_format_selection_options(self):
         """Test format selection options structure"""
-        from src.schemas import OutputFormat
+        from src.protocols.schemas.output_format import OutputFormat
 
         # This mimics the format_options from the actual implementation
         format_options = {
@@ -218,7 +218,7 @@ class TestDownloadPageLogic:
             assert hasattr(marp_service, "convert")
 
             # Simulate conversion call
-            from src.schemas import OutputFormat
+            from src.protocols.schemas.output_format import OutputFormat
 
             mock_markdown = "# Test slide"
             mock_format = OutputFormat.PDF

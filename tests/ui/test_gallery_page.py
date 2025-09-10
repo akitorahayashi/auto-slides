@@ -2,7 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import streamlit as st
 
-from src.models import SlideTemplate, TemplateRepository
+from src.backend.models.slide_template import SlideTemplate
+from src.backend.models.template_repository import TemplateRepository
 
 
 class TestGalleryPageLogic:
@@ -51,14 +52,14 @@ class TestGalleryPageLogic:
 
                 # Simulate template selection logic
                 mock_session.app_state.selected_template = mock_template
-                st.switch_page("components/pages/implementation_page.py")
+                st.switch_page("src/frontend/components/pages/implementation_page.py")
 
                 # Verify template was selected
                 assert mock_session.app_state.selected_template == mock_template
 
                 # Verify navigation to implementation page
                 mock_switch_page.assert_called_with(
-                    "components/pages/implementation_page.py"
+                    "src/frontend/components/pages/implementation_page.py"
                 )
 
     def test_grid_layout_logic(self):
@@ -116,7 +117,7 @@ class TestGalleryPageLogic:
 
     def test_css_loading_logic(self):
         """Test CSS loading logic"""
-        css_file_path = "src/static/css/main_page.css"
+        css_file_path = "src/backend/static/css/main_page.css"
 
         # Test successful CSS loading
         css_content = "body { color: red; }"

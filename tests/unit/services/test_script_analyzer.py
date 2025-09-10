@@ -3,8 +3,8 @@
 import tempfile
 from pathlib import Path
 
-from src.models import SlideTemplate
-from src.services import TemplateAnalyzer
+from src.backend.models.slide_template import SlideTemplate
+from src.backend.services.script_analyzer import TemplateAnalyzer
 
 
 class TestTemplateAnalyzer:

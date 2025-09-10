@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from dev.mocks import MockOlmClient
-from src.chains import SlideGenChain
-from src.models import SlideTemplate
+from src.backend.chains.slide_gen_chain import SlideGenChain
+from src.backend.models.slide_template import SlideTemplate
 
 
 class TestSlideGenChainIntegration:
@@ -89,9 +89,9 @@ class TestSlideGenChainIntegration:
         assert "Analysis completed successfully" in full_response
         assert len(chunks) > 1  # Should be split into multiple chunks
 
-    @patch("src.services.slides_loader.SlidesLoader.create_function_catalog")
-    @patch("src.services.slides_loader.SlidesLoader.load_template_functions")
-    @patch("src.services.slides_loader.SlidesLoader.get_function_by_name")
+    @patch("src.backend.services.slides_loader.SlidesLoader.create_function_catalog")
+    @patch("src.backend.services.slides_loader.SlidesLoader.load_template_functions")
+    @patch("src.backend.services.slides_loader.SlidesLoader.get_function_by_name")
     def test_full_slide_generation_workflow(
         self,
         mock_get_function,
@@ -172,7 +172,7 @@ class TestSlideGenChainIntegration:
         assert "Test script content" in analysis_result["prompt"]
 
     @patch(
-        "src.chains.slide_gen_chain.print"
+        "src.backend.chains.slide_gen_chain.print"
     )  # Mock print to avoid output during tests
     def test_error_handling_in_chain(self, mock_print, mock_template):
         """Test error handling when chain encounters issues"""

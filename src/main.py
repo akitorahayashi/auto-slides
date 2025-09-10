@@ -2,16 +2,17 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.app_state import AppState
-from src.models import TemplateRepository
-from src.protocols import MarpProtocol
+from src.backend.chains.slide_gen_chain import SlideGenChain
+from src.backend.clients.olm_client import OlmClient
+from src.backend.models.template_repository import TemplateRepository
+from src.frontend.app_state import AppState
+from src.protocols.protocols.marp_protocol import MarpProtocol
+from src.protocols.slide_generation_protocol import SlideGenerationProtocol
 
 st.set_page_config(
     page_title="Auto Slides",
     page_icon="📑",
-    # "centered"/"wide"
     layout="wide",
-    # "auto"/"expanded"/"collapsed"
     initial_sidebar_state="collapsed",
 )
 
@@ -22,62 +23,59 @@ def main():
     """
     initialize_session()
 
-    # st.navigationでページのリストを定義
     pg = st.navigation(
         [
             st.Page(
-                "components/pages/gallery_page.py", title="ギャラリー", default=True
+                "src/frontend/components/pages/gallery_page.py",
+                title="ギャラリー",
+                default=True,
             ),
-            st.Page("components/pages/implementation_page.py", title="実行"),
-            st.Page("components/pages/result_page.py", title="結果"),
+            st.Page(
+                "src/frontend/components/pages/implementation_page.py", title="実行"
+            ),
+            st.Page("src/frontend/components/pages/result_page.py", title="結果"),
         ],
         position="hidden",
     )
 
-    # アプリケーションを実行
     pg.run()
 
 
 def initialize_session():
     """Initializes the session state."""
-    if "marp_service" not in st.session_state:
+    if "app_state" not in st.session_state:
         debug_value = st.secrets.get("DEBUG", "false")
         is_debug = str(debug_value).lower() == "true"
 
+        slide_generator: SlideGenerationProtocol
+        template_repository: TemplateRepository
+        marp_service: MarpProtocol
+
         if is_debug:
-            from dev.mocks import MockTemplateRepository
+            from dev.mocks import (
+                MockMarpService,
+                MockSlideGenerator,
+                MockTemplateRepository,
+            )
 
             template_repository = MockTemplateRepository(
-                templates_dir=Path("src/templates")
+                templates_dir=Path("src/backend/templates")
             )
+            slide_generator = MockSlideGenerator()
+            marp_service = MockMarpService("", "")
         else:
+            from src.backend.services import MarpService
+
             template_repository = TemplateRepository()
+            llm = OlmClient()
+            slide_generator = SlideGenChain(llm=llm)
+            marp_service = MarpService("", "")
 
-        templates = template_repository.get_all_templates()
-        if not templates:
-            st.error("テンプレートが見つかりません。")
-            st.stop()
-        default_template = templates[0]
-
-        slides_path = default_template.markdown_path
-        output_dir = "output"
-
-        if is_debug:
-            from dev.mocks import MockMarpService
-
-            marp_service: MarpProtocol = MockMarpService(slides_path, output_dir)
-        else:
-            from src.services import MarpService
-
-            marp_service: MarpProtocol = MarpService(slides_path, output_dir)
-
-        st.session_state.marp_service = marp_service
-        st.session_state.template_repository = template_repository
-
-    if "app_state" not in st.session_state:
         st.session_state.app_state = AppState(
-            template_repository=st.session_state.template_repository,
+            template_repository=template_repository,
+            slide_generator=slide_generator,
         )
+        st.session_state.marp_service = marp_service
 
 
 if __name__ == "__main__":
