@@ -7,22 +7,69 @@ from pdf2image import convert_from_bytes
 from src.schemas import OutputFormat
 from src.services.marp_service import MarpService
 
-# ナビゲーションボタンをタイトルの上に配置
-col1, col2 = st.columns(2, gap="small")
 
-with col1:
-    if st.button(
-        "← ダウンロード設定に戻る",
-        key="back_to_download_top",
-        use_container_width=True,
-    ):
-        st.switch_page("components/pages/implementation_page.py")
+def generate_slides_with_llm():
+    """LLMを使用してスライドを生成する"""
+    script_content = st.session_state.app_state.user_inputs["script_content"]
+    template = st.session_state.app_state.selected_template
 
-with col2:
-    if st.button(
-        "🏠 ギャラリーに戻る", key="back_to_gallery_top", use_container_width=True
-    ):
-        st.switch_page("components/pages/gallery_page.py")
+    # DEBUGモードに応じてモックまたは実際のサービスを使用
+    debug_value = st.secrets.get("DEBUG", "false")
+    is_debug = str(debug_value).lower() == "true"
+
+    try:
+        if is_debug:
+            # DEBUGモードではMockSlideGeneratorを使用
+            from dev.mocks.mock_slide_generator import MockSlideGenerator
+
+            with st.spinner("モックサービスでスライドを生成中..."):
+                generator = MockSlideGenerator()
+                generated_markdown = generator.generate_sync(script_content, template)
+        else:
+            # 本番モードでは既存のSlideGeneratorを使用
+            from src.services.slide_generator import SlideGenerator
+
+            with st.status("LLMがプレゼンテーションを生成中...", expanded=True) as main_status:
+                generator = SlideGenerator()
+                generated_markdown = generator.generate_sync(script_content, template)
+                main_status.update(label="スライド生成完了", state="complete")
+
+        # 生成完了後、セッションに保存
+        st.session_state.app_state.generated_markdown = generated_markdown
+        # 生成開始フラグをクリア
+        if "should_start_generation" in st.session_state:
+            del st.session_state.should_start_generation
+        st.success("✅ スライドの生成が完了しました！")
+        st.rerun()
+
+    except Exception as e:
+        st.error(f"❌ プレゼンテーション生成に失敗しました: {str(e)}")
+        st.error("設定画面に戻って再度お試しください。")
+        if st.button("設定画面に戻る", type="primary"):
+            st.switch_page("components/pages/implementation_page.py")
+
+# ナビゲーションボタンをタイトルの上に配置（処理中は非表示）
+is_processing = st.session_state.get("should_start_generation", False)
+
+if not is_processing:
+    col1, col2 = st.columns(2, gap="small")
+
+    with col1:
+        if st.button(
+            "← 入力画面に戻る",
+            key="back_to_download_top",
+            use_container_width=True,
+        ):
+            st.switch_page("components/pages/implementation_page.py")
+
+    with col2:
+        if st.button(
+            "🏠 ギャラリーに戻る", key="back_to_gallery_top", use_container_width=True
+        ):
+            st.switch_page("components/pages/gallery_page.py")
+else:
+    # 処理中は非表示にして、処理中メッセージを表示
+    st.info("⏳ スライドを生成中です。しばらくお待ちください...")
 
 st.title("📄 生成結果")
 
@@ -30,10 +77,14 @@ st.title("📄 生成結果")
 if (
     not hasattr(st.session_state, "app_state")
     or st.session_state.app_state.selected_template is None
-    or st.session_state.app_state.generated_markdown is None
     or "selected_format" not in st.session_state
 ):
     st.switch_page("components/pages/gallery_page.py")
+
+# LLM処理を開始する必要がある場合
+if st.session_state.get("should_start_generation", False):
+    generate_slides_with_llm()
+    # 関数内でst.rerun()が呼ばれるため、ここで処理は終了
 
 template = st.session_state.app_state.selected_template
 selected_format = st.session_state.selected_format
@@ -42,16 +93,13 @@ if not template:
     st.error("テンプレートが見つかりません。")
     st.stop()
 
+st.subheader(f"📋 {template.name}")
+
 format_options = {
     "PDF": {"label": "📄 PDF", "format": OutputFormat.PDF},
     "HTML": {"label": "🌐 HTML", "format": OutputFormat.HTML},
     "PPTX": {"label": "📊 PPTX", "format": OutputFormat.PPTX},
 }
-
-st.subheader(f"📋 {template.name}")
-
-# 1. 選択した形式を表示
-st.info(f"選択した形式: {format_options[selected_format]['label']}")
 
 selected_format_enum = format_options[selected_format]["format"]
 
@@ -99,10 +147,18 @@ try:
             "application/vnd.openxmlformats-officedocument.presentationml.presentation"
         )
 
-    # 2. ダウンロードボタン
+    # ダウンロードボタン
     filename = f"{template.id}.{selected_format_enum.value}"
+    
+    if selected_format == "PDF":
+        download_label = "PDFファイルをダウンロード"
+    elif selected_format == "HTML":
+        download_label = "HTMLファイルをダウンロード"
+    elif selected_format == "PPTX":
+        download_label = "PPTXファイルをダウンロード"
+    
     st.download_button(
-        label=f"📥 {format_options[selected_format]['label']} ファイルをダウンロード",
+        label=download_label,
         data=file_data,
         file_name=filename,
         mime=mime_type,
@@ -113,13 +169,13 @@ try:
 
     st.divider()
 
-    # 3. 生成されたMarkdownコンテンツ表示
+    # 生成されたMarkdownコンテンツ表示
     with st.expander("📝 生成されたMarkdownコンテンツ", expanded=False):
         st.code(generated_markdown, language="markdown")
 
     st.divider()
 
-    # 4. プレビュー
+    # プレビュー
     with st.spinner("プレビューを準備中..."):
         if selected_format == "PDF":
             # 既存のPDFデータをプレビュー用に使用

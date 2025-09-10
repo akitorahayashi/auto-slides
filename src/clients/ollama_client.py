@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Any, List, Optional
 
 import streamlit as st
@@ -13,12 +14,27 @@ from sdk.olm_api_client import (
 class OlmClient(LLM):
     """Unified OLM client with LangChain integration"""
 
-    model: str = "qwen3:0.6b"
+    model: str = "qwen3:4b"
     client: Any = None
 
     def __init__(self):
         super().__init__()
         self._setup_client()
+
+    def _clean_output(self, text: str) -> str:
+        """Clean LLM output by removing think tags and other artifacts"""
+        # Remove <think> tags and their content
+        cleaned = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+        
+        # Remove other common artifacts
+        cleaned = re.sub(r'<reasoning>.*?</reasoning>', '', cleaned, flags=re.DOTALL)
+        cleaned = re.sub(r'<analysis>.*?</analysis>', '', cleaned, flags=re.DOTALL)
+        
+        # Clean up extra whitespace
+        cleaned = re.sub(r'\n\s*\n', '\n\n', cleaned)
+        cleaned = cleaned.strip()
+        
+        return cleaned
 
     def _setup_client(self):
         """Setup Ollama client based on configuration"""
@@ -81,7 +97,8 @@ class OlmClient(LLM):
     ) -> str:
         import asyncio
 
-        return asyncio.run(self.client.gen_batch(prompt, self.model))
+        result = asyncio.run(self.client.gen_batch(prompt, self.model))
+        return self._clean_output(result)
 
     async def _acall(
         self,
@@ -90,4 +107,5 @@ class OlmClient(LLM):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> str:
-        return await self.client.gen_batch(prompt, self.model)
+        result = await self.client.gen_batch(prompt, self.model)
+        return self._clean_output(result)

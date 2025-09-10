@@ -5,7 +5,7 @@ from src.schemas import OutputFormat
 
 @st.dialog("実行確認", width="small", dismissible=True)
 def confirm_execute_dialog():
-    st.write("こちらの実行します")
+    st.write("プレゼンテーションの生成を開始します")
     st.write("よろしいですか？")
     col_no, col_yes = st.columns(2, gap="small")
     with col_no:
@@ -14,89 +14,25 @@ def confirm_execute_dialog():
             st.rerun()
     with col_yes:
         if st.button("はい", use_container_width=True, type="primary"):
-            # ユーザー入力と生成されたマークダウンをセッションに保存
+            # ユーザー入力をセッションに保存
             script_content = st.session_state.get("script_content", "")
-            template = st.session_state.app_state.selected_template
-
-            # DEBUGモードに応じてモックまたは実際のサービスを使用
-            debug_value = st.secrets.get("DEBUG", "false")
-            is_debug = str(debug_value).lower() == "true"
-
-            try:
-                if is_debug:
-                    # DEBUGモードではMockSlideGeneratorを使用
-                    from dev.mocks.mock_slide_generator import MockSlideGenerator
-
-                    generator = MockSlideGenerator()
-                    generated_markdown = generator.generate_sync(
-                        script_content, template
-                    )
-                else:
-                    # 本番モードではSlideGenChainを使用
-                    from src.chains.slide_gen_chain import SlideGenChain
-
-                    with st.spinner("LLMがプレゼンテーションを生成中..."):
-                        chain = SlideGenChain()
-
-                        # Phase 1: Script Analysis
-                        with st.spinner("原稿を解析中..."):
-                            analysis_result = chain.analysis_chain.invoke(
-                                {"script_content": script_content}
-                            )
-
-                        # Phase 2: Content Planning
-                        with st.spinner("コンテンツを計画中..."):
-                            placeholders = list(template.extract_placeholders())
-                            planning_result = chain.planning_chain.invoke(
-                                {
-                                    "script_content": script_content,
-                                    "analysis_result": analysis_result,
-                                    "placeholders": placeholders,
-                                    "template": template,
-                                }
-                            )
-
-                        # Phase 3: Content Generation
-                        with st.spinner("スライドを生成中..."):
-                            generation_result = chain.generation_chain.invoke(
-                                {
-                                    "script_content": script_content,
-                                    "analysis_result": analysis_result,
-                                    "planning_result": planning_result,
-                                    "placeholders": placeholders,
-                                    "template": template,
-                                }
-                            )
-
-                        # Phase 4: Content Validation
-                        with st.spinner("コンテンツを検証中..."):
-                            validation_result = chain.validation_chain.invoke(
-                                {
-                                    "script_content": script_content,
-                                    "analysis_result": analysis_result,
-                                    "content_plan": planning_result,
-                                    "generated_content": generation_result,
-                                    "template": template,
-                                }
-                            )
-
-                        generated_markdown = validation_result.get(
-                            "final_markdown", generation_result.get("markdown", "")
-                        )
-
-                # 成功時のみ結果ページに遷移
-                st.session_state.app_state.user_inputs = {
-                    "format": st.session_state.format_selection,
-                    "script_content": script_content,
-                }
-                st.session_state.app_state.generated_markdown = generated_markdown
-                st.session_state.selected_format = st.session_state.format_selection
-                st.switch_page("components/pages/result_page.py")
-
-            except Exception as e:
-                # エラーが発生した場合はセッション状態にエラーメッセージを保存
-                st.session_state.generation_error = str(e)
+            
+            # 入力データを検証
+            if not script_content.strip():
+                st.session_state.generation_error = "原稿を入力してください。"
                 st.rerun()
+                return
+            
+            # ユーザー入力を保存し、結果ページに遷移
+            # generated_markdownは結果ページで生成される
+            st.session_state.app_state.user_inputs = {
+                "format": st.session_state.format_selection,
+                "script_content": script_content,
+            }
+            st.session_state.selected_format = st.session_state.format_selection
+            # LLM処理開始フラグを設定
+            st.session_state.should_start_generation = True
+            st.switch_page("components/pages/result_page.py")
 
 
 @st.dialog("エラー", width="medium", dismissible=True)

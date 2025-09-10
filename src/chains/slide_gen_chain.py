@@ -1,9 +1,10 @@
-from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
 from src.clients.ollama_client import OlmClient
 from src.services.prompt_service import PromptService
+from src.services.output_parsers import RobustJsonOutputParser
 
 
 class SlideGenChain:
@@ -11,14 +12,15 @@ class SlideGenChain:
 
     def __init__(self):
         self.llm = OlmClient()
-        self.json_parser = JsonOutputParser()
+        self.json_parser = RobustJsonOutputParser()
+        self.str_parser = StrOutputParser()
         self.prompt_service = PromptService()
         self._setup_chains()
 
     def _setup_chains(self):
         """Setup LangChain LCEL chains using OllamaClientManager"""
 
-        # Phase 1: Script Analysis Chain
+        # Phase 1: Script Analysis Chain (テキスト出力)
         self.analysis_chain = (
             RunnablePassthrough.assign(
                 prompt=RunnableLambda(self.prompt_service.build_analysis_prompt)
@@ -26,7 +28,7 @@ class SlideGenChain:
             | RunnableLambda(lambda x: x["prompt"])
             | ChatPromptTemplate.from_template("{prompt}")
             | self.llm
-            | self.json_parser
+            | self.str_parser
         )
 
         # Phase 2: Content Planning Chain

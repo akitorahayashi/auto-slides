@@ -10,13 +10,17 @@ ${placeholders_list}
 # 計画タスク
 各プレースホルダについて、どのような内容を生成するかの詳細計画をJSON形式で返答してください：
 
+# 重要な指示
+- 必ずJSON形式のみで回答してください
+- 余分なテキストや説明は含めないでください
+- JSONオブジェクト以外は出力しないでください
+
 # 出力形式
 {
   "content_plan": {
     "placeholder1": "生成する内容の詳細説明",
-    "placeholder2": "生成する内容の詳細説明",
-    ...
+    "placeholder2": "生成する内容の詳細説明"
   },
   "generation_strategy": "全体的な生成戦略",
-  "quality_criteria": ["品質基準1", "品質基準2", ...]
+  "quality_criteria": ["品質基準1", "品質基準2"]
 }
