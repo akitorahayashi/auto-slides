@@ -6,6 +6,7 @@ from pathlib import Path
 import streamlit as st
 from pdf2image import convert_from_bytes
 
+from src.backend.chains.slide_gen_chain import SlideGenChain
 from src.backend.services import MarpService
 from src.protocols.schemas import OutputFormat
 
@@ -86,7 +87,7 @@ def generate_slides_with_llm():
     # プログレス表示用のコンテナとプログレスバー
     progress_container = st.empty()
     progress_bar_container = st.empty()
-    
+
     progress_container.info("🚀 スライド生成を準備しています...")
     progress_bar_container.progress(0.0)
 
@@ -118,12 +119,6 @@ def generate_slides_with_llm():
         progress_bar_container.progress(progress_value)
 
     try:
-        # ジェネレーターにコールバックを設定
-        try:
-            from src.backend.chains.slide_gen_chain import SlideGenChain
-        except Exception as import_error:
-            st.error(f"❌ Failed to import SlideGenChain: {import_error}")
-            raise
 
         def execute_generation():
             """生成処理を実行する関数"""
@@ -194,47 +189,6 @@ def generate_slides_with_llm():
                 f"Error Type: {error_type}\n\nMessage: {error_message}", language="text"
             )
 
-            # 特定のエラータイプに応じた対処法を表示
-            if (
-                "timeout" in error_message.lower()
-                or "timed out" in error_message.lower()
-                or isinstance(e, TimeoutError)
-            ):
-                st.warning(
-                    f"⏱️ **タイムアウトエラー**: LLMの応答に時間がかかりすぎています (制限時間: {chain_timeout}秒)"
-                )
-                st.info(
-                    f"""**対処法:**
-- Ollamaサーバーが正常に動作していることを確認してください
-- より軽量なモデルを使用することを検討してください  
-- `.streamlit/secrets.toml`でCHAIN_TIMEOUT={chain_timeout}を調整してください
-- スクリプトの内容を短くすることを検討してください"""
-                )
-            elif "connection" in error_message.lower():
-                st.warning("🔌 **接続エラー**: LLMサービスに接続できません")
-                st.info(
-                    "- Ollamaが起動していることを確認してください\n- ネットワーク設定を確認してください"
-                )
-            elif "json" in error_message.lower() or "parse" in error_message.lower():
-                st.warning("📄 **解析エラー**: LLMの応答が期待された形式ではありません")
-                st.info(
-                    "- モデルが適切なJSON形式で応答していない可能性があります\n- プロンプトの調整が必要かもしれません"
-                )
-            elif (
-                "slide_name" in error_message.lower()
-                or "keyerror" in error_type.lower()
-            ):
-                st.warning("🔧 **構造エラー**: LLMの応答に必要なキーが不足しています")
-                st.info(
-                    """**考えられる原因:**
-- LLMが期待されたJSON構造を生成していない
-- `slide_name`などの必須フィールドが欠落している
-- より具体的なプロンプトが必要な可能性があります
-- モデルの能力不足の可能性があります"""
-                )
-            else:
-                st.warning("❓ **不明なエラー**: 予期しない問題が発生しました")
-
         # トレースバック情報（折りたたみ）
         with st.expander("📋 スタックトレース", expanded=False):
             st.code(error_traceback, language="python")
@@ -253,7 +207,6 @@ def generate_slides_with_llm():
                 "Timeout Settings": {
                     "Chain Timeout": chain_timeout,
                     "LLM Timeout": getattr(st.secrets, "LLM_TIMEOUT", 300),
-                    "Marp Timeout": getattr(st.secrets, "MARP_TIMEOUT", 120),
                 },
             }
             st.json(debug_info)
@@ -406,8 +359,6 @@ try:
 
     # MarpServiceを使用して変換
     marp_service = MarpService(str(temp_md_path), str(temp_dir))
-    marp_timeout = getattr(st.secrets, "MARP_TIMEOUT", 120)  # デフォルト2分
-    pdf_timeout = getattr(st.secrets, "PDF_CONVERSION_TIMEOUT", 60)  # デフォルト1分
 
     # Marp変換処理を関数として定義
     def generate_file():
@@ -427,9 +378,9 @@ try:
                     "application/vnd.openxmlformats-officedocument.presentationml.presentation",
                 )
 
-    # タイムアウト付きで実行
+    # ファイル生成実行
     with st.spinner(f"{selected_format}生成中..."):
-        file_data, mime_type = run_with_simple_timeout(generate_file, marp_timeout)
+        file_data, mime_type = generate_file()
 
     # ダウンロードボタン
     filename = f"{template.id}.{selected_format_enum.value}"
@@ -457,6 +408,15 @@ try:
     with st.expander("📝 生成されたMarkdownコンテンツ", expanded=False):
         st.code(generated_markdown, language="markdown")
 
+    # theme.css表示
+    template = st.session_state.app_state.selected_template
+    try:
+        theme_css_content = template.css_path.read_text(encoding="utf-8")
+        with st.expander("🎨 theme.css", expanded=False):
+            st.code(theme_css_content, language="css")
+    except Exception as e:
+        st.warning(f"theme.cssの読み込みに失敗しました: {e}")
+
     st.divider()
 
     # プレビュー
@@ -474,7 +434,7 @@ try:
         return convert_from_bytes(preview_data)
 
     with st.spinner("プレビューを準備中..."):
-        images = run_with_simple_timeout(generate_preview, pdf_timeout)
+        images = generate_preview()
 
     for i, image in enumerate(images):
         st.image(image, caption=f"スライド {i+1}")
@@ -492,40 +452,6 @@ except Exception as e:
             f"Error Type: {error_type}\n\nMessage: {error_message}", language="text"
         )
 
-        # 特定のエラータイプに応じた対処法を表示
-        if (
-            "timeout" in error_message.lower()
-            or "timed out" in error_message.lower()
-            or isinstance(e, TimeoutError)
-        ):
-            st.warning(
-                "⏱️ **タイムアウトエラー**: ファイル変換に時間がかかりすぎています"
-            )
-            st.info(
-                f"""**対処法:**
-- `.streamlit/secrets.toml`でMARP_TIMEOUT={marp_timeout}を調整してください
-- `.streamlit/secrets.toml`でPDF_CONVERSION_TIMEOUT={pdf_timeout}を調整してください
-- より高速なマシンでの実行を検討してください
-- Markdownの内容を簡略化することを検討してください"""
-            )
-        elif "marp" in error_message.lower():
-            st.warning("🔧 **Marpエラー**: Marpサービスでファイル変換に失敗")
-            st.info(
-                "- Marpが正しくインストールされているか確認してください\n- Markdownの構文に問題がないか確認してください"
-            )
-        elif "permission" in error_message.lower() or "access" in error_message.lower():
-            st.warning("🔒 **権限エラー**: ファイルアクセスに失敗")
-            st.info(
-                "- 一時ディレクトリへの書き込み権限を確認してください\n- ディスクの容量を確認してください"
-            )
-        elif "pdf2image" in error_message.lower():
-            st.warning("🖼️ **PDF変換エラー**: PDFから画像への変換に失敗")
-            st.info(
-                "- pdf2imageライブラリが正しくインストールされているか確認してください\n- Popplerがインストールされているか確認してください"
-            )
-        else:
-            st.warning("❓ **ファイル変換エラー**: 予期しない問題が発生しました")
-
     # トレースバック情報（折りたたみ）
     with st.expander("📋 スタックトレース", expanded=False):
         st.code(error_traceback, language="python")
@@ -542,13 +468,5 @@ except Exception as e:
             "Temp Directory Available": (
                 temp_dir.exists() if "temp_dir" in locals() else "Unknown"
             ),
-            "Timeout Settings": {
-                "Marp Timeout": (
-                    marp_timeout if "marp_timeout" in locals() else "Not set"
-                ),
-                "PDF Conversion Timeout": (
-                    pdf_timeout if "pdf_timeout" in locals() else "Not set"
-                ),
-            },
         }
         st.json(debug_info)

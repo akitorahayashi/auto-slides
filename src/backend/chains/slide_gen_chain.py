@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, Dict, Optional
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -33,7 +33,7 @@ class SlideGenChain(SlideGenerationProtocol):
         self.slides_loader = SlidesLoader()
         self.progress_callback = progress_callback
         self.current_phase = 0
-        self.total_phases = 4  # analyzing, composing, generating, building
+        self.total_phases = 4  # analyzing, composing, building, generating,
         self._setup_chains()
 
     def _create_chain_step(self, prompt_builder_method):
@@ -51,6 +51,7 @@ class SlideGenChain(SlideGenerationProtocol):
             )
             | ChatPromptTemplate.from_template("{prompt}")
             | self.llm
+            | RunnableLambda(self._log_llm_response)
             | self.json_parser
         )
 
@@ -69,9 +70,9 @@ class SlideGenChain(SlideGenerationProtocol):
             )
             | ChatPromptTemplate.from_template("{prompt}")
             | self.llm
+            | RunnableLambda(self._log_llm_response)
             | self.str_parser
         )
-
 
     def _setup_chains(self):
         """Setup unified slide generation chain with placeholder approach"""
@@ -99,7 +100,9 @@ class SlideGenChain(SlideGenerationProtocol):
             # Phase 3: Build Template with Placeholders
             | RunnableLambda(lambda x: self._report_phase_progress("composing") or x)
             | RunnablePassthrough.assign(
-                template_with_placeholders=RunnableLambda(self._build_template_with_placeholders)
+                template_with_placeholders=RunnableLambda(
+                    self._build_template_with_placeholders
+                )
             )
             # Phase 4: Single LLM Call to Fill All Placeholders
             | RunnableLambda(lambda x: self._report_phase_progress("generating") or x)
@@ -109,6 +112,7 @@ class SlideGenChain(SlideGenerationProtocol):
                 )
             )
             | RunnableLambda(lambda x: self._report_phase_progress("building") or x)
+            | RunnableLambda(lambda x: self._report_phase_progress("completed") or x)
             | RunnableLambda(lambda x: x["final_presentation"])
         )
 
@@ -127,7 +131,6 @@ class SlideGenChain(SlideGenerationProtocol):
             )
 
             result = self.slide_gen_chain.invoke(input_data)
-            self._report_phase_progress("completed")
             print("🎉 Agent: Presentation generated successfully!")
             print(f"🔍 Result length: {len(result) if result else 0}")
             return result
@@ -139,36 +142,37 @@ class SlideGenChain(SlideGenerationProtocol):
             )
             raise e
 
-
     def _build_template_with_placeholders(self, context: Dict) -> str:
         """Build unified template by calling slide functions with placeholders"""
         print("🏗️ Agent: Building template with placeholders...")
-        
+
         composition_plan = context["composition_plan"]
         template = context["template"]
         slides_list = composition_plan.get("slides", [])
-        
+
         template_parts = []
-        
+
         for i, slide_plan in enumerate(slides_list):
             if not isinstance(slide_plan, dict):
                 continue
-                
+
             slide_name = slide_plan.get("slide_name")
             if not slide_name:
                 continue
-                
+
             func = self.slides_loader.get_function_by_name(template.id, slide_name)
             if not func:
                 continue
-                
+
             # Create placeholder parameters based on function signature
             sig = inspect.signature(func)
             placeholder_params = {}
-            
+
             for param_name in sig.parameters.keys():
-                placeholder_params[param_name] = f"{{{{{slide_name.upper()}_{i}_{param_name.upper()}}}}}"
-            
+                placeholder_params[param_name] = (
+                    f"{{{{{slide_name.upper()}_{i}_{param_name.upper()}}}}}"
+                )
+
             # Call the actual slide function with placeholders
             try:
                 slide_with_placeholders = func(**placeholder_params)
@@ -176,9 +180,24 @@ class SlideGenChain(SlideGenerationProtocol):
             except Exception as e:
                 print(f"⚠️ Error creating placeholder template for {slide_name}: {e}")
                 continue
-            
+
         return "\n\n".join(template_parts)
 
+    def _log_llm_response(self, response):
+        """Log LLM response for debugging"""
+        if hasattr(response, "content"):
+            content = response.content
+        else:
+            content = str(response)
+
+        print(f"AI Response ({len(content)} chars):")
+        if len(content) > 500:
+            print(f"   {content[:200]}...")
+            print(f"   ...{content[-200:]}")
+        else:
+            print(f"   {content}")
+
+        return response
 
     def _report_phase_progress(self, stage: str):
         """Report phase completion progress"""
