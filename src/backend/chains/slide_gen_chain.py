@@ -102,6 +102,8 @@ class SlideGenChain(SlideGenerationProtocol):
         try:
             # 事前にLLMリクエスト数を計算
             self._calculate_total_requests(template)
+            # カウンターを1から開始するために初期化
+            self.current_request = 0
             self._report_progress("analyzing")
             print("🔍 Agent: Analyzing script content...")
 
@@ -130,18 +132,21 @@ class SlideGenChain(SlideGenerationProtocol):
             # 基本的なリクエスト: 分析(1) + 構成(1) = 2
             base_requests = 2
 
-            # テンプレート関数の数を取得
+            # テンプレート関数の数を取得（これは利用可能な関数数であり、実際に使用される数ではない）
             functions = self.slides_loader.load_template_functions(template.id)
-            function_count = len(functions)
+            
+            # 初期値として利用可能な関数数を使用（後で動的に調整）
+            # 実際の値は composition_plan 取得後に更新される
+            estimated_slide_count = len(functions)
 
-            # 各スライドのパラメータ生成リクエスト数（推定値として関数数を使用）
-            parameter_requests = function_count
+            # 各スライドのパラメータ生成リクエスト数
+            parameter_requests = estimated_slide_count
 
             self.total_requests = base_requests + parameter_requests
             self.current_request = 0
 
             print(
-                f"🔢 Calculated total requests: {self.total_requests} (base: {base_requests}, parameters: {parameter_requests})"
+                f"🔢 Initial request calculation: {self.total_requests} (base: {base_requests}, estimated slides: {estimated_slide_count})"
             )
         except Exception as e:
             print(f"⚠️ Error calculating requests: {e}")
@@ -159,26 +164,36 @@ class SlideGenChain(SlideGenerationProtocol):
         script_content = context["script_content"]
         analysis_result = context["analysis_result"]
 
+        # composition_planから実際のスライド数を取得してリクエスト数を更新
+        slides_list = composition_plan.get("slides", [])
+        actual_slide_count = len(slides_list)
+        
+        if actual_slide_count > 0:
+            # 実際のスライド数に基づいてリクエスト数を再計算
+            base_requests = 2  # 分析(1) + 構成(1)
+            new_total_requests = base_requests + actual_slide_count
+            
+            print(f"🔄 Updating total requests: {self.total_requests} → {new_total_requests} (actual slides: {actual_slide_count})")
+            self.total_requests = new_total_requests
+
         slide_parameters = []
         functions = self.slides_loader.load_template_functions(template.id)
 
         # composition_planの構造をデバッグ出力
         print(f"🔍 Composition plan structure: {composition_plan}")
-
-        slides_list = composition_plan.get("slides", [])
         print(f"🔍 Slides list: {slides_list}")
 
         for i, slide_plan in enumerate(slides_list):
-            print(f"🔍 Processing slide {i}: {slide_plan}")
+            print(f"🔍 Processing slide {i + 1}: {slide_plan}")
 
             # slide_nameの存在確認
             if not isinstance(slide_plan, dict):
-                print(f"⚠️ Slide plan {i} is not a dictionary: {type(slide_plan)}")
+                print(f"⚠️ Slide plan {i + 1} is not a dictionary: {type(slide_plan)}")
                 continue
 
             slide_name = slide_plan.get("slide_name")
             if not slide_name:
-                print(f"⚠️ Slide plan {i} missing slide_name: {slide_plan}")
+                print(f"⚠️ Slide plan {i + 1} missing slide_name: {slide_plan}")
                 continue
 
             if slide_name not in functions:
@@ -207,15 +222,15 @@ class SlideGenChain(SlideGenerationProtocol):
         slides = []
 
         for i, slide_param in enumerate(slide_parameters):
-            print(f"🔍 Processing slide parameter {i}: {slide_param}")
+            print(f"🔍 Processing slide parameter {i + 1}: {slide_param}")
 
             if not isinstance(slide_param, dict):
-                print(f"⚠️ Slide param {i} is not a dictionary: {type(slide_param)}")
+                print(f"⚠️ Slide param {i + 1} is not a dictionary: {type(slide_param)}")
                 continue
 
             slide_name = slide_param.get("slide_name")
             if not slide_name:
-                print(f"⚠️ Slide param {i} missing slide_name: {slide_param}")
+                print(f"⚠️ Slide param {i + 1} missing slide_name: {slide_param}")
                 continue
 
             parameters = slide_param.get("parameters", {})
@@ -276,4 +291,9 @@ class SlideGenChain(SlideGenerationProtocol):
     def _report_progress(self, stage: str):
         """Report progress to callback if available"""
         if self.progress_callback:
-            self.progress_callback(stage, self.current_request, self.total_requests)
+            # 完了時は最大値に設定
+            if stage == "completed":
+                current = self.total_requests
+            else:
+                current = self.current_request
+            self.progress_callback(stage, current, self.total_requests)
