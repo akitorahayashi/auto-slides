@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Callable, Dict, List, Optional
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -13,18 +13,20 @@ from src.protocols.slide_generation_protocol import SlideGenerationProtocol
 class SlideGenChain(SlideGenerationProtocol):
     """LangChain LCEL chains for slide generation workflow"""
 
-    def __init__(self, llm: OlmClientProtocol):
+    def __init__(self, llm: OlmClientProtocol, progress_callback: Optional[Callable[[str], None]] = None):
         """
         Initialize slide generation chain.
 
         Args:
             llm: Required OlmClientProtocol implementation for text generation
+            progress_callback: Optional callback function to report progress
         """
         self.llm = llm
         self.json_parser = JsonParser()
         self.str_parser = StrOutputParser()
         self.prompt_service = PromptService()
         self.slides_loader = SlidesLoader()
+        self.progress_callback = progress_callback
         self._setup_chains()
 
     def _create_chain_step(self, prompt_builder_method):
@@ -47,6 +49,7 @@ class SlideGenChain(SlideGenerationProtocol):
                 )
             )
             # Phase 2: Composition
+            | RunnableLambda(lambda x: self._report_progress("composing") or x)
             | RunnablePassthrough.assign(
                 function_catalog=RunnableLambda(
                     lambda x: self.slides_loader.create_function_catalog(
@@ -70,10 +73,12 @@ class SlideGenChain(SlideGenerationProtocol):
     ) -> str:
         """Unified slide generation chain execution"""
         try:
+            self._report_progress("analyzing")
             print("🔍 Agent: Analyzing script content...")
             result = self.slide_gen_chain.invoke(
                 {"script_content": script_content, "template": template}
             )
+            self._report_progress("completed")
             print("🎉 Agent: Presentation generated successfully!")
             return result
         except Exception as e:
@@ -82,6 +87,7 @@ class SlideGenChain(SlideGenerationProtocol):
 
     def _execute_slides(self, context: Dict) -> Dict:
         """Execute slide generation from composition plan"""
+        self._report_progress("generating")
         print("✍️ Agent: Generating slide parameters...")
 
         composition_plan = context["composition_plan"]
@@ -107,6 +113,7 @@ class SlideGenChain(SlideGenerationProtocol):
                 )
                 slide_parameters.append(params)
 
+        self._report_progress("building")
         print("🏗️ Agent: Building slides...")
         slides = []
 
@@ -128,9 +135,15 @@ class SlideGenChain(SlideGenerationProtocol):
 
     def _combine_slides(self, slides: List[str]) -> str:
         """Combine individual slides into complete presentation"""
+        self._report_progress("combining")
 
         processed_slides = []
         for slide in slides:
             processed_slides.append(slide.rstrip("\n-"))
 
         return "\n\n".join(processed_slides)
+    
+    def _report_progress(self, stage: str):
+        """Report progress to callback if available"""
+        if self.progress_callback:
+            self.progress_callback(stage)
