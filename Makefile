@@ -70,6 +70,11 @@ lint: ## Perform static code analysis (check) using Black and Ruff
 .PHONY: test
 test: unit-test ui-test intg-test e2e-test ## Run the full test suite
 
+.PHONY: cov
+cov: ## Run tests and generate coverage report
+	@echo "📊 Generating test coverage report..."
+	@PYTHONPATH=. $(PYTHON) -m pytest --cov=src --cov-report=html
+
 .PHONY: unit-test
 unit-test: ## Run unit tests
 	@echo "Running unit tests..."
