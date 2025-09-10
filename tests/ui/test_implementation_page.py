@@ -169,6 +169,34 @@ class TestImplementationPageLogic:
                 # Verify redirect to result page
                 mock_switch_page.assert_called_with("components/pages/result_page.py")
 
+    def test_template_placeholder_extraction(self):
+        """Test template placeholder extraction in implementation workflow"""
+        from pathlib import Path
+
+        from src.models import SlideTemplate
+
+        template = SlideTemplate(
+            id="test_template",
+            name="Test Template",
+            description="Test template for placeholder extraction",
+            template_dir=Path("/tmp/test_template"),
+            duration_minutes=10,
+        )
+
+        template_content = "Hello ${name}, welcome to ${event}!"
+        placeholders = template.extract_placeholders(template_content)
+        assert placeholders == {"name", "event"}
+
+        # Test that placeholders are properly converted to list
+        placeholders_list = list(placeholders)
+        assert isinstance(placeholders_list, list)
+        assert len(placeholders_list) == 2
+
+        # Test render_template method
+        content_dict = {"name": "John", "event": "Conference"}
+        result = template.render_template(template_content, content_dict)
+        assert result == "Hello John, welcome to Conference!"
+
     def test_slide_generator_chain_integration(self):
         """Test SlideGenerator integration with chain workflow"""
         with patch("streamlit.secrets") as mock_secrets:

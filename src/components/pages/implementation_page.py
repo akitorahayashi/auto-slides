@@ -8,9 +8,13 @@ from src.schemas import OutputFormat
 def confirm_execute_dialog():
     st.write("こちらの実行します")
     st.write("よろしいですか？")
-    col_yes, col_no = st.columns(2, gap="small")
+    col_no, col_yes = st.columns(2, gap="small")
+    with col_no:
+        if st.button("いいえ", use_container_width=True):
+            # ダイアログを閉じて再描画
+            st.rerun()
     with col_yes:
-        if st.button("はい", use_container_width=True):
+        if st.button("はい", use_container_width=True, type="primary"):
             # ユーザー入力と生成されたマークダウンをセッションに保存
             script_content = st.session_state.get("script_content", "")
             template = st.session_state.app_state.selected_template
@@ -28,10 +32,12 @@ def confirm_execute_dialog():
 
                     # Phase 2: Content Planning
                     with st.spinner("コンテンツを計画中..."):
+                        placeholders = list(template.extract_placeholders())
                         planning_result = chain.planning_chain.invoke(
                             {
                                 "script_content": script_content,
-                                "analysis": analysis_result,
+                                "analysis_result": analysis_result,
+                                "placeholders": placeholders,
                                 "template": template,
                             }
                         )
@@ -41,8 +47,9 @@ def confirm_execute_dialog():
                         generation_result = chain.generation_chain.invoke(
                             {
                                 "script_content": script_content,
-                                "analysis": analysis_result,
-                                "planning": planning_result,
+                                "analysis_result": analysis_result,
+                                "planning_result": planning_result,
+                                "placeholders": placeholders,
                                 "template": template,
                             }
                         )
@@ -52,8 +59,8 @@ def confirm_execute_dialog():
                         validation_result = chain.validation_chain.invoke(
                             {
                                 "script_content": script_content,
-                                "analysis": analysis_result,
-                                "planning": planning_result,
+                                "analysis_result": analysis_result,
+                                "content_plan": planning_result,
                                 "generated_content": generation_result,
                                 "template": template,
                             }
@@ -62,40 +69,31 @@ def confirm_execute_dialog():
                     generated_markdown = validation_result.get(
                         "final_markdown", generation_result.get("markdown", "")
                     )
+                    
+                    # 成功時のみ結果ページに遷移
+                    st.session_state.app_state.user_inputs = {
+                        "format": st.session_state.format_selection,
+                        "script_content": script_content,
+                    }
+                    st.session_state.app_state.generated_markdown = generated_markdown
+                    st.session_state.selected_format = st.session_state.format_selection
+                    st.switch_page("components/pages/result_page.py")
+                    
             except Exception as e:
-                st.error(f"プレゼンテーション生成に失敗しました: {str(e)}")
-                # フォールバック用の基本的なMarkdown
-                generated_markdown = f"""---
-marp: true
-theme: default
----
+                # エラーが発生した場合はセッション状態にエラーメッセージを保存
+                st.session_state.generation_error = str(e)
+                st.rerun()
 
-# プレゼンテーション
 
-エラーが発生しました。以下は原稿の内容です:
-
-{script_content}
-
----
-
-# 終わり
-
-ありがとうございました。
-"""
-
-            st.session_state.app_state.user_inputs = {
-                "format": st.session_state.format_selection,
-                "script_content": script_content,
-            }
-            st.session_state.app_state.generated_markdown = generated_markdown
-
-            # 選択した形式を保存し、結果ページへ遷移
-            st.session_state.selected_format = st.session_state.format_selection
-            st.switch_page("components/pages/result_page.py")
-    with col_no:
-        if st.button("いいえ", use_container_width=True):
-            # ダイアログを閉じて再描画
-            st.rerun()
+@st.dialog("エラー", width="medium", dismissible=True)
+def show_error_dialog(error_message):
+    st.error("プレゼンテーション生成に失敗しました")
+    st.write(f"エラーの詳細: {error_message}")
+    if st.button("OK", use_container_width=True, type="primary"):
+        # エラーメッセージを削除してダイアログを閉じる
+        if "generation_error" in st.session_state:
+            del st.session_state.generation_error
+        st.rerun()
 
 
 # app_stateまたはselected_templateが存在しない場合、ギャラリーページにリダイレクト
@@ -104,6 +102,10 @@ if (
     or st.session_state.app_state.selected_template is None
 ):
     st.switch_page("components/pages/gallery_page.py")
+
+# エラーダイアログの表示処理
+if "generation_error" in st.session_state:
+    show_error_dialog(st.session_state.generation_error)
 
 template = st.session_state.app_state.selected_template
 
