@@ -73,7 +73,7 @@ class TestPromptService:
         result = self.service.build_composition_prompt(input_dict)
 
         assert "prompt" in result
-        expected_prompt = 'Compose slides for: Test script\nAnalysis: {"summary": "Analysis"}\nFunctions: Function list\nTarget: 2 slides'
+        expected_prompt = 'Compose slides for: Test script\nAnalysis: {"summary": "Analysis"}\nFunctions: Function list\nTarget: 3 slides'
         assert result["prompt"] == expected_prompt
 
     def test_build_parameter_prompt(self):

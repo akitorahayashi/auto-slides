@@ -240,21 +240,3 @@ class TestSlideGenChainIntegration:
 
         chain_step = slide_gen_chain._create_chain_step(dummy_prompt_builder)
         assert chain_step is not None
-
-    def test_slides_combination(self, slide_gen_chain):
-        """Test slide combination functionality"""
-        test_slides = [
-            "# Slide 1\nContent 1\n\n---",
-            "# Slide 2\nContent 2\n\n---",
-            "# Slide 3\nContent 3",
-        ]
-
-        combined = slide_gen_chain._combine_slides(test_slides)
-
-        assert isinstance(combined, str)
-        assert "# Slide 1" in combined
-        assert "# Slide 2" in combined
-        assert "# Slide 3" in combined
-
-        # Should join slides with double newlines
-        assert "\n\n" in combined

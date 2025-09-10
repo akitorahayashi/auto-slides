@@ -33,7 +33,7 @@ class SlideGenChain(SlideGenerationProtocol):
         self.slides_loader = SlidesLoader()
         self.progress_callback = progress_callback
         self.current_phase = 0
-        self.total_phases = 4  # analyzing, composing, building, generating,
+        self.total_phases = 3  # analyzing, composing, building
         self._setup_chains()
 
     def _create_chain_step(self, prompt_builder_method):
@@ -104,15 +104,13 @@ class SlideGenChain(SlideGenerationProtocol):
                     self._build_template_with_placeholders
                 )
             )
-            # Phase 4: Single LLM Call to Fill All Placeholders
-            | RunnableLambda(lambda x: self._report_phase_progress("generating") or x)
+            # Phase 3: Single LLM Call to Fill All Placeholders
             | RunnablePassthrough.assign(
                 final_presentation=self._create_string_chain_step(
                     self.prompt_service.build_placeholder_prompt
                 )
             )
             | RunnableLambda(lambda x: self._report_phase_progress("building") or x)
-            | RunnableLambda(lambda x: self._report_phase_progress("completed") or x)
             | RunnableLambda(lambda x: x["final_presentation"])
         )
 
