@@ -3,6 +3,8 @@ from pathlib import Path
 from string import Template
 from typing import Any, Dict
 
+import streamlit as st
+
 
 class PromptService:
     """Service for building and managing prompts from templates"""
@@ -22,8 +24,6 @@ class PromptService:
         Returns:
             Truncated prompt string (truncated from the end if necessary)
         """
-        import streamlit as st
-
         # Get maximum length from secrets
         max_length = st.secrets.get("MAX_PROMPT_LENGTH", 6000)
 
@@ -47,10 +47,9 @@ class PromptService:
 
     def build_analysis_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Build analysis prompt from template"""
-        import streamlit as st
+        divisor = st.secrets.get("ARGUMENT_FLOW_DIVISOR", 4)
 
         script_content = input_dict["script_content"]
-        divisor = st.secrets.get("ARGUMENT_FLOW_DIVISOR", 4)
         argument_flow_limit = len(script_content) // divisor
         substitutions = {
             "script_content": script_content,
@@ -61,8 +60,6 @@ class PromptService:
 
     def build_composition_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Build slide composition prompt"""
-        import streamlit as st
-
         target_slide_count = st.secrets.get("TARGET_SLIDE_COUNT", 10)
         substitutions = {
             "script_content": input_dict["script_content"],

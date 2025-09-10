@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -64,6 +64,19 @@ class SlideGenChain(SlideGenerationProtocol):
             print(
                 f"📊 LLM Request {self.current_request}/{self.total_requests} (progress: {progress:.1%})"
             )
+            # 現在のステージを決定
+            if self.current_request == 1:
+                stage = "analyzing"
+            elif self.current_request == 2:
+                stage = "composing"
+            else:
+                stage = "generating"
+            
+            # プログレスコールバックを呼び出し（セッションコンテキスト外での呼び出しを回避）
+            try:
+                self.progress_callback(stage, self.current_request, self.total_requests)
+            except Exception as e:
+                print(f"Progress callback failed: {e}")
         return None
 
     def _setup_chains(self):

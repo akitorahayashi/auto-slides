@@ -110,25 +110,9 @@ def generate_slides_with_llm():
         st.session_state.progress_animation_count += 1
 
         # プログレステキストを更新
-        if total > 0 and stage != "completed":
-            # LLMリクエスト数ベースのメッセージ
-            stage_messages = {
-                "analyzing": "📊 スライド内容を分析中",
-                "composing": "🎯 スライド構成を決定中",
-                "generating": "✍️ パラメータを生成中",
-                "building": "🏗️ スライドを構築中",
-                "combining": "🔗 スライドを統合中",
-            }
-            base_message = stage_messages.get(stage, "スライドを生成中")
-            # リクエスト数表示を削除して、シンプルにする
-            progress_text = get_progress_text(
-                stage, st.session_state.progress_animation_count
-            )
-        else:
-            # 完了時または従来の表示
-            progress_text = get_progress_text(
-                stage, st.session_state.progress_animation_count
-            )
+        progress_text = get_progress_text(
+            stage, st.session_state.progress_animation_count
+        )
 
         progress_container.info(progress_text)
         progress_bar_container.progress(progress_value)
