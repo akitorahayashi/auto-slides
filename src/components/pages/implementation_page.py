@@ -1,5 +1,6 @@
 import streamlit as st
 
+from src.chains.slide_gen_chain import SlideGenChain
 from src.schemas import OutputFormat
 
 
@@ -17,9 +18,49 @@ def confirm_execute_dialog():
             # LLMサービスを使用してプレゼンテーションを生成
             try:
                 with st.spinner("LLMがプレゼンテーションを生成中..."):
-                    generator = st.session_state.slide_generator
-                    generated_markdown = generator.generate_sync(
-                        script_content=script_content, template=template
+                    chain = SlideGenChain()
+
+                    # Phase 1: Script Analysis
+                    with st.spinner("原稿を解析中..."):
+                        analysis_result = chain.analysis_chain.invoke(
+                            {"script_content": script_content}
+                        )
+
+                    # Phase 2: Content Planning
+                    with st.spinner("コンテンツを計画中..."):
+                        planning_result = chain.planning_chain.invoke(
+                            {
+                                "script_content": script_content,
+                                "analysis": analysis_result,
+                                "template": template,
+                            }
+                        )
+
+                    # Phase 3: Content Generation
+                    with st.spinner("スライドを生成中..."):
+                        generation_result = chain.generation_chain.invoke(
+                            {
+                                "script_content": script_content,
+                                "analysis": analysis_result,
+                                "planning": planning_result,
+                                "template": template,
+                            }
+                        )
+
+                    # Phase 4: Content Validation
+                    with st.spinner("コンテンツを検証中..."):
+                        validation_result = chain.validation_chain.invoke(
+                            {
+                                "script_content": script_content,
+                                "analysis": analysis_result,
+                                "planning": planning_result,
+                                "generated_content": generation_result,
+                                "template": template,
+                            }
+                        )
+
+                    generated_markdown = validation_result.get(
+                        "final_markdown", generation_result.get("markdown", "")
                     )
             except Exception as e:
                 st.error(f"プレゼンテーション生成に失敗しました: {str(e)}")

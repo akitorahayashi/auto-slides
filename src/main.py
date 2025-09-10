@@ -5,7 +5,6 @@ import streamlit as st
 from src.app_state import AppState
 from src.models.template_repository import TemplateRepository
 from src.protocols.marp_protocol import MarpProtocol
-from src.services.slide_generator import SlideGenerator
 
 st.set_page_config(
     page_title="Auto Slides",
@@ -75,13 +74,9 @@ def initialize_session():
         st.session_state.marp_service = marp_service
         st.session_state.template_repository = template_repository
 
-    if "slide_generator" not in st.session_state:
-        st.session_state.slide_generator = SlideGenerator()
-
     if "app_state" not in st.session_state:
         st.session_state.app_state = AppState(
             template_repository=st.session_state.template_repository,
-            slide_generator=st.session_state.slide_generator,
         )
 
 

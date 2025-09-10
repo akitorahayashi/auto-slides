@@ -1,6 +1,3 @@
-import re
-from typing import Set
-
 from src.models.slide_template import SlideTemplate
 
 
@@ -9,13 +6,14 @@ class SlideGenerator:
 
     def __init__(self):
         from src.chains.slide_gen_chain import SlideGenChain
+
         self.chain = SlideGenChain()
 
     async def generate_slide(self, script_content: str, template: SlideTemplate) -> str:
         """Agentic slide generation workflow with observation and reasoning"""
 
         template_content = template.read_markdown_content()
-        placeholders = extract_placeholders(template_content)
+        placeholders = template.extract_placeholders(template_content)
 
         try:
             # Phase 1: Analyze Script (Observation)
@@ -69,25 +67,10 @@ class SlideGenerator:
             raise e
 
         # Final: Render template
-        return render_template(template_content, final_content)
+        return template.render_template(template_content, final_content)
 
     def generate_sync(self, script_content: str, template: SlideTemplate) -> str:
         """Synchronous wrapper"""
         import asyncio
 
         return asyncio.run(self.generate_slide(script_content, template))
-
-
-def extract_placeholders(template_content: str) -> Set[str]:
-    """Extract all ${placeholder} variables from template content"""
-    pattern = r"\$\{([^}]+)\}"
-    matches = re.findall(pattern, template_content)
-    return set(matches)
-
-
-def render_template(template_content: str, content_dict: dict) -> str:
-    """Render template with content dictionary"""
-    from string import Template
-
-    template = Template(template_content)
-    return template.safe_substitute(content_dict)

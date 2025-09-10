@@ -88,8 +88,8 @@ Thank you for your attention.
                 assert mock_session.app_state.generated_markdown == generated_markdown
                 assert "chain workflow" in mock_session.app_state.generated_markdown
 
-    def test_slide_generator_service_initialization(self):
-        """Test SlideGenerator service initialization in main.py"""
+    def test_slide_gen_chain_initialization(self):
+        """Test SlideGenChain initialization"""
         with patch("streamlit.secrets") as mock_secrets:
             # Mock streamlit secrets for testing
             mock_secrets.get.side_effect = lambda key, default=None: {
@@ -97,19 +97,16 @@ Thank you for your attention.
                 "OLLAMA_MODEL": "test-model",
             }.get(key, default)
 
-            from src.services import SlideGenerator
+            from src.chains.slide_gen_chain import SlideGenChain
 
-            # Test that SlideGenerator can be instantiated
-            generator = SlideGenerator()
-
-            # Verify it has the chain component
-            assert hasattr(generator, "chain")
+            # Test that SlideGenChain can be instantiated
+            chain = SlideGenChain()
 
             # Verify chain has all required components
-            assert hasattr(generator.chain, "analysis_chain")
-            assert hasattr(generator.chain, "planning_chain")
-            assert hasattr(generator.chain, "generation_chain")
-            assert hasattr(generator.chain, "validation_chain")
+            assert hasattr(chain, "analysis_chain")
+            assert hasattr(chain, "planning_chain")
+            assert hasattr(chain, "generation_chain")
+            assert hasattr(chain, "validation_chain")
 
     def test_session_state_chain_integration(self):
         """Test session state setup with chain integration"""
@@ -121,16 +118,16 @@ Thank you for your attention.
 
             with patch.object(st, "session_state") as mock_session:
                 # Mock the session state initialization logic from main.py
-                from src.services import SlideGenerator
+                from src.chains.slide_gen_chain import SlideGenChain
 
-                # Simulate initialization
-                if "slide_generator" not in mock_session.__dict__:
-                    mock_session.slide_generator = SlideGenerator()
+                # Simulate chain initialization (direct instantiation in pages)
+                chain = SlideGenChain()
 
-                # Verify the service is properly initialized
-                assert hasattr(mock_session, "slide_generator")
-                generator = mock_session.slide_generator
-                assert isinstance(generator, SlideGenerator)
+                # Verify the chain is properly initialized
+                assert hasattr(chain, "analysis_chain")
+                assert hasattr(chain, "planning_chain")
+                assert hasattr(chain, "generation_chain")
+                assert hasattr(chain, "validation_chain")
 
     def test_chain_error_handling_in_ui(self):
         """Test chain error handling in UI context"""
@@ -200,7 +197,9 @@ Thank you.
 
     def test_template_placeholder_workflow(self):
         """Test template placeholder extraction and rendering workflow"""
-        from src.services.slide_generator import extract_placeholders, render_template
+        from pathlib import Path
+
+        from src.models import SlideTemplate
 
         # Test complex template with multiple placeholders
         template_content = """---
@@ -231,8 +230,17 @@ ${topic_2_content}
 ${conclusion}
 """
 
+        # Create a real SlideTemplate instance for testing
+        template = SlideTemplate(
+            id="test_template",
+            name="Test Template",
+            description="Test template for unit tests",
+            template_dir=Path("/tmp/test_template"),
+            duration_minutes=10,
+        )
+
         # Extract placeholders
-        placeholders = extract_placeholders(template_content)
+        placeholders = template.extract_placeholders(template_content)
         expected_placeholders = {
             "theme",
             "presentation_title",
@@ -257,7 +265,7 @@ ${conclusion}
             "conclusion": "Conclusion from validation phase",
         }
 
-        result = render_template(template_content, mock_content)
+        result = template.render_template(template_content, mock_content)
 
         # Verify all placeholders were replaced
         assert "${" not in result

@@ -184,18 +184,26 @@ class TestImplementationPageLogic:
             generator = SlideGenerator()
             assert hasattr(generator, "chain")
 
-            # Test extract_placeholders function
-            from src.services.slide_generator import extract_placeholders
+            # Test template functionality with SlideTemplate
+            from pathlib import Path
+
+            from src.models import SlideTemplate
+
+            template = SlideTemplate(
+                id="test_template",
+                name="Test Template",
+                description="Test template for integration tests",
+                template_dir=Path("/tmp/test_template"),
+                duration_minutes=10,
+            )
 
             template_content = "Hello ${name}, welcome to ${event}!"
-            placeholders = extract_placeholders(template_content)
+            placeholders = template.extract_placeholders(template_content)
             assert placeholders == {"name", "event"}
 
-            # Test render_template function
-            from src.services.slide_generator import render_template
-
+            # Test render_template method
             content_dict = {"name": "John", "event": "Conference"}
-            result = render_template(template_content, content_dict)
+            result = template.render_template(template_content, content_dict)
             assert result == "Hello John, welcome to Conference!"
 
     def test_slide_generator_error_handling(self):

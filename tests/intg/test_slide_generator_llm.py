@@ -156,21 +156,32 @@ class TestSlideGeneratorIntegration:
 
     def test_placeholder_extraction_and_rendering(self):
         """Test placeholder extraction and template rendering"""
-        from src.services.slide_generator import extract_placeholders, render_template
+        from pathlib import Path
+
+        from src.models import SlideTemplate
+
+        # Create a real SlideTemplate instance
+        template = SlideTemplate(
+            id="test_template",
+            name="Test Template",
+            description="Test template for integration tests",
+            template_dir=Path("/tmp/test_template"),
+            duration_minutes=10,
+        )
 
         # Test placeholder extraction
         template_content = "Hello ${name}, welcome to ${event} at ${location}!"
-        placeholders = extract_placeholders(template_content)
+        placeholders = template.extract_placeholders(template_content)
         assert placeholders == {"name", "event", "location"}
 
         # Test template rendering
         content_dict = {"name": "John", "event": "Conference", "location": "Tokyo"}
-        result = render_template(template_content, content_dict)
+        result = template.render_template(template_content, content_dict)
         assert result == "Hello John, welcome to Conference at Tokyo!"
 
         # Test with missing placeholder
         incomplete_dict = {"name": "John", "event": "Conference"}
-        result = render_template(template_content, incomplete_dict)
+        result = template.render_template(template_content, incomplete_dict)
         assert "John" in result
         assert "Conference" in result
         assert "${location}" in result  # Should remain unreplaced

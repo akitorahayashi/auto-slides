@@ -58,7 +58,7 @@ Thank you for your attention.
                 mock_session.app_state = mock_app_state
                 mock_session.slide_generator = mock_slide_generator
                 mock_session.format_selection = "PDF"
-                
+
                 script_content = "Test script for chain workflow"
 
                 # Simulate execution with chain workflow
@@ -66,16 +66,16 @@ Thank you for your attention.
                 generated_markdown = generator.generate_sync(
                     script_content=script_content, template=mock_template
                 )
-                
+
                 # Verify chain workflow was used
                 mock_slide_generator.generate_sync.assert_called_once_with(
                     script_content=script_content, template=mock_template
                 )
-                
+
                 # Verify generated content contains chain-specific markers
                 assert "Generated via chain workflow" in generated_markdown
                 assert "marp: true" in generated_markdown
-                
+
                 # Simulate session state update
                 mock_session.app_state.user_inputs = {
                     "format": mock_session.format_selection,
@@ -83,7 +83,7 @@ Thank you for your attention.
                 }
                 mock_session.app_state.generated_markdown = generated_markdown
                 mock_session.selected_format = mock_session.format_selection
-                
+
                 # Verify session state
                 assert mock_session.app_state.generated_markdown == generated_markdown
                 assert "chain workflow" in mock_session.app_state.generated_markdown
@@ -94,41 +94,41 @@ Thank you for your attention.
             # Mock streamlit secrets for testing
             mock_secrets.get.side_effect = lambda key, default=None: {
                 "DEBUG": "true",
-                "OLLAMA_MODEL": "test-model"
+                "OLLAMA_MODEL": "test-model",
             }.get(key, default)
-            
+
             from src.services.slide_generator import SlideGenerator
-            
+
             # Test that SlideGenerator can be instantiated
             generator = SlideGenerator()
-            
+
             # Verify it has the chain component
-            assert hasattr(generator, 'chain')
-            
+            assert hasattr(generator, "chain")
+
             # Verify chain has all required components
-            assert hasattr(generator.chain, 'analysis_chain')
-            assert hasattr(generator.chain, 'planning_chain')
-            assert hasattr(generator.chain, 'generation_chain')
-            assert hasattr(generator.chain, 'validation_chain')
+            assert hasattr(generator.chain, "analysis_chain")
+            assert hasattr(generator.chain, "planning_chain")
+            assert hasattr(generator.chain, "generation_chain")
+            assert hasattr(generator.chain, "validation_chain")
 
     def test_session_state_chain_integration(self):
         """Test session state setup with chain integration"""
         with patch("streamlit.secrets") as mock_secrets:
             mock_secrets.get.side_effect = lambda key, default=None: {
                 "DEBUG": "true",
-                "OLLAMA_MODEL": "test-model"
+                "OLLAMA_MODEL": "test-model",
             }.get(key, default)
-            
+
             with patch.object(st, "session_state") as mock_session:
                 # Mock the session state initialization logic from main.py
                 from src.services.slide_generator import SlideGenerator
-                
+
                 # Simulate initialization
                 if "slide_generator" not in mock_session.__dict__:
                     mock_session.slide_generator = SlideGenerator()
-                
+
                 # Verify the service is properly initialized
-                assert hasattr(mock_session, 'slide_generator')
+                assert hasattr(mock_session, "slide_generator")
                 generator = mock_session.slide_generator
                 assert isinstance(generator, SlideGenerator)
 
@@ -136,7 +136,9 @@ Thank you for your attention.
         """Test chain error handling in UI context"""
         # Create mock slide generator that simulates chain errors
         mock_slide_generator = MagicMock()
-        mock_slide_generator.generate_sync.side_effect = Exception("Chain workflow error")
+        mock_slide_generator.generate_sync.side_effect = Exception(
+            "Chain workflow error"
+        )
 
         mock_template = MagicMock(spec=SlideTemplate)
         mock_app_state = MagicMock()
@@ -145,15 +147,14 @@ Thank you for your attention.
         with patch.object(st, "session_state") as mock_session:
             mock_session.app_state = mock_app_state
             mock_session.slide_generator = mock_slide_generator
-            
+
             script_content = "Test script"
-            
+
             # Simulate error handling from implementation_page.py
             try:
                 generator = mock_session.slide_generator
                 generated_markdown = generator.generate_sync(
-                    script_content=script_content, 
-                    template=mock_template
+                    script_content=script_content, template=mock_template
                 )
             except Exception as e:
                 # This is the fallback logic from the actual implementation
@@ -174,7 +175,7 @@ Error occurred. Here is the script content:
 
 Thank you.
 """
-            
+
             # Verify error was handled gracefully
             assert "Error occurred" in generated_markdown
             assert script_content in generated_markdown
@@ -185,22 +186,33 @@ Thank you.
         # Simulate the console output and workflow from SlideGenerator
         phases = [
             "Agent: Analyzing script content...",
-            "Agent: Planning content strategy...", 
+            "Agent: Planning content strategy...",
             "Agent: Generating slide content...",
-            "Agent: Validating content quality..."
+            "Agent: Validating content quality...",
         ]
-        
+
         # Test that all phases are represented
         assert len(phases) == 4
         assert "Analyzing" in phases[0]
-        assert "Planning" in phases[1] 
+        assert "Planning" in phases[1]
         assert "Generating" in phases[2]
         assert "Validating" in phases[3]
 
     def test_template_placeholder_workflow(self):
         """Test template placeholder extraction and rendering workflow"""
-        from src.services.slide_generator import extract_placeholders, render_template
-        
+        from pathlib import Path
+
+        from src.models import SlideTemplate
+
+        # Create a real SlideTemplate instance
+        template = SlideTemplate(
+            id="test_template",
+            name="Test Template",
+            description="Test template for integration tests",
+            template_dir=Path("/tmp/test_template"),
+            duration_minutes=10,
+        )
+
         # Test complex template with multiple placeholders
         template_content = """---
 marp: true
@@ -229,16 +241,21 @@ ${topic_2_content}
 
 ${conclusion}
 """
-        
+
         # Extract placeholders
-        placeholders = extract_placeholders(template_content)
+        placeholders = template.extract_placeholders(template_content)
         expected_placeholders = {
-            "theme", "presentation_title", "presentation_subtitle",
-            "topic_1_title", "topic_1_content", "topic_2_title", 
-            "topic_2_content", "conclusion"
+            "theme",
+            "presentation_title",
+            "presentation_subtitle",
+            "topic_1_title",
+            "topic_1_content",
+            "topic_2_title",
+            "topic_2_content",
+            "conclusion",
         }
         assert placeholders == expected_placeholders
-        
+
         # Test rendering with mock chain output
         mock_content = {
             "theme": "default",
@@ -246,14 +263,14 @@ ${conclusion}
             "presentation_subtitle": "Subtitle from analysis phase",
             "topic_1_title": "First Topic",
             "topic_1_content": "Content from planning phase",
-            "topic_2_title": "Second Topic", 
+            "topic_2_title": "Second Topic",
             "topic_2_content": "Content from generation phase",
-            "conclusion": "Conclusion from validation phase"
+            "conclusion": "Conclusion from validation phase",
         }
-        
-        result = render_template(template_content, mock_content)
-        
-        # Verify all placeholders were replaced
+
+        result = template.render_template(
+            template_content, mock_content
+        )  # Verify all placeholders were replaced
         assert "${" not in result
         assert "Chain Generated Title" in result
         assert "analysis phase" in result
@@ -263,10 +280,11 @@ ${conclusion}
 
     def test_mock_chain_workflow_output(self):
         """Test that mock chain workflow produces expected output format"""
+        from pathlib import Path
+
         from dev.mocks.mock_slide_generator import MockSlideGenerator
         from src.models.slide_template import SlideTemplate
-        from pathlib import Path
-        
+
         # Create test template
         test_template = SlideTemplate(
             id="test_chain",
@@ -275,12 +293,12 @@ ${conclusion}
             template_dir=Path("tests/templates/k2g4h1x9"),
             duration_minutes=5,
         )
-        
+
         mock_generator = MockSlideGenerator()
         script_content = "Test script for mock chain workflow"
-        
+
         result = mock_generator.generate_sync(script_content, test_template)
-        
+
         # Verify mock chain output format
         assert isinstance(result, str)
         assert "---" in result  # Marp format
