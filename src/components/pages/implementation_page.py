@@ -16,13 +16,13 @@ def confirm_execute_dialog():
         if st.button("はい", use_container_width=True, type="primary"):
             # ユーザー入力をセッションに保存
             script_content = st.session_state.get("script_content", "")
-            
+
             # 入力データを検証
             if not script_content.strip():
                 st.session_state.generation_error = "原稿を入力してください。"
                 st.rerun()
                 return
-            
+
             # ユーザー入力を保存し、結果ページに遷移
             # generated_markdownは結果ページで生成される
             st.session_state.app_state.user_inputs = {

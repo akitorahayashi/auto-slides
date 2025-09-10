@@ -24,16 +24,16 @@ class OlmClient(LLM):
     def _clean_output(self, text: str) -> str:
         """Clean LLM output by removing think tags and other artifacts"""
         # Remove <think> tags and their content
-        cleaned = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-        
+        cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
         # Remove other common artifacts
-        cleaned = re.sub(r'<reasoning>.*?</reasoning>', '', cleaned, flags=re.DOTALL)
-        cleaned = re.sub(r'<analysis>.*?</analysis>', '', cleaned, flags=re.DOTALL)
-        
+        cleaned = re.sub(r"<reasoning>.*?</reasoning>", "", cleaned, flags=re.DOTALL)
+        cleaned = re.sub(r"<analysis>.*?</analysis>", "", cleaned, flags=re.DOTALL)
+
         # Clean up extra whitespace
-        cleaned = re.sub(r'\n\s*\n', '\n\n', cleaned)
+        cleaned = re.sub(r"\n\s*\n", "\n\n", cleaned)
         cleaned = cleaned.strip()
-        
+
         return cleaned
 
     def _setup_client(self):

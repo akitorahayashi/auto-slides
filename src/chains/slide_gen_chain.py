@@ -3,8 +3,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
 from src.clients.ollama_client import OlmClient
-from src.services.prompt_service import PromptService
 from src.services.output_parsers import RobustJsonOutputParser
+from src.services.prompt_service import PromptService
 
 
 class SlideGenChain:

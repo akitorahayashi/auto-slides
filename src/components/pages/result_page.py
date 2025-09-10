@@ -29,7 +29,9 @@ def generate_slides_with_llm():
             # 本番モードでは既存のSlideGeneratorを使用
             from src.services.slide_generator import SlideGenerator
 
-            with st.status("プレゼンテーションスライドを生成中...", expanded=True) as main_status:
+            with st.status(
+                "プレゼンテーションスライドを生成中...", expanded=True
+            ) as main_status:
                 generator = SlideGenerator()
                 generated_markdown = generator.generate_sync(script_content, template)
                 main_status.update(label="スライド生成完了", state="complete")
@@ -47,6 +49,7 @@ def generate_slides_with_llm():
         st.error("設定画面に戻って再度お試しください。")
         if st.button("設定画面に戻る", type="primary"):
             st.switch_page("components/pages/implementation_page.py")
+
 
 # ナビゲーションボタンをタイトルの上に配置（処理中は非表示）
 is_processing = st.session_state.get("should_start_generation", False)
@@ -106,7 +109,7 @@ selected_format_enum = format_options[selected_format]["format"]
 try:
     # 生成されたMarkdownコンテンツとCSSを取得
     generated_markdown = st.session_state.app_state.generated_markdown
-    
+
     # 生成されたMarkdownコンテンツの検証
     if not generated_markdown or generated_markdown.strip() == "":
         st.error("❌ 生成されたMarkdownコンテンツが空です。")
@@ -114,9 +117,9 @@ try:
         if st.button("設定画面に戻る", type="primary"):
             st.switch_page("components/pages/implementation_page.py")
         st.stop()
-    
+
     css_content = template.read_css_content()
-    
+
     # CSSコンテンツの検証
     if not css_content:
         st.warning("⚠️ CSSコンテンツが見つかりません。デフォルトスタイルを使用します。")
@@ -168,14 +171,14 @@ try:
 
     # ダウンロードボタン
     filename = f"{template.id}.{selected_format_enum.value}"
-    
+
     if selected_format == "PDF":
         download_label = "PDFファイルをダウンロード"
     elif selected_format == "HTML":
         download_label = "HTMLファイルをダウンロード"
     elif selected_format == "PPTX":
         download_label = "PPTXファイルをダウンロード"
-    
+
     st.download_button(
         label=download_label,
         data=file_data,
