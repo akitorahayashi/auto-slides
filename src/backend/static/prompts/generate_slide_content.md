@@ -1,7 +1,4 @@
-以下の原稿を分析し、指定された各項目に対応する内容をJSON形式で生成してください。
-
-# 原稿
-${script_content}
+以下の指示に従って、文末の原稿を分析し、指定された各項目に対応する内容をJSON形式で生成してください。
 
 # 生成すべき項目（JSONキー）
 ${placeholders_list}
@@ -19,3 +16,7 @@ ${placeholders_list}
 {
 ${json_example}
 }
+
+---
+# 原稿
+${script_content}

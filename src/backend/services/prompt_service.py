@@ -42,7 +42,7 @@ class PromptService:
             "script_content": input_dict["script_content"],
             "placeholders_list": "\n".join([f"- {p}" for p in placeholders]),
             "json_example": ",\n".join(
-                [f'  "{p}": "対応する内容"' for p in placeholders]
+                [f'  \"{p}\": \"対応する内容\"' for p in placeholders]
             ),
         }
         prompt = self._build_prompt("generate_slide_content.md", substitutions)

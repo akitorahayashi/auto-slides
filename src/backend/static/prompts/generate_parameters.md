@@ -5,9 +5,6 @@ Extract and generate appropriate parameter values from the script content for th
 
 ## Input Information
 
-### Script Content
-$script_content
-
 ### Analysis Result
 $analysis_result
 
@@ -40,3 +37,7 @@ Output a JSON structure with the function name and parameter values:
 ```
 
 Ensure all required parameters are provided and values are appropriate for the function's purpose.
+
+---
+### Script Content
+$script_content

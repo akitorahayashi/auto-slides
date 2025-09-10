@@ -1,4 +1,3 @@
-import os
 import re
 from typing import Any, List, Optional
 
@@ -55,15 +54,13 @@ class OlmClient(LLM):
 
     def _setup_client(self):
         """Setup Ollama client based on configuration"""
-        debug_value = st.secrets.get("DEBUG", os.getenv("DEBUG", "false"))
+        debug_value = st.secrets.get("DEBUG", "false")
         if isinstance(debug_value, bool):
             debug = debug_value
         else:
             debug = str(debug_value).lower() == "true"
 
-        self.model = st.secrets.get(
-            "OLLAMA_MODEL", os.getenv("OLLAMA_MODEL", "qwen3:0.6b")
-        )
+        self.model = st.secrets.get("OLLAMA_MODEL", "qwen3:0.6b")
 
         if debug:
             # Use mock client for debug mode
@@ -75,9 +72,7 @@ class OlmClient(LLM):
             )
             return
 
-        use_local_value = st.secrets.get(
-            "USE_LOCAL_CLIENT", os.getenv("USE_LOCAL_CLIENT", "false")
-        )
+        use_local_value = st.secrets.get("USE_LOCAL_CLIENT", "false")
         if isinstance(use_local_value, bool):
             use_local = use_local_value
         else:
@@ -86,9 +81,7 @@ class OlmClient(LLM):
         if use_local:
             self.client = OllamaLocalClient()
         else:
-            api_endpoint = st.secrets.get(
-                "OLM_API_ENDPOINT", os.getenv("OLM_API_ENDPOINT")
-            )
+            api_endpoint = st.secrets.get("OLM_API_ENDPOINT")
 
             if not api_endpoint:
                 print("Warning: OLM_API_ENDPOINT not set, using mock client")

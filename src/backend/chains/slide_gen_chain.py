@@ -1,3 +1,4 @@
+import inspect
 from typing import Callable, Dict, List, Optional
 
 from langchain_core.output_parsers import StrOutputParser
@@ -13,13 +14,17 @@ from src.protocols.slide_generation_protocol import SlideGenerationProtocol
 class SlideGenChain(SlideGenerationProtocol):
     """LangChain LCEL chains for slide generation workflow"""
 
-    def __init__(self, llm: OlmClientProtocol, progress_callback: Optional[Callable[[str], None]] = None):
+    def __init__(
+        self,
+        llm: OlmClientProtocol,
+        progress_callback: Optional[Callable[[str, int, int], None]] = None,
+    ):
         """
         Initialize slide generation chain.
 
         Args:
             llm: Required OlmClientProtocol implementation for text generation
-            progress_callback: Optional callback function to report progress
+            progress_callback: Optional callback function to report progress (stage, current, total)
         """
         self.llm = llm
         self.json_parser = JsonParser()
@@ -27,6 +32,8 @@ class SlideGenChain(SlideGenerationProtocol):
         self.prompt_service = PromptService()
         self.slides_loader = SlidesLoader()
         self.progress_callback = progress_callback
+        self.current_request = 0
+        self.total_requests = 0
         self._setup_chains()
 
     def _create_chain_step(self, prompt_builder_method):
@@ -34,10 +41,26 @@ class SlideGenChain(SlideGenerationProtocol):
         return (
             RunnablePassthrough.assign(prompt=RunnableLambda(prompt_builder_method))
             | RunnableLambda(lambda x: x["prompt"])
+            | RunnableLambda(
+                lambda prompt_dict: {
+                    **prompt_dict,
+                    "prompt": self.prompt_service._truncate_prompt(prompt_dict["prompt"]),
+                }
+            )
             | ChatPromptTemplate.from_template("{prompt}")
+            | RunnableLambda(lambda x: self._increment_request_counter() or x)
             | self.llm
             | self.json_parser
         )
+
+    def _increment_request_counter(self):
+        """LLMリクエストカウンターを増加"""
+        self.current_request += 1
+        if self.progress_callback:
+            # プログレスを0.0-1.0で計算
+            progress = min(self.current_request / max(self.total_requests, 1), 1.0)
+            print(f"📊 LLM Request {self.current_request}/{self.total_requests} (progress: {progress:.1%})")
+        return None
 
     def _setup_chains(self):
         """Setup unified slide generation chain"""
@@ -73,17 +96,48 @@ class SlideGenChain(SlideGenerationProtocol):
     ) -> str:
         """Unified slide generation chain execution"""
         try:
+            # 事前にLLMリクエスト数を計算
+            self._calculate_total_requests(template)
             self._report_progress("analyzing")
             print("🔍 Agent: Analyzing script content...")
-            result = self.slide_gen_chain.invoke(
-                {"script_content": script_content, "template": template}
-            )
+            
+            input_data = {"script_content": script_content, "template": template}
+            print(f"🔍 Input data: script_length={len(script_content)}, template_id={template.id}")
+            print(f"🔍 Total LLM requests: {self.total_requests}")
+            
+            result = self.slide_gen_chain.invoke(input_data)
             self._report_progress("completed")
             print("🎉 Agent: Presentation generated successfully!")
+            print(f"🔍 Result length: {len(result) if result else 0}")
             return result
         except Exception as e:
             print(f"🚨 Agent error: {e}")
+            print(f"🚨 Error type: {type(e).__name__}")
+            print(f"🚨 Input was: script_length={len(script_content) if script_content else 0}, template_id={template.id if template else 'None'}")
             raise e
+
+    def _calculate_total_requests(self, template: SlideTemplate) -> None:
+        """事前にLLMリクエスト数を計算"""
+        try:
+            # 基本的なリクエスト: 分析(1) + 構成(1) = 2
+            base_requests = 2
+            
+            # テンプレート関数の数を取得
+            functions = self.slides_loader.load_template_functions(template.id)
+            function_count = len(functions)
+            
+            # 各スライドのパラメータ生成リクエスト数（推定値として関数数を使用）
+            parameter_requests = function_count
+            
+            self.total_requests = base_requests + parameter_requests
+            self.current_request = 0
+            
+            print(f"🔢 Calculated total requests: {self.total_requests} (base: {base_requests}, parameters: {parameter_requests})")
+        except Exception as e:
+            print(f"⚠️ Error calculating requests: {e}")
+            # エラー時はデフォルト値を使用
+            self.total_requests = 5
+            self.current_request = 0
 
     def _execute_slides(self, context: Dict) -> Dict:
         """Execute slide generation from composition plan"""
@@ -98,9 +152,30 @@ class SlideGenChain(SlideGenerationProtocol):
         slide_parameters = []
         functions = self.slides_loader.load_template_functions(template.id)
 
-        for slide_plan in composition_plan.get("slides", []):
-            function_name = slide_plan["function_name"]
-            if function_name in functions:
+        # composition_planの構造をデバッグ出力
+        print(f"🔍 Composition plan structure: {composition_plan}")
+        
+        slides_list = composition_plan.get("slides", [])
+        print(f"🔍 Slides list: {slides_list}")
+        
+        for i, slide_plan in enumerate(slides_list):
+            print(f"🔍 Processing slide {i}: {slide_plan}")
+            
+            # function_nameの存在確認
+            if not isinstance(slide_plan, dict):
+                print(f"⚠️ Slide plan {i} is not a dictionary: {type(slide_plan)}")
+                continue
+                
+            function_name = slide_plan.get("function_name")
+            if not function_name:
+                print(f"⚠️ Slide plan {i} missing function_name: {slide_plan}")
+                continue
+                
+            if function_name not in functions:
+                print(f"⚠️ Function '{function_name}' not available in template functions")
+                continue
+                
+            try:
                 params = self._create_chain_step(
                     self.prompt_service.build_parameter_prompt
                 ).invoke(
@@ -112,23 +187,68 @@ class SlideGenChain(SlideGenerationProtocol):
                     }
                 )
                 slide_parameters.append(params)
+                print(f"✅ Successfully generated parameters for {function_name}")
+            except Exception as param_error:
+                print(f"⚠️ Error generating parameters for {function_name}: {param_error}")
+                continue
 
         self._report_progress("building")
         print("🏗️ Agent: Building slides...")
         slides = []
 
-        for slide_param in slide_parameters:
+        for i, slide_param in enumerate(slide_parameters):
+            print(f"🔍 Processing slide parameter {i}: {slide_param}")
+            
+            if not isinstance(slide_param, dict):
+                print(f"⚠️ Slide param {i} is not a dictionary: {type(slide_param)}")
+                continue
+                
             function_name = slide_param.get("function_name")
+            if not function_name:
+                print(f"⚠️ Slide param {i} missing function_name: {slide_param}")
+                continue
+                
             parameters = slide_param.get("parameters", {})
 
             func = self.slides_loader.get_function_by_name(template.id, function_name)
 
             if func:
                 try:
-                    slide_content = func(**parameters)
+                    # 関数のシグネチャを取得して、有効なパラメータのみを渡す
+                    sig = inspect.signature(func)
+                    valid_params = {}
+
+                    for param_name, param_value in parameters.items():
+                        if param_name in sig.parameters:
+                            valid_params[param_name] = param_value
+                        else:
+                            print(
+                                f"🔧 Skipping invalid parameter '{param_name}' for function '{function_name}'"
+                            )
+
+                    # 不足している必須パラメータがないかチェック
+                    missing_params = []
+                    for param_name, param in sig.parameters.items():
+                        if (
+                            param.default is inspect.Parameter.empty
+                            and param_name not in valid_params
+                        ):
+                            missing_params.append(param_name)
+
+                    if missing_params:
+                        print(
+                            f"⚠️ Missing required parameters for {function_name}: {missing_params}"
+                        )
+                        continue
+
+                    slide_content = func(**valid_params)
                     slides.append(slide_content)
                 except Exception as e:
                     print(f"⚠️ Error executing {function_name}: {e}")
+                    print(f"   Parameters: {parameters}")
+                    print(
+                        f"   Valid parameters: {valid_params if 'valid_params' in locals() else 'N/A'}"
+                    )
                     continue
 
         return {**context, "slides": slides}
@@ -142,8 +262,8 @@ class SlideGenChain(SlideGenerationProtocol):
             processed_slides.append(slide.rstrip("\n-"))
 
         return "\n\n".join(processed_slides)
-    
+
     def _report_progress(self, stage: str):
         """Report progress to callback if available"""
         if self.progress_callback:
-            self.progress_callback(stage)
+            self.progress_callback(stage, self.current_request, self.total_requests)

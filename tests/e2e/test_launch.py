@@ -4,9 +4,6 @@ import time
 from typing import Optional
 
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 class StreamlitE2ETest:
@@ -22,8 +19,8 @@ class StreamlitE2ETest:
     ):
         self.app_path = app_path
         self.main_module = main_module
-        self.test_port = test_port or os.getenv("TEST_PORT", "8502")
-        self.host_ip = host_ip or os.getenv("HOST_IP", "localhost")
+        self.test_port = test_port or "8502"
+        self.host_ip = host_ip or "localhost"
 
         self.project_root = os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

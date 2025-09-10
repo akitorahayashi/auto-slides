@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock, patch
-import time
 
 import pytest
 import streamlit as st
 
 from src.backend.models.slide_template import SlideTemplate
 from src.protocols.schemas.output_format import OutputFormat
+
 # Test the progress functionality without direct imports to avoid streamlit issues
 
 
@@ -248,31 +248,38 @@ class TestProgressDisplay:
 
     def test_get_progress_text_logic(self):
         """Test progress text generation logic"""
-        
+
         def get_progress_text(stage: str, dot_count: int = 1) -> str:
             """Local implementation of progress text function for testing"""
             dot_patterns = [".", "..", "...", ""]
             dots = dot_patterns[dot_count % 4] if dot_count > 0 else "."
-            
+
             stage_messages = {
                 "analyzing": f"📊 スライド内容を分析中{dots}",
                 "composing": f"🎯 スライド構成を決定中{dots}",
                 "generating": f"✍️ パラメータを生成中{dots}",
                 "building": f"🏗️ スライドを構築中{dots}",
                 "combining": f"🔗 スライドを統合中{dots}",
-                "completed": "✅ スライドの生成が完了しました！"
+                "completed": "✅ スライドの生成が完了しました！",
             }
-            
+
             return stage_messages.get(stage, f"スライドを生成中{dots}")
-        
+
         # Test different stages
-        stages = ["analyzing", "composing", "generating", "building", "combining", "completed"]
-        
+        stages = [
+            "analyzing",
+            "composing",
+            "generating",
+            "building",
+            "combining",
+            "completed",
+        ]
+
         for stage in stages:
             text = get_progress_text(stage, 1)
             assert isinstance(text, str)
             assert len(text) > 0
-            
+
             if stage == "completed":
                 assert "✅ スライドの生成が完了しました！" in text
             else:
@@ -281,22 +288,22 @@ class TestProgressDisplay:
 
     def test_get_progress_text_dot_animation_logic(self):
         """Test dot animation logic"""
-        
+
         def get_progress_text(stage: str, dot_count: int = 1) -> str:
             """Local implementation for testing"""
             dot_patterns = [".", "..", "...", ""]
             dots = dot_patterns[dot_count % 4] if dot_count > 0 else "."
             return f"📊 スライド内容を分析中{dots}"
-        
+
         stage = "analyzing"
-        
+
         # Test dot animation cycle: . → .. → ... → (empty) → .
         expected_patterns = [".", "..", "...", ""]
-        
+
         for i in range(8):  # Test two full cycles
             text = get_progress_text(stage, i)
             expected_dots = expected_patterns[i % 4]
-            
+
             if expected_dots:
                 assert text.endswith(expected_dots)
             else:
@@ -305,32 +312,32 @@ class TestProgressDisplay:
 
     def test_progress_text_stage_messages_logic(self):
         """Test specific stage messages logic"""
-        
+
         def get_progress_text(stage: str, dot_count: int = 1) -> str:
             """Local implementation for testing"""
             dot_patterns = [".", "..", "...", ""]
             dots = dot_patterns[dot_count % 4] if dot_count > 0 else "."
-            
+
             stage_messages = {
                 "analyzing": f"📊 スライド内容を分析中{dots}",
                 "composing": f"🎯 スライド構成を決定中{dots}",
                 "generating": f"✍️ パラメータを生成中{dots}",
                 "building": f"🏗️ スライドを構築中{dots}",
                 "combining": f"🔗 スライドを統合中{dots}",
-                "completed": "✅ スライドの生成が完了しました！"
+                "completed": "✅ スライドの生成が完了しました！",
             }
-            
+
             return stage_messages.get(stage, f"スライドを生成中{dots}")
-        
+
         test_cases = [
             ("analyzing", "📊", "分析中"),
             ("composing", "🎯", "構成を決定中"),
             ("generating", "✍️", "パラメータを生成中"),
             ("building", "🏗️", "構築中"),
             ("combining", "🔗", "統合中"),
-            ("completed", "✅", "完了しました")
+            ("completed", "✅", "完了しました"),
         ]
-        
+
         for stage, expected_emoji, expected_text in test_cases:
             result = get_progress_text(stage, 1)
             assert expected_emoji in result
@@ -338,23 +345,23 @@ class TestProgressDisplay:
 
     def test_progress_text_default_stage_logic(self):
         """Test default behavior for unknown stage"""
-        
+
         def get_progress_text(stage: str, dot_count: int = 1) -> str:
             """Local implementation for testing"""
             dot_patterns = [".", "..", "...", ""]
             dots = dot_patterns[dot_count % 4] if dot_count > 0 else "."
-            
+
             stage_messages = {
                 "analyzing": f"📊 スライド内容を分析中{dots}",
                 "composing": f"🎯 スライド構成を決定中{dots}",
                 "generating": f"✍️ パラメータを生成中{dots}",
                 "building": f"🏗️ スライドを構築中{dots}",
                 "combining": f"🔗 スライドを統合中{dots}",
-                "completed": "✅ スライドの生成が完了しました！"
+                "completed": "✅ スライドの生成が完了しました！",
             }
-            
+
             return stage_messages.get(stage, f"スライドを生成中{dots}")
-        
+
         unknown_stage = "unknown_stage"
         text = get_progress_text(unknown_stage, 1)
         assert "スライドを生成中" in text
@@ -369,7 +376,7 @@ class TestProgressCallbackIntegration:
         # Mock the behavior instead of importing
         mock_generator = MagicMock()
         mock_generator.invoke_slide_gen_chain.return_value = "# Generated slides"
-        
+
         # Test that the mock generator can be called
         result = mock_generator.invoke_slide_gen_chain("test content", MagicMock())
         assert result == "# Generated slides"
@@ -377,33 +384,43 @@ class TestProgressCallbackIntegration:
 
     def test_progress_stages_sequence(self):
         """Test that progress stages follow correct sequence"""
-        stages = ["analyzing", "composing", "generating", "building", "combining", "completed"]
+        stages = [
+            "analyzing",
+            "composing",
+            "generating",
+            "building",
+            "combining",
+            "completed",
+        ]
         progress_values = {
             "analyzing": 0.2,
             "composing": 0.4,
             "generating": 0.6,
             "building": 0.8,
             "combining": 0.9,
-            "completed": 1.0
+            "completed": 1.0,
         }
-        
+
         # Verify each stage has appropriate progress value
         for stage in stages:
             assert stage in progress_values
             assert 0.0 <= progress_values[stage] <= 1.0
-        
+
         # Verify stages are in ascending order
         stage_values = [progress_values[stage] for stage in stages]
         assert stage_values == sorted(stage_values)
 
-    @pytest.mark.parametrize("stage,expected_progress", [
-        ("analyzing", 0.2),
-        ("composing", 0.4), 
-        ("generating", 0.6),
-        ("building", 0.8),
-        ("combining", 0.9),
-        ("completed", 1.0)
-    ])
+    @pytest.mark.parametrize(
+        "stage,expected_progress",
+        [
+            ("analyzing", 0.2),
+            ("composing", 0.4),
+            ("generating", 0.6),
+            ("building", 0.8),
+            ("combining", 0.9),
+            ("completed", 1.0),
+        ],
+    )
     def test_progress_values_for_stages(self, stage, expected_progress):
         """Test correct progress values for each stage"""
         progress_values = {
@@ -412,9 +429,9 @@ class TestProgressCallbackIntegration:
             "generating": 0.6,
             "building": 0.8,
             "combining": 0.9,
-            "completed": 1.0
+            "completed": 1.0,
         }
-        
+
         assert progress_values.get(stage, 0.1) == expected_progress
 
 
@@ -425,58 +442,78 @@ class TestSlideGenChainProgressIntegration:
         """Test SlideGenChain callback concept"""
         # Test the callback concept without importing actual class
         callback_calls = []
-        def mock_callback(stage):
-            callback_calls.append(stage)
-        
+
+        def mock_callback(stage, current=0, total=1):
+            callback_calls.append((stage, current, total))
+
         # Mock a chain-like class
         class MockSlideGenChain:
             def __init__(self, llm, progress_callback=None):
                 self.llm = llm
                 self.progress_callback = progress_callback
-                
+                self.current_request = 0
+                self.total_requests = 6
+
             def _report_progress(self, stage):
                 if self.progress_callback:
-                    self.progress_callback(stage)
-            
+                    self.progress_callback(stage, self.current_request, self.total_requests)
+
             def invoke_slide_gen_chain(self, content, template):
+                self.current_request = 1
                 self._report_progress("analyzing")
+                self.current_request = 2
                 self._report_progress("composing")
+                self.current_request = 3
                 self._report_progress("generating")
+                self.current_request = 4
                 self._report_progress("building")
+                self.current_request = 5
                 self._report_progress("combining")
+                self.current_request = 6
                 self._report_progress("completed")
                 return "# Generated content"
-        
+
         # Test with callback
         mock_llm = MagicMock()
         chain = MockSlideGenChain(mock_llm, mock_callback)
-        
+
         # Execute and verify callback calls
         result = chain.invoke_slide_gen_chain("test content", MagicMock())
-        
-        # Verify all stages were called
-        expected_stages = ["analyzing", "composing", "generating", "building", "combining", "completed"]
-        assert callback_calls == expected_stages
+
+        # Verify all stages were called with correct parameters
+        expected_calls = [
+            ("analyzing", 1, 6),
+            ("composing", 2, 6),
+            ("generating", 3, 6),
+            ("building", 4, 6),
+            ("combining", 5, 6),
+            ("completed", 6, 6),
+        ]
+        assert callback_calls == expected_calls
         assert result == "# Generated content"
 
     def test_progress_callback_without_callback(self):
         """Test chain behavior when no callback is provided"""
+
         class MockSlideGenChain:
             def __init__(self, llm, progress_callback=None):
                 self.llm = llm
                 self.progress_callback = progress_callback
-                
+                self.current_request = 0
+                self.total_requests = 1
+
             def _report_progress(self, stage):
                 if self.progress_callback:
-                    self.progress_callback(stage)
-            
+                    self.progress_callback(stage, self.current_request, self.total_requests)
+
             def invoke_slide_gen_chain(self, content, template):
+                self.current_request = 1
                 self._report_progress("analyzing")
                 return "# Generated content"
-        
+
         # Test without callback (should not error)
         mock_llm = MagicMock()
         chain = MockSlideGenChain(mock_llm, None)
-        
+
         result = chain.invoke_slide_gen_chain("test content", MagicMock())
         assert result == "# Generated content"

@@ -11,9 +11,6 @@ $analysis_result
 ### Available Slide Functions
 $function_catalog
 
-### Script Content
-$script_content
-
 ## Planning Guidelines
 Consider these factors when selecting and ordering slides:
 - Logical flow of information
@@ -42,3 +39,7 @@ Output a JSON structure with your composition plan:
 ```
 
 Ensure the JSON is properly formatted and contains only the functions available in the function catalog.
+
+---
+### Script Content
+$script_content
