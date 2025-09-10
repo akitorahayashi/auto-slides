@@ -19,22 +19,26 @@ def generate_slides_with_llm():
 
     try:
         if is_debug:
-            # DEBUGモードではMockSlideGeneratorを使用
-            from dev.mocks.mock_slide_generator import MockSlideGenerator
+            # DEBUGモードではMockLLMクライアントを使用
+            from dev.mocks.mock_olm_client import MockOlmClient
+            from src.chains.slide_gen_chain import SlideGenChain
 
             with st.spinner("モックサービスでスライドを生成中..."):
-                generator = MockSlideGenerator()
-                generated_markdown = generator.generate_sync(script_content, template)
+                mock_llm = MockOlmClient()
+                generator = SlideGenChain(llm=mock_llm)
+                generated_markdown = generator.invoke_slide_gen_chain(
+                    script_content, template
+                )
         else:
-            # 本番モードでは既存のSlideGeneratorを使用
-            from src.services.slide_generator import SlideGenerator
+            # 本番モードではSlideGenChainを使用
+            from src.chains.slide_gen_chain import SlideGenChain
+            from src.clients.olm_client import OlmClient
 
-            with st.status(
-                "プレゼンテーションスライドを生成中...", expanded=True
-            ) as main_status:
-                generator = SlideGenerator()
-                generated_markdown = generator.generate_sync(script_content, template)
-                main_status.update(label="スライド生成完了", state="complete")
+            llm = OlmClient()
+            generator = SlideGenChain(llm=llm)
+            generated_markdown = generator.invoke_slide_gen_chain(
+                script_content, template
+            )
 
         # 生成完了後、セッションに保存
         st.session_state.app_state.generated_markdown = generated_markdown

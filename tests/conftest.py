@@ -41,8 +41,8 @@ def mock_template_repository_with_sample(project_root):
 
 @pytest.fixture
 def sample_template_path(test_template_dir):
-    """Path to the sample template content.md (for backward compatibility)"""
-    return test_template_dir / "content.md"
+    """Path to the sample template slides.py"""
+    return test_template_dir / "slides.py"
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ class TemplateAnalyzer:
     def analyze_template(self, template: SlideTemplate) -> Dict[str, any]:
         """Basic template analysis - simplified for LangChain workflow"""
         try:
-            content = template.read_markdown_content()
+            content = template.read_slides_content()
             placeholders = template.extract_placeholders(content)
 
             return {

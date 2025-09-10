@@ -6,16 +6,33 @@ import streamlit as st
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.llms import LLM
 from sdk.olm_api_client import (
+    MockOllamaApiClient,
     OllamaApiClient,
     OllamaLocalClient,
 )
 
+from src.protocols.olm_client_protocol import OlmClientProtocol
+
 
 class OlmClient(LLM):
-    """Unified OLM client with LangChain integration"""
+    """
+    Unified OLM client with LangChain integration.
+
+    Provides a LangChain-compatible interface for Ollama clients.
+    Automatically selects appropriate client implementation based on configuration:
+    - MockOllamaApiClient for debug mode
+    - OllamaLocalClient for local development
+    - OllamaApiClient for remote API communication
+
+    Configuration via environment variables or Streamlit secrets:
+    - DEBUG: Enable mock mode for testing
+    - USE_LOCAL_CLIENT: Use local ollama serve instance
+    - OLM_API_ENDPOINT: Remote API server URL
+    - OLLAMA_MODEL: Model name to use (default: qwen3:0.6b)
+    """
 
     model: str = "qwen3:4b"
-    client: Any = None
+    client: OlmClientProtocol = None
 
     def __init__(self):
         super().__init__()
@@ -49,12 +66,13 @@ class OlmClient(LLM):
         )
 
         if debug:
-            # Use simple mock responses for debug mode
-            class SimpleMockClient:
-                async def gen_batch(self, prompt: str, model: str) -> str:
-                    return '{"result": "Mock response for testing"}'
-
-            self.client = SimpleMockClient()
+            # Use mock client for debug mode
+            self.client = MockOllamaApiClient(
+                responses=[
+                    '{"result": "Mock response for testing"}',
+                    '{"result": "Debug mode active - using mock responses"}',
+                ]
+            )
             return
 
         use_local_value = st.secrets.get(
@@ -73,14 +91,13 @@ class OlmClient(LLM):
             )
 
             if not api_endpoint:
-                print("Warning: OLM_API_ENDPOINT not set, using simple mock client")
-
-                # Use simple mock for missing endpoint
-                class SimpleMockClient:
-                    async def gen_batch(self, prompt: str, model: str) -> str:
-                        return '{"result": "Mock API response"}'
-
-                self.client = SimpleMockClient()
+                print("Warning: OLM_API_ENDPOINT not set, using mock client")
+                # Use mock client when endpoint is not configured
+                self.client = MockOllamaApiClient(
+                    responses=[
+                        '{"result": "Mock API response - endpoint not configured"}'
+                    ]
+                )
             else:
                 self.client = OllamaApiClient(api_url=api_endpoint)
 

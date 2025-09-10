@@ -54,7 +54,7 @@ class TemplateRepository(TemplateRepositoryProtocol):
                 templates.append(template)
             else:
                 print(
-                    f"Warning: Skipping template '{dir_name}'. Missing content.md or theme.css."
+                    f"Warning: Skipping template '{dir_name}'. Missing slides.py or theme.css."
                 )
 
         return templates

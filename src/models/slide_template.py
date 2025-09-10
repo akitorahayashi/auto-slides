@@ -13,25 +13,25 @@ class SlideTemplate:
     duration_minutes: int
 
     @property
-    def markdown_path(self) -> Path:
-        return self.template_dir / "content.md"
+    def slides_path(self) -> Path:
+        return self.template_dir / "slides.py"
 
     @property
     def css_path(self) -> Path:
         return self.template_dir / "theme.css"
 
     def exists(self) -> bool:
-        """Check if both content.md and theme.css exist"""
+        """Check if both slides.py and theme.css exist"""
         return (
             self.template_dir.exists()
-            and self.markdown_path.exists()
+            and self.slides_path.exists()
             and self.css_path.exists()
         )
 
-    def read_markdown_content(self) -> str:
-        if not self.markdown_path.exists():
-            raise FileNotFoundError(f"Markdown file not found: {self.markdown_path}")
-        return self.markdown_path.read_text(encoding="utf-8")
+    def read_slides_content(self) -> str:
+        if not self.slides_path.exists():
+            raise FileNotFoundError(f"Slides file not found: {self.slides_path}")
+        return self.slides_path.read_text(encoding="utf-8")
 
     def read_css_content(self) -> str:
         """Read CSS theme file"""
@@ -42,7 +42,7 @@ class SlideTemplate:
     def extract_placeholders(self, template_content: str = None) -> Set[str]:
         """Extract all ${placeholder} variables from template content"""
         if template_content is None:
-            template_content = self.read_markdown_content()
+            template_content = self.read_slides_content()
 
         pattern = r"\$\{([^}]+)\}"
         matches = re.findall(pattern, template_content)

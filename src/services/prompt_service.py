@@ -61,3 +61,40 @@ class PromptService:
         }
         prompt = self._build_prompt("validate_content.md", substitutions)
         return {**input_dict, "prompt": prompt}
+
+    def build_composition_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Build slide composition prompt"""
+        substitutions = {
+            "script_content": input_dict["script_content"],
+            "analysis_result": json.dumps(
+                input_dict["analysis_result"], ensure_ascii=False
+            ),
+            "function_catalog": input_dict["function_catalog"],
+        }
+        prompt = self._build_prompt("compose_slides.md", substitutions)
+        return {**input_dict, "prompt": prompt}
+
+    def build_parameter_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Build parameter generation prompt"""
+        function_info = input_dict["function_info"]
+        substitutions = {
+            "script_content": input_dict["script_content"],
+            "analysis_result": json.dumps(
+                input_dict["analysis_result"], ensure_ascii=False
+            ),
+            "function_name": input_dict["function_name"],
+            "function_purpose": (
+                function_info.get("docstring", "").split("\n")[0]
+                if function_info.get("docstring")
+                else ""
+            ),
+            "function_signature": function_info.get("signature", ""),
+            "arguments_list": "\n".join(
+                [
+                    f"  - {name}: {desc}"
+                    for name, desc in function_info.get("args_info", {}).items()
+                ]
+            ),
+        }
+        prompt = self._build_prompt("generate_parameters.md", substitutions)
+        return {**input_dict, "prompt": prompt}

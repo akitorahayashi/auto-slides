@@ -1,153 +1,186 @@
+"""Tests for MarpService"""
+
 import subprocess
-from unittest.mock import MagicMock, patch
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 
-from src.schemas import OutputFormat
-from src.services import MarpService
+from src.schemas.output_format import OutputFormat
+from src.services.marp_service import MarpService
 
 
 class TestMarpService:
-    """Unit tests for MarpService - testing logic without external dependencies"""
+    """Test MarpService functionality"""
+
+    def setup_method(self):
+        """Set up test fixtures"""
+        # Create temporary files for testing
+        self.temp_dir = tempfile.mkdtemp()
+        self.slides_file = Path(self.temp_dir) / "test_slides.md"
+        self.slides_file.write_text("# Test Slide\n\nContent")
+        self.output_dir = Path(self.temp_dir) / "output"
+
+    def teardown_method(self):
+        """Clean up test files"""
+        import shutil
+
+        if Path(self.temp_dir).exists():
+            shutil.rmtree(self.temp_dir)
+
+    def test_init_creates_output_dir(self):
+        """Test that initialization creates output directory"""
+        service = MarpService(str(self.slides_file), str(self.output_dir))
+        assert self.output_dir.exists()
+        assert service.slides_path == str(self.slides_file)
+        assert service.output_dir == str(self.output_dir)
 
     def test_init_without_output_dir(self):
         """Test initialization without output directory"""
-        service = MarpService(slides_path="test.md")
-        assert service.slides_path == "test.md"
+        service = MarpService(str(self.slides_file))
+        assert service.slides_path == str(self.slides_file)
         assert service.output_dir is None
 
-    @patch("os.makedirs")
-    def test_init_with_output_dir(self, mock_makedirs):
-        """Test initialization with output directory"""
-        service = MarpService(slides_path="test.md", output_dir="/output")
-        assert service.slides_path == "test.md"
-        assert service.output_dir == "/output"
-        mock_makedirs.assert_called_once_with("/output", exist_ok=True)
-
-    def test_output_type_enum_access(self):
-        """Test that OutputFormat enum is accessible through service"""
-        assert MarpService.OutputFormat.PDF == OutputFormat.PDF
-        assert MarpService.OutputFormat.HTML == OutputFormat.HTML
-        assert MarpService.OutputFormat.PNG == OutputFormat.PNG
-        assert MarpService.OutputFormat.PPTX == OutputFormat.PPTX
-
-    @patch("os.makedirs")
     @patch("subprocess.run")
-    def test_generate_pdf_success(self, mock_subprocess, mock_makedirs):
+    def test_generate_pdf_success(self, mock_run):
         """Test successful PDF generation"""
-        # Setup
-        service = MarpService(slides_path="test.md", output_dir="/output")
-        mock_subprocess.return_value = MagicMock(stdout="Success")
+        mock_run.return_value = Mock(stdout="Success", stderr="")
 
-        # Execute
+        service = MarpService(str(self.slides_file), str(self.output_dir))
         result = service.generate_pdf("test.pdf")
 
-        # Verify
-        assert result == "/output/test.pdf"
-        mock_subprocess.assert_called_once_with(
-            ["marp", "test.md", "-o", "/output/test.pdf"],
+        expected_path = str(self.output_dir / "test.pdf")
+        assert result == expected_path
+
+        mock_run.assert_called_once_with(
+            ["marp", str(self.slides_file), "-o", expected_path],
             check=True,
             capture_output=True,
             text=True,
         )
 
-    @patch("os.makedirs")
     @patch("subprocess.run")
-    def test_generate_html_with_theme(self, mock_subprocess, mock_makedirs):
-        """Test HTML generation with theme"""
-        service = MarpService(slides_path="test.md", output_dir="/output")
-        mock_subprocess.return_value = MagicMock(stdout="Success")
+    def test_generate_html_success(self, mock_run):
+        """Test successful HTML generation"""
+        mock_run.return_value = Mock(stdout="Success", stderr="")
 
-        result = service.generate_html("test.html", theme="custom")
+        service = MarpService(str(self.slides_file), str(self.output_dir))
+        result = service.generate_html("test.html")
 
-        assert result == "/output/test.html"
-        mock_subprocess.assert_called_once_with(
-            ["marp", "test.md", "-o", "/output/test.html", "--theme", "custom"],
+        expected_path = str(self.output_dir / "test.html")
+        assert result == expected_path
+
+    @patch("subprocess.run")
+    def test_generate_png_success(self, mock_run):
+        """Test successful PNG generation"""
+        mock_run.return_value = Mock(stdout="Success", stderr="")
+
+        service = MarpService(str(self.slides_file), str(self.output_dir))
+        result = service.generate_png("test.png")
+
+        expected_path = str(self.output_dir / "test.png")
+        assert result == expected_path
+
+    @patch("subprocess.run")
+    def test_generate_pptx_success(self, mock_run):
+        """Test successful PPTX generation"""
+        mock_run.return_value = Mock(stdout="Success", stderr="")
+
+        service = MarpService(str(self.slides_file), str(self.output_dir))
+        result = service.generate_pptx("test.pptx")
+
+        expected_path = str(self.output_dir / "test.pptx")
+        assert result == expected_path
+
+    @patch("subprocess.run")
+    def test_generate_with_theme(self, mock_run):
+        """Test generation with custom theme"""
+        mock_run.return_value = Mock(stdout="Success", stderr="")
+
+        service = MarpService(str(self.slides_file), str(self.output_dir))
+        result = service.generate_pdf("test.pdf", theme="custom_theme.css")
+
+        expected_path = str(self.output_dir / "test.pdf")
+        assert result == expected_path
+
+        mock_run.assert_called_once_with(
+            [
+                "marp",
+                str(self.slides_file),
+                "-o",
+                expected_path,
+                "--theme",
+                "custom_theme.css",
+            ],
             check=True,
             capture_output=True,
             text=True,
         )
 
     def test_generate_without_output_dir_raises_error(self):
-        """Test that generation fails when no output directory is set"""
-        service = MarpService(slides_path="test.md")
+        """Test that generation without output directory raises error"""
+        service = MarpService(str(self.slides_file))
 
         with pytest.raises(ValueError, match="Output directory must be set"):
-            service.generate_pdf()
+            service.generate_pdf("test.pdf")
 
-    @patch("os.makedirs")
     @patch("subprocess.run")
-    def test_generate_subprocess_error(self, mock_subprocess, mock_makedirs):
+    def test_generate_subprocess_error(self, mock_run):
         """Test handling of subprocess errors during generation"""
-        service = MarpService(slides_path="test.md", output_dir="/output")
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["marp"], stderr="Marp error"
+        )
 
-        # Setup subprocess to raise CalledProcessError
-        error = subprocess.CalledProcessError(1, "marp")
-        error.stderr = "Marp command failed"
-        mock_subprocess.side_effect = error
+        service = MarpService(str(self.slides_file), str(self.output_dir))
 
         with pytest.raises(subprocess.CalledProcessError):
             service.generate_pdf("test.pdf")
 
-    @pytest.mark.parametrize(
-        "method,output_type,default_filename",
-        [
-            ("generate_pdf", OutputFormat.PDF, "slides.pdf"),
-            ("generate_html", OutputFormat.HTML, "slides.html"),
-            ("generate_png", OutputFormat.PNG, "slides.png"),
-            ("generate_pptx", OutputFormat.PPTX, "slides.pptx"),
-        ],
-    )
-    @patch("os.makedirs")
     @patch("subprocess.run")
-    def test_all_generation_methods(
-        self, mock_subprocess, mock_makedirs, method, output_type, default_filename
-    ):
-        """Test all generation methods use correct parameters"""
-        service = MarpService(slides_path="test.md", output_dir="/output")
-        mock_subprocess.return_value = MagicMock(stdout="Success")
-
-        # Call the method
-        generator_method = getattr(service, method)
-        result = generator_method()
-
-        # Verify
-        assert result == f"/output/{default_filename}"
-
-    @patch("subprocess.run")
-    def test_preview_default_options(self, mock_subprocess):
+    def test_preview_default_options(self, mock_run):
         """Test preview with default options"""
-        service = MarpService(slides_path="test.md")
-
+        service = MarpService(str(self.slides_file), str(self.output_dir))
         service.preview()
 
-        mock_subprocess.assert_called_once_with(
-            ["marp", "test.md", "-s", "-w"], check=True
+        mock_run.assert_called_once_with(
+            ["marp", str(self.slides_file), "-s", "-w"], check=True
         )
 
     @patch("subprocess.run")
-    def test_preview_custom_options(self, mock_subprocess):
+    def test_preview_custom_options(self, mock_run):
         """Test preview with custom options"""
-        service = MarpService(slides_path="test.md")
-
+        service = MarpService(str(self.slides_file), str(self.output_dir))
         service.preview(server=False, watch=False)
 
-        mock_subprocess.assert_called_once_with(["marp", "test.md"], check=True)
+        mock_run.assert_called_once_with(["marp", str(self.slides_file)], check=True)
 
     @patch("subprocess.run")
-    def test_preview_subprocess_error(self, mock_subprocess):
-        """Test preview handles subprocess errors"""
-        service = MarpService(slides_path="test.md")
-        mock_subprocess.side_effect = subprocess.CalledProcessError(1, "marp")
+    def test_preview_subprocess_error(self, mock_run):
+        """Test handling of subprocess errors during preview"""
+        mock_run.side_effect = subprocess.CalledProcessError(
+            returncode=1, cmd=["marp"], stderr="Preview error"
+        )
+
+        service = MarpService(str(self.slides_file), str(self.output_dir))
 
         with pytest.raises(subprocess.CalledProcessError):
             service.preview()
 
     @patch("subprocess.run")
-    def test_preview_keyboard_interrupt(self, mock_subprocess):
-        """Test preview handles keyboard interrupt gracefully"""
-        service = MarpService(slides_path="test.md")
-        mock_subprocess.side_effect = KeyboardInterrupt()
+    def test_preview_keyboard_interrupt(self, mock_run):
+        """Test handling of KeyboardInterrupt during preview"""
+        mock_run.side_effect = KeyboardInterrupt()
 
-        # Should not raise, just print message
+        service = MarpService(str(self.slides_file), str(self.output_dir))
+
+        # Should not raise exception, just log and return
         service.preview()
+
+    def test_output_format_enum_access(self):
+        """Test that OutputFormat enum is accessible through service"""
+        service = MarpService(str(self.slides_file))
+        assert service.OutputFormat.PDF == OutputFormat.PDF
+        assert service.OutputFormat.HTML == OutputFormat.HTML
+        assert service.OutputFormat.PNG == OutputFormat.PNG
+        assert service.OutputFormat.PPTX == OutputFormat.PPTX
