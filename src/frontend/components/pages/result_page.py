@@ -86,20 +86,20 @@ def generate_slides_with_llm():
     # プログレス表示用のコンテナとプログレスバー
     progress_container = st.empty()
     progress_bar_container = st.empty()
+    
+    progress_container.info("🚀 スライド生成を準備しています...")
+    progress_bar_container.progress(0.0)
 
     def progress_callback(stage: str, current: int = 0, total: int = 1):
         """進捗を更新するコールバック"""
-        # LLMリクエスト数ベースの進捗計算
         if total > 0:
             progress_value = min(current / total, 1.0)
         else:
-            # フォールバック: 従来の段階ベース
             progress_values = {
-                "analyzing": 0.2,
-                "composing": 0.4,
-                "generating": 0.6,
-                "building": 0.8,
-                "combining": 0.9,
+                "analyzing": 0.25,
+                "composing": 0.5,
+                "generating": 0.75,
+                "building": 1.0,
                 "completed": 1.0,
             }
             progress_value = progress_values.get(stage, 0.1)
@@ -143,21 +143,17 @@ def generate_slides_with_llm():
                     # モック用の想定LLMリクエスト数
                     mock_total_requests = 5
 
-                    progress_callback("analyzing", 1, mock_total_requests)
+                    progress_callback("analyzing", 1, 4)
                     time.sleep(0.5)
-                    progress_callback("composing", 2, mock_total_requests)
+                    progress_callback("composing", 2, 4)
                     time.sleep(0.5)
-                    progress_callback("generating", 3, mock_total_requests)
+                    progress_callback("generating", 3, 4)
                     time.sleep(0.5)
-                    progress_callback("building", 4, mock_total_requests)
-                    time.sleep(0.5)
-                    progress_callback("combining", 5, mock_total_requests)
+                    progress_callback("building", 4, 4)
                     time.sleep(0.5)
 
                     result = generator.invoke_slide_gen_chain(script_content, template)
-                    progress_callback(
-                        "completed", mock_total_requests, mock_total_requests
-                    )
+                    progress_callback("completed", 4, 4)
                     return result
             except Exception as gen_error:
                 raise gen_error

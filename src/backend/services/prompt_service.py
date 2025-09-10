@@ -96,3 +96,15 @@ class PromptService:
         }
         prompt = self._build_prompt("generate_parameters.md", substitutions)
         return {**input_dict, "prompt": prompt}
+
+    def build_placeholder_prompt(self, input_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Build placeholder filling prompt"""
+        substitutions = {
+            "script_content": input_dict["script_content"],
+            "analysis_result": json.dumps(
+                input_dict["analysis_result"], ensure_ascii=False
+            ),
+            "template_with_placeholders": input_dict["template_with_placeholders"],
+        }
+        prompt = self._build_prompt("fill_placeholders.md", substitutions)
+        return {**input_dict, "prompt": prompt}
