@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 import streamlit as st
 
 from src.models import SlideTemplate
@@ -97,7 +98,7 @@ class TestResultPageLogic:
                 mock_session.app_state = mock_app_state
                 # Don't set selected_format
 
-                # Simulate checking for selected_format
+                # Simulate checking for selected_format by inspecting session_state dict
                 has_selected_format = "selected_format" in mock_session.__dict__
 
                 # Simulate the redirect logic from result_page.py
@@ -130,7 +131,7 @@ class TestResultPageLogic:
                 mock_session.app_state = mock_app_state
                 mock_session.selected_format = "PDF"
 
-                # Simulate checking for selected_format
+                # Simulate checking for selected_format by inspecting session_state dict
                 has_selected_format = "selected_format" in mock_session.__dict__
 
                 # Simulate the redirect logic from result_page.py
@@ -167,43 +168,32 @@ class TestResultPageLogic:
         assert format_options["HTML"]["format"] == OutputFormat.HTML
         assert format_options["PPTX"]["format"] == OutputFormat.PPTX
 
-    def test_conversion_mime_types(self):
+    @pytest.mark.parametrize(
+        "selected_format, expected_mime",
+        [
+            ("PDF", "application/pdf"),
+            ("HTML", "text/html"),
+            (
+                "PPTX",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ),
+            ("PNG", "image/png"),
+        ],
+    )
+    def test_conversion_mime_types(self, selected_format, expected_mime):
         """Test correct MIME types for different formats"""
-        # Simulate the MIME type assignment logic from result_page.py
-        selected_format = "PDF"
         if selected_format == "PDF":
             mime_type = "application/pdf"
         elif selected_format == "HTML":
             mime_type = "text/html"
         elif selected_format == "PPTX":
             mime_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        elif selected_format == "PNG":
+            mime_type = "image/png"
+        else:
+            raise AssertionError("Unsupported format in test")
 
-        assert mime_type == "application/pdf"
-
-        # Test HTML
-        selected_format = "HTML"
-        if selected_format == "PDF":
-            mime_type = "application/pdf"
-        elif selected_format == "HTML":
-            mime_type = "text/html"
-        elif selected_format == "PPTX":
-            mime_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-
-        assert mime_type == "text/html"
-
-        # Test PPTX
-        selected_format = "PPTX"
-        if selected_format == "PDF":
-            mime_type = "application/pdf"
-        elif selected_format == "HTML":
-            mime_type = "text/html"
-        elif selected_format == "PPTX":
-            mime_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-
-        assert (
-            mime_type
-            == "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        )
+        assert mime_type == expected_mime
 
     def test_navigation_button_logic(self):
         """Test navigation button logic"""

@@ -15,10 +15,11 @@ class TestChainIntegrationUI:
 
     def test_implementation_page_with_chain_workflow(self):
         """Test implementation page with new chain workflow"""
-        with patch("streamlit.switch_page") as mock_switch_page:
-            # Create mock slide generator with chain
-            mock_slide_generator = MagicMock()
-            mock_slide_generator.generate_sync.return_value = """---
+
+    with patch("streamlit.switch_page"):
+        # Create mock slide generator with chain
+        mock_slide_generator = MagicMock()
+        mock_slide_generator.generate_sync.return_value = """---
 marp: true
 theme: default
 ---
@@ -46,47 +47,47 @@ Mock content from planning chain
 Thank you for your attention.
 """
 
-            # Create mock template
-            mock_template = MagicMock(spec=SlideTemplate)
-            mock_template.name = "Chain Test Template"
-            mock_template.description = "Template for testing chain integration"
+        # Create mock template
+        mock_template = MagicMock(spec=SlideTemplate)
+        mock_template.name = "Chain Test Template"
+        mock_template.description = "Template for testing chain integration"
 
-            mock_app_state = MagicMock()
-            mock_app_state.selected_template = mock_template
+        mock_app_state = MagicMock()
+        mock_app_state.selected_template = mock_template
 
-            with patch.object(st, "session_state") as mock_session:
-                mock_session.app_state = mock_app_state
-                mock_session.slide_generator = mock_slide_generator
-                mock_session.format_selection = "PDF"
+        with patch.object(st, "session_state") as mock_session:
+            mock_session.app_state = mock_app_state
+            mock_session.slide_generator = mock_slide_generator
+            mock_session.format_selection = "PDF"
 
-                script_content = "Test script for chain workflow"
+            script_content = "Test script for chain workflow"
 
-                # Simulate execution with chain workflow
-                generator = mock_session.slide_generator
-                generated_markdown = generator.generate_sync(
-                    script_content=script_content, template=mock_template
-                )
+            # Simulate execution with chain workflow
+            generator = mock_session.slide_generator
+            generated_markdown = generator.generate_sync(
+                script_content=script_content, template=mock_template
+            )
 
-                # Verify chain workflow was used
-                mock_slide_generator.generate_sync.assert_called_once_with(
-                    script_content=script_content, template=mock_template
-                )
+            # Verify chain workflow was used
+            mock_slide_generator.generate_sync.assert_called_once_with(
+                script_content=script_content, template=mock_template
+            )
 
-                # Verify generated content contains chain-specific markers
-                assert "Generated via chain workflow" in generated_markdown
-                assert "marp: true" in generated_markdown
+            # Verify generated content contains chain-specific markers
+            assert "Generated via chain workflow" in generated_markdown
+            assert "marp: true" in generated_markdown
 
-                # Simulate session state update
-                mock_session.app_state.user_inputs = {
-                    "format": mock_session.format_selection,
-                    "script_content": script_content,
-                }
-                mock_session.app_state.generated_markdown = generated_markdown
-                mock_session.selected_format = mock_session.format_selection
+            # Simulate session state update
+            mock_session.app_state.user_inputs = {
+                "format": mock_session.format_selection,
+                "script_content": script_content,
+            }
+            mock_session.app_state.generated_markdown = generated_markdown
+            mock_session.selected_format = mock_session.format_selection
 
-                # Verify session state
-                assert mock_session.app_state.generated_markdown == generated_markdown
-                assert "chain workflow" in mock_session.app_state.generated_markdown
+            # Verify session state
+            assert mock_session.app_state.generated_markdown == generated_markdown
+            assert "chain workflow" in mock_session.app_state.generated_markdown
 
     def test_slide_gen_chain_initialization(self):
         """Test SlideGenChain initialization"""
@@ -116,7 +117,7 @@ Thank you for your attention.
                 "OLLAMA_MODEL": "test-model",
             }.get(key, default)
 
-            with patch.object(st, "session_state") as mock_session:
+            with patch.object(st, "session_state"):
                 # Mock the session state initialization logic from main.py
                 from src.chains.slide_gen_chain import SlideGenChain
 
@@ -153,7 +154,7 @@ Thank you for your attention.
                 generated_markdown = generator.generate_sync(
                     script_content=script_content, template=mock_template
                 )
-            except Exception as e:
+            except Exception:  # noqa: BLE001
                 # This is the fallback logic from the actual implementation
                 generated_markdown = f"""---
 marp: true
@@ -199,7 +200,7 @@ Thank you.
         """Test template placeholder extraction and rendering workflow"""
         from pathlib import Path
 
-        from src.models import SlideTemplate
+        # (top-level import is sufficient)
 
         # Test complex template with multiple placeholders
         template_content = """---
@@ -230,14 +231,18 @@ ${topic_2_content}
 ${conclusion}
 """
 
-        # Create a real SlideTemplate instance for testing
-        template = SlideTemplate(
-            id="test_template",
-            name="Test Template",
-            description="Test template for unit tests",
-            template_dir=Path("/tmp/test_template"),
-            duration_minutes=10,
-        )
+        # Create a real SlideTemplate instance for testing (temp dir)
+        import tempfile
+
+        with tempfile.TemporaryDirectory(prefix="auto-slides-test-") as tmpdir:
+            template = SlideTemplate(
+                id="test_template",
+                name="Test Template",
+                description="Test template for unit tests",
+                template_dir=Path(tmpdir),
+                duration_minutes=10,
+            )
+            # Extract / render operations remain the same below
 
         # Extract placeholders
         placeholders = template.extract_placeholders(template_content)
@@ -280,7 +285,8 @@ ${conclusion}
         from pathlib import Path
 
         from dev.mocks.mock_slide_generator import MockSlideGenerator
-        from src.models import SlideTemplate
+
+        # (top-level import is sufficient)
 
         # Create test template
         test_template = SlideTemplate(

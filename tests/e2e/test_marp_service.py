@@ -118,7 +118,7 @@ class TestMarpServiceE2E:
         # Verify that the error is related to the missing file
         assert exc_info.value.returncode != 0
 
-    def test_marp_cli_is_accessible(self, sample_template_path):
+    def test_marp_cli_is_accessible(self):
         """
         Tests that the marp CLI is accessible and can be executed.
         This test acts as a basic check that the marp command is in the system's PATH.
