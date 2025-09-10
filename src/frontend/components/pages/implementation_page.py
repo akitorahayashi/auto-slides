@@ -32,7 +32,7 @@ def confirm_execute_dialog():
             st.session_state.selected_format = st.session_state.format_selection
             # LLM処理開始フラグを設定
             st.session_state.should_start_generation = True
-            st.switch_page("src/frontend/components/pages/result_page.py")
+            st.switch_page("frontend/components/pages/result_page.py")
 
 
 @st.dialog("エラー", width="medium", dismissible=True)
@@ -51,7 +51,7 @@ if (
     not hasattr(st.session_state, "app_state")
     or st.session_state.app_state.selected_template is None
 ):
-    st.switch_page("src/frontend/components/pages/gallery_page.py")
+    st.switch_page("frontend/components/pages/gallery_page.py")
 
 # エラーダイアログの表示処理
 if "generation_error" in st.session_state:
@@ -71,16 +71,13 @@ st.divider()
 
 # 原稿入力
 st.subheader("📝 原稿の入力")
-st.write(
-    "プレゼンテーションの原稿を入力してください。LLMが内容を解析してスライドを生成します："
-)
 
 # 原稿入力のテキストエリア
 script_content = st.text_area(
     "原稿内容",
     key="script_content",
     height=200,
-    placeholder="プレゼンテーションの原稿をここに入力してください...\n\n例：\n今日は弊社の新製品についてご紹介いたします。\n\n1. 製品の概要\n新製品は...\n\n2. 主な機能\n- 機能A\n- 機能B\n\n3. まとめ\nこの製品により...",
+    placeholder="プレゼンテーションの原稿をここに入力します...",
 )
 
 st.divider()
@@ -110,7 +107,7 @@ col1, col2 = st.columns(2, gap="small")
 
 with col1:
     if st.button("← ギャラリーに戻る", key="back_to_gallery", use_container_width=True):
-        st.switch_page("src/frontend/components/pages/gallery_page.py")
+        st.switch_page("frontend/components/pages/gallery_page.py")
 
 with col2:
     if st.button(

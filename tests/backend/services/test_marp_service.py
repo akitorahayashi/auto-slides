@@ -42,15 +42,27 @@ class TestMarpService:
         assert service.slides_path == str(self.slides_file)
         assert service.output_dir is None
 
+    @pytest.mark.parametrize(
+        "output_format, method_name, output_filename",
+        [
+            (OutputFormat.PDF, "generate_pdf", "test.pdf"),
+            (OutputFormat.HTML, "generate_html", "test.html"),
+            (OutputFormat.PNG, "generate_png", "test.png"),
+            (OutputFormat.PPTX, "generate_pptx", "test.pptx"),
+        ],
+    )
     @patch("subprocess.run")
-    def test_generate_pdf_success(self, mock_run):
-        """Test successful PDF generation"""
+    def test_generate_success(
+        self, mock_run, output_format, method_name, output_filename
+    ):
+        """Test successful generation for all formats"""
         mock_run.return_value = Mock(stdout="Success", stderr="")
 
         service = MarpService(str(self.slides_file), str(self.output_dir))
-        result = service.generate_pdf("test.pdf")
+        generator_method = getattr(service, method_name)
+        result = generator_method(output_filename)
 
-        expected_path = str(self.output_dir / "test.pdf")
+        expected_path = str(self.output_dir / output_filename)
         assert result == expected_path
 
         mock_run.assert_called_once_with(
@@ -59,39 +71,6 @@ class TestMarpService:
             capture_output=True,
             text=True,
         )
-
-    @patch("subprocess.run")
-    def test_generate_html_success(self, mock_run):
-        """Test successful HTML generation"""
-        mock_run.return_value = Mock(stdout="Success", stderr="")
-
-        service = MarpService(str(self.slides_file), str(self.output_dir))
-        result = service.generate_html("test.html")
-
-        expected_path = str(self.output_dir / "test.html")
-        assert result == expected_path
-
-    @patch("subprocess.run")
-    def test_generate_png_success(self, mock_run):
-        """Test successful PNG generation"""
-        mock_run.return_value = Mock(stdout="Success", stderr="")
-
-        service = MarpService(str(self.slides_file), str(self.output_dir))
-        result = service.generate_png("test.png")
-
-        expected_path = str(self.output_dir / "test.png")
-        assert result == expected_path
-
-    @patch("subprocess.run")
-    def test_generate_pptx_success(self, mock_run):
-        """Test successful PPTX generation"""
-        mock_run.return_value = Mock(stdout="Success", stderr="")
-
-        service = MarpService(str(self.slides_file), str(self.output_dir))
-        result = service.generate_pptx("test.pptx")
-
-        expected_path = str(self.output_dir / "test.pptx")
-        assert result == expected_path
 
     @patch("subprocess.run")
     def test_generate_with_theme(self, mock_run):

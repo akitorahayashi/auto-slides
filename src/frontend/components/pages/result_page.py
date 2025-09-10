@@ -31,8 +31,10 @@ def generate_slides_with_llm():
     except Exception as e:
         st.error(f"❌ プレゼンテーション生成に失敗しました: {str(e)}")
         st.error("設定画面に戻って再度お試しください。")
-        if st.button("設定画面に戻る", type="primary"):
-            st.switch_page("src/frontend/components/pages/implementation_page.py")
+        if st.button(
+            "設定画面に戻る", type="primary", key="back_to_settings_llm_error"
+        ):
+            st.switch_page("frontend/components/pages/implementation_page.py")
 
 
 # ナビゲーションボタンをタイトルの上に配置（処理中は非表示）
@@ -47,16 +49,16 @@ if not is_processing:
             key="back_to_download_top",
             use_container_width=True,
         ):
-            st.switch_page("src/frontend/components/pages/implementation_page.py")
+            st.switch_page("frontend/components/pages/implementation_page.py")
 
     with col2:
         if st.button(
             "🏠 ギャラリーに戻る", key="back_to_gallery_top", use_container_width=True
         ):
-            st.switch_page("src/frontend/components/pages/gallery_page.py")
+            st.switch_page("frontend/components/pages/gallery_page.py")
 else:
-    # 処理中は非表示にして、処理中メッセージを表示
-    st.info("⏳ スライドを生成中です。しばらくお待ちください...")
+    # 処理中はナビゲーションボタンを非表示にする
+    pass
 
 st.title("📄 生成結果")
 
@@ -66,7 +68,7 @@ if (
     or st.session_state.app_state.selected_template is None
     or "selected_format" not in st.session_state
 ):
-    st.switch_page("src/frontend/components/pages/gallery_page.py")
+    st.switch_page("frontend/components/pages/gallery_page.py")
 
 # LLM処理を開始する必要がある場合
 if st.session_state.get("should_start_generation", False):
@@ -98,8 +100,10 @@ try:
     if not generated_markdown or generated_markdown.strip() == "":
         st.error("❌ 生成されたMarkdownコンテンツが空です。")
         st.error("設定画面に戻って再度お試しください。")
-        if st.button("設定画面に戻る", type="primary"):
-            st.switch_page("src/frontend/components/pages/implementation_page.py")
+        if st.button(
+            "設定画面に戻る", type="primary", key="back_to_settings_empty_content"
+        ):
+            st.switch_page("frontend/components/pages/implementation_page.py")
         st.stop()
 
     css_content = template.read_css_content()

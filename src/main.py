@@ -26,14 +26,12 @@ def main():
     pg = st.navigation(
         [
             st.Page(
-                "src/frontend/components/pages/gallery_page.py",
+                "frontend/components/pages/gallery_page.py",
                 title="ギャラリー",
                 default=True,
             ),
-            st.Page(
-                "src/frontend/components/pages/implementation_page.py", title="実行"
-            ),
-            st.Page("src/frontend/components/pages/result_page.py", title="結果"),
+            st.Page("frontend/components/pages/implementation_page.py", title="実行"),
+            st.Page("frontend/components/pages/result_page.py", title="結果"),
         ],
         position="hidden",
     )

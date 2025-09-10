@@ -18,7 +18,7 @@ class SlidesLoader:
         """
         try:
             # Dynamic import of template module
-            module = importlib.import_module(f"src.templates.{template_id}")
+            module = importlib.import_module(f"src.backend.templates.{template_id}")
 
             functions = {}
 
