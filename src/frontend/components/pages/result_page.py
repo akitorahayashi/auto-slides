@@ -120,7 +120,10 @@ def generate_slides_with_llm():
                 "combining": "🔗 スライドを統合中",
             }
             base_message = stage_messages.get(stage, "スライドを生成中")
-            progress_text = f"{base_message} ({current}/{total} リクエスト)"
+            # リクエスト数表示を削除して、シンプルにする
+            progress_text = get_progress_text(
+                stage, st.session_state.progress_animation_count
+            )
         else:
             # 完了時または従来の表示
             progress_text = get_progress_text(

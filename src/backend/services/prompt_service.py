@@ -15,28 +15,28 @@ class PromptService:
         Truncate prompt from the end if it exceeds the maximum length to prevent token limit issues.
         This prevents Ollama from automatically truncating from the beginning, preserving important
         context that appears early in the prompt.
-        
+
         Args:
             prompt: The prompt string to truncate
-            
+
         Returns:
             Truncated prompt string (truncated from the end if necessary)
         """
         import streamlit as st
-        
+
         # Get maximum length from secrets
         max_length = st.secrets.get("MAX_PROMPT_LENGTH", 6000)
-        
+
         # If prompt is within limits, return as-is
         if len(prompt) <= max_length:
             return prompt
-        
+
         # Truncate from the end, keeping the beginning intact
         truncation_message = f"\n\n[...TRUNCATED {len(prompt) - max_length + 100} CHARACTERS FROM END...]\n"
         available_length = max_length - len(truncation_message)
-        
+
         truncated_prompt = prompt[:available_length] + truncation_message
-        
+
         return truncated_prompt
 
     def _build_prompt(self, template_name: str, substitutions: Dict[str, Any]) -> str:

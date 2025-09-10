@@ -76,7 +76,6 @@ class SlideGenChain(SlideGenerationProtocol):
                 )
             )
             # Phase 2: Composition
-            | RunnableLambda(lambda x: self._report_progress("composing") or x)
             | RunnablePassthrough.assign(
                 slide_functions_summary=RunnableLambda(
                     lambda x: self.slides_loader.create_slide_functions_summary(
@@ -84,6 +83,7 @@ class SlideGenChain(SlideGenerationProtocol):
                     )
                 )
             )
+            | RunnableLambda(lambda x: self._report_progress("composing") or x)
             | RunnablePassthrough.assign(
                 composition_plan=self._create_chain_step(
                     self.prompt_service.build_composition_prompt
@@ -134,7 +134,7 @@ class SlideGenChain(SlideGenerationProtocol):
 
             # テンプレート関数の数を取得（これは利用可能な関数数であり、実際に使用される数ではない）
             functions = self.slides_loader.load_template_functions(template.id)
-            
+
             # 初期値として利用可能な関数数を使用（後で動的に調整）
             # 実際の値は composition_plan 取得後に更新される
             estimated_slide_count = len(functions)
@@ -156,7 +156,6 @@ class SlideGenChain(SlideGenerationProtocol):
 
     def _execute_slides(self, context: Dict) -> Dict:
         """Execute slide generation from composition plan"""
-        self._report_progress("generating")
         print("✍️ Agent: Generating slide parameters...")
 
         composition_plan = context["composition_plan"]
@@ -167,14 +166,23 @@ class SlideGenChain(SlideGenerationProtocol):
         # composition_planから実際のスライド数を取得してリクエスト数を更新
         slides_list = composition_plan.get("slides", [])
         actual_slide_count = len(slides_list)
-        
+
         if actual_slide_count > 0:
             # 実際のスライド数に基づいてリクエスト数を再計算
             base_requests = 2  # 分析(1) + 構成(1)
             new_total_requests = base_requests + actual_slide_count
-            
-            print(f"🔄 Updating total requests: {self.total_requests} → {new_total_requests} (actual slides: {actual_slide_count})")
+
+            print(
+                f"🔄 Updating total requests: {self.total_requests} → {new_total_requests} (actual slides: {actual_slide_count})"
+            )
             self.total_requests = new_total_requests
+        else:
+            print(
+                f"⚠️ No slides found in composition plan, using original estimate: {self.total_requests}"
+            )
+
+        # プログレス表示を更新（現在のステージで最新の分母を表示）
+        self._report_progress("generating")
 
         slide_parameters = []
         functions = self.slides_loader.load_template_functions(template.id)
@@ -291,9 +299,9 @@ class SlideGenChain(SlideGenerationProtocol):
     def _report_progress(self, stage: str):
         """Report progress to callback if available"""
         if self.progress_callback:
-            # 完了時は最大値に設定
+            # 完了時は最大値に設定、それ以外は現在のリクエスト数+1を表示（1から始まるため）
             if stage == "completed":
                 current = self.total_requests
             else:
-                current = self.current_request
+                current = self.current_request + 1  # 1から始まるように表示
             self.progress_callback(stage, current, self.total_requests)
