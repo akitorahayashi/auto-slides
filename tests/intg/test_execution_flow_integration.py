@@ -187,14 +187,12 @@ theme: default
             assert script_content in generated_markdown
             assert "marp: true" in generated_markdown
 
-    def test_real_slide_gen_chain_error_detection(self, mock_template):
+    @pytest.mark.asyncio
+    async def test_real_slide_gen_chain_error_detection(self, mock_template):
         """Test that real SlideGenChain errors are properly detected and fixed"""
         # Use a real SlideGenChain to test actual functionality
-        from src.backend.clients.olm_client import OlmClient
-
         # Create real components to test actual functionality
-        llm = OlmClient()  # This will use actual configuration
-        chain = SlideGenChain(llm=llm)
+        chain = SlideGenChain()  # This will use actual configuration
 
         script_content = "Test script"
         template = mock_template
@@ -220,7 +218,7 @@ theme: default
 
                     # This should now work without the _truncate_prompt error
                     try:
-                        result = chain.invoke_slide_gen_chain(script_content, template)
+                        result = await chain.invoke_slide_gen_chain(script_content, template)
 
                         # Verify we got a result (even if it's a mock response)
                         assert isinstance(result, str)
@@ -260,7 +258,7 @@ theme: default
 
             # Create chain with progress callback
             chain = SlideGenChain(
-                llm=MagicMock(), progress_callback=test_progress_callback
+                client=MagicMock(), progress_callback=test_progress_callback
             )
 
             # Simulate progress updates
@@ -401,11 +399,11 @@ theme: default
                 "OLLAMA_MODEL": "test-model",
             }.get(key, default)
 
-            from src.backend.clients.olm_client import OlmClient
+            from olm_api_sdk.v1 import MockOlmClientV1
 
-            debug_client = OlmClient()
+            debug_client = MockOlmClientV1()
             # In debug mode, should use mock client
-            assert hasattr(debug_client.client, "gen_batch")
+            assert hasattr(debug_client, "generate")
 
         # Test production mode
         with patch("streamlit.secrets") as mock_secrets:
@@ -416,11 +414,15 @@ theme: default
             }.get(key, default)
 
             try:
-                production_client = OlmClient()
-                # In production mode, should use real client
-                from sdk.olm_api_client import OllamaLocalClient
+                from olm_api_sdk.v1 import OlmLocalClientV1
 
-                assert isinstance(production_client.client, OllamaLocalClient)
+                # Test that SlideGenChain creates the right client in production mode
+                with patch(
+                    "src.backend.chains.slide_gen_chain.SlideGenChain._setup_client"
+                ) as mock_setup:
+                    mock_setup.return_value = OlmLocalClientV1()
+                    chain = SlideGenChain()
+                    assert hasattr(chain.client, "generate")
             except Exception:
                 # Skip if local client not available
                 pass

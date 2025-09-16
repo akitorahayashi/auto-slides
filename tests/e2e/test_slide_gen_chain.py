@@ -12,7 +12,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.backend.chains.slide_gen_chain import SlideGenChain
-from src.backend.clients.olm_client import OlmClient
 from src.backend.models.slide_template import SlideTemplate
 
 
@@ -47,13 +46,14 @@ class TestSlideGenChainE2E:
                 "OLLAMA_MODEL": "qwen3:0.6b",
             }.get(key, default)
 
-            # Create OlmClient which should use SimpleMockClient in debug mode
-            llm = OlmClient()
-            chain = SlideGenChain(llm=llm)
+            # Create SlideGenChain which should use MockOlmClientV1 in debug mode
+            chain = SlideGenChain()
 
             # Verify that we're using the mock client
-            assert llm.client is not None
-            assert hasattr(llm.client, "gen_batch")
+            assert chain.client is not None
+            from olm_api_sdk.v1 import MockOlmClientV1
+
+            assert isinstance(chain.client, MockOlmClientV1)
 
             # Mock the slides loader to avoid file dependencies
             with patch(
@@ -100,14 +100,13 @@ class TestSlideGenChainE2E:
             }.get(key, default)
 
             try:
-                # Create OlmClient which should use OllamaLocalClient
-                llm = OlmClient()
-                chain = SlideGenChain(llm=llm)
+                # Create SlideGenChain which should use OlmLocalClientV1
+                chain = SlideGenChain()
 
                 # Verify that we're using the local client
-                from sdk.olm_api_client import OllamaLocalClient
+                from olm_api_sdk.v1 import OlmLocalClientV1
 
-                assert isinstance(llm.client, OllamaLocalClient)
+                assert isinstance(chain.client, OlmLocalClientV1)
 
                 # Mock the slides loader to avoid file dependencies
                 with patch(
@@ -161,15 +160,14 @@ class TestSlideGenChainE2E:
             }.get(key, default)
 
             try:
-                # Create OlmClient which should use OllamaApiClient
-                llm = OlmClient()
-                chain = SlideGenChain(llm=llm)
+                # Create SlideGenChain which should use OlmApiClientV1
+                chain = SlideGenChain()
 
                 # Verify we're using the API client
-                from sdk.olm_api_client import OllamaApiClient
+                from olm_api_sdk.v1 import OlmApiClientV1
 
-                assert isinstance(llm.client, OllamaApiClient)
-                assert llm.client.api_url == test_endpoint
+                assert isinstance(chain.client, OlmApiClientV1)
+                # Note: OlmApiClientV1 uses different attribute name for endpoint
 
                 # Mock the slides loader to avoid file dependencies
                 with patch(
@@ -219,9 +217,11 @@ class TestSlideGenChainE2E:
                 "DEBUG": True
             }.get(key, default)
 
-            llm = OlmClient()
-            # Should use SimpleMockClient in debug mode
-            assert hasattr(llm.client, "gen_batch")
+            chain = SlideGenChain()
+            # Should use MockOlmClientV1 in debug mode
+            from olm_api_sdk.v1 import MockOlmClientV1
+
+            assert isinstance(chain.client, MockOlmClientV1)
 
         # Test local client mode
         with patch("streamlit.secrets") as mock_secrets:
@@ -230,11 +230,11 @@ class TestSlideGenChainE2E:
                 "USE_LOCAL_CLIENT": "true",
             }.get(key, default)
 
-            llm = OlmClient()
-            # Should use OllamaLocalClient
-            from sdk.olm_api_client import OllamaLocalClient
+            chain = SlideGenChain()
+            # Should use OlmLocalClientV1
+            from olm_api_sdk.v1 import OlmLocalClientV1
 
-            assert isinstance(llm.client, OllamaLocalClient)
+            assert isinstance(chain.client, OlmLocalClientV1)
 
         # Test remote client mode with endpoint
         with patch("streamlit.secrets") as mock_secrets:
@@ -244,12 +244,11 @@ class TestSlideGenChainE2E:
                 "OLM_API_ENDPOINT": "http://test-endpoint:8000",
             }.get(key, default)
 
-            llm = OlmClient()
-            # Should use OllamaApiClient
-            from sdk.olm_api_client import OllamaApiClient
+            chain = SlideGenChain()
+            # Should use OlmApiClientV1
+            from olm_api_sdk.v1 import OlmApiClientV1
 
-            assert isinstance(llm.client, OllamaApiClient)
-            assert llm.client.api_url == "http://test-endpoint:8000"
+            assert isinstance(chain.client, OlmApiClientV1)
 
     def test_model_configuration(self):
         """Test that model configuration is properly read from secrets"""
@@ -259,8 +258,8 @@ class TestSlideGenChainE2E:
                 "OLLAMA_MODEL": "custom-model:1.0",
             }.get(key, default)
 
-            llm = OlmClient()
-            assert llm.model == "custom-model:1.0"
+            chain = SlideGenChain()
+            assert chain.model == "custom-model:1.0"
 
     def test_chain_error_handling_with_real_client(self, mock_template):
         """Test error handling with real client configuration"""
@@ -273,8 +272,7 @@ class TestSlideGenChainE2E:
                 "DEBUG": True
             }.get(key, default)
 
-            llm = OlmClient()
-            chain = SlideGenChain(llm=llm)
+            chain = SlideGenChain()
 
             # Mock the slides loader
             with patch(

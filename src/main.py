@@ -3,7 +3,6 @@ from pathlib import Path
 import streamlit as st
 
 from src.backend.chains.slide_gen_chain import SlideGenChain
-from src.backend.clients.olm_client import OlmClient
 from src.backend.models.template_repository import TemplateRepository
 from src.frontend.app_state import AppState
 from src.protocols.protocols.marp_protocol import MarpProtocol
@@ -65,8 +64,7 @@ def initialize_session():
             from src.backend.services import MarpService
 
             template_repository = TemplateRepository()
-            llm = OlmClient()
-            slide_generator = SlideGenChain(llm=llm)
+            slide_generator = SlideGenChain()
             marp_service = MarpService("", "")
 
         st.session_state.app_state = AppState(

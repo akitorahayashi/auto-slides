@@ -48,8 +48,6 @@ class StreamlitE2ETest:
         if result.returncode != 0:
             assert False, f"Package import failed:\n{result.stderr}"
 
-        print("✅ Package imports successfully")
-
     def test_streamlit_app_starts_without_errors(self):
         """Test that Streamlit starts and serves content without errors."""
         process = subprocess.Popen(
@@ -81,10 +79,6 @@ class StreamlitE2ETest:
 
             if response.status_code != 200:
                 assert False, f"Server returned status {response.status_code}"
-
-            # Basic check - if we got here, server is working
-
-            print("✅ Streamlit app loaded successfully")
 
         finally:
             process.terminate()
@@ -121,8 +115,6 @@ def test_chain_integration_import():
 
     if result.returncode != 0:
         assert False, f"Chain import failed:\n{result.stderr}"
-
-    print("✅ Chain integration imports successfully")
 
 
 def test_streamlit_app_starts_without_errors():

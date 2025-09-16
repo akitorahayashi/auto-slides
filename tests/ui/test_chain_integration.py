@@ -112,16 +112,16 @@ Thank you for your attention.
 
             from src.backend.chains.slide_gen_chain import SlideGenChain
 
-            # Create mock LLM
-            mock_llm = Mock()
-            mock_llm.invoke.return_value = "mocked response"
+            # Create mock client (using SDK interface)
+            mock_client = Mock()
+            mock_client.generate.return_value = {"content": "mocked response"}
 
             # Test that SlideGenChain can be instantiated
-            chain = SlideGenChain(mock_llm)
+            chain = SlideGenChain(client=mock_client)
 
             # Verify chain has all required components (based on actual implementation)
             assert hasattr(chain, "slide_gen_chain")  # The main unified chain
-            assert hasattr(chain, "llm")
+            assert hasattr(chain, "client")
             assert hasattr(chain, "json_parser")
             assert hasattr(chain, "prompt_service")
             assert hasattr(chain, "slides_loader")
@@ -141,16 +141,16 @@ Thank you for your attention.
 
                 from src.backend.chains.slide_gen_chain import SlideGenChain
 
-                # Create mock LLM
-                mock_llm = Mock()
-                mock_llm.invoke.return_value = "mocked response"
+                # Create mock client (using SDK interface)
+                mock_client = Mock()
+                mock_client.generate.return_value = {"content": "mocked response"}
 
                 # Simulate chain initialization (direct instantiation in pages)
-                chain = SlideGenChain(mock_llm)
+                chain = SlideGenChain(client=mock_client)
 
                 # Verify the chain is properly initialized (based on actual implementation)
                 assert hasattr(chain, "slide_gen_chain")  # The main unified chain
-                assert hasattr(chain, "llm")
+                assert hasattr(chain, "client")
                 assert hasattr(chain, "json_parser")
                 assert hasattr(chain, "prompt_service")
                 assert hasattr(chain, "slides_loader")

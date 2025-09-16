@@ -8,8 +8,8 @@ to verify chain integration without external dependencies.
 from unittest.mock import MagicMock, patch
 
 import pytest
+from olm_api_sdk.v1 import MockOlmClientV1
 
-from dev.mocks import MockOlmClient
 from src.backend.chains.slide_gen_chain import SlideGenChain
 from src.backend.models.slide_template import SlideTemplate
 
@@ -20,12 +20,12 @@ class TestSlideGenChainIntegration:
     @pytest.fixture
     def mock_responses(self):
         """Mock responses for different phases of slide generation"""
-        return {
-            "analyze": "Analysis completed successfully",
-            "composition": '{"slides": [{"slide_name": "title_slide", "order": 1}, {"slide_name": "content_slide", "order": 2}]}',
-            "parameter": '{"slide_name": "title_slide", "parameters": {"title": "Test Title", "subtitle": "Test Subtitle"}}',
-            "default": "Mock response generated successfully",
-        }
+        return [
+            '{"main_theme": "Test Presentation", "argument_flow": "This is a test presentation about slide generation"}',
+            '{"slides": [{"slide_name": "title_slide", "order": 1}, {"slide_name": "content_slide", "order": 2}]}',
+            '{"slide_name": "title_slide", "parameters": {"title": "Test Title", "subtitle": "Test Subtitle"}}',
+            "Mock response generated successfully",
+        ]
 
     @pytest.fixture
     def mock_template(self):
@@ -39,62 +39,32 @@ class TestSlideGenChainIntegration:
 
     @pytest.fixture
     def mock_olm_client(self, mock_responses):
-        """Create MockOlmClient with predefined responses"""
-        return MockOlmClient(responses=mock_responses)
+        """Create MockOlmClientV1 with predefined responses"""
+        return MockOlmClientV1(responses=mock_responses)
 
     @pytest.fixture
     def slide_gen_chain(self, mock_olm_client):
         """Create SlideGenChain instance with mock client"""
-        return SlideGenChain(llm=mock_olm_client)
+        return SlideGenChain(client=mock_olm_client)
 
     def test_slide_gen_chain_initialization(self, mock_olm_client):
         """Test that SlideGenChain initializes correctly with mock client"""
-        chain = SlideGenChain(llm=mock_olm_client)
+        chain = SlideGenChain(client=mock_olm_client)
 
         # Verify chain components are properly initialized
-        assert chain.llm is mock_olm_client
+        assert chain.client is mock_olm_client
         assert hasattr(chain, "json_parser")
         assert hasattr(chain, "prompt_service")
         assert hasattr(chain, "slides_loader")
         assert hasattr(chain, "slide_gen_chain")
 
-    @pytest.mark.asyncio
-    async def test_mock_client_gen_batch_integration(self, mock_olm_client):
-        """Test mock client gen_batch method works correctly"""
-        # Test exact match
-        result = await mock_olm_client.gen_batch("analyze this content", "test-model")
-        assert "Analysis completed successfully" in result
-
-        # Test substring match
-        result = await mock_olm_client.gen_batch(
-            "create composition plan", "test-model"
-        )
-        assert "slides" in result
-
-        # Test default fallback
-        result = await mock_olm_client.gen_batch("unknown prompt", "test-model")
-        assert "Mock response generated successfully" in result
-
-    @pytest.mark.asyncio
-    async def test_mock_client_gen_stream_integration(self, mock_olm_client):
-        """Test mock client gen_stream method works correctly"""
-        stream = mock_olm_client.gen_stream("analyze content", "test-model")
-
-        chunks = []
-        async for chunk in stream:
-            chunks.append(chunk)
-
-        # Verify streaming works and produces expected content
-        full_response = "".join(chunks)
-        assert "Analysis completed successfully" in full_response
-        assert len(chunks) > 1  # Should be split into multiple chunks
-
     @patch(
         "src.backend.services.slides_loader.SlidesLoader.create_slide_functions_summary"
     )
+    @pytest.mark.asyncio
     @patch("src.backend.services.slides_loader.SlidesLoader.load_template_functions")
     @patch("src.backend.services.slides_loader.SlidesLoader.get_function_by_name")
-    def test_full_slide_generation_workflow(
+    async def test_full_slide_generation_workflow(
         self,
         mock_get_function,
         mock_load_functions,
@@ -130,7 +100,7 @@ class TestSlideGenChainIntegration:
 
         try:
             # Execute the full chain
-            result = slide_gen_chain.invoke_slide_gen_chain(
+            result = await slide_gen_chain.invoke_slide_gen_chain(
                 script_content, mock_template
             )
 
@@ -173,60 +143,61 @@ class TestSlideGenChainIntegration:
         assert len(analysis_result["prompt"]) > 0
         assert "Test script content" in analysis_result["prompt"]
 
+    @pytest.mark.asyncio
     @patch(
         "src.backend.chains.slide_gen_chain.print"
     )  # Mock print to avoid output during tests
-    def test_error_handling_in_chain(self, mock_print, mock_template):
+    async def test_error_handling_in_chain(self, mock_print, mock_template):
         """Test error handling when chain encounters issues"""
 
         # Create client with responses that might cause issues
-        problematic_responses = {
-            "analyze": "invalid json response",
-            "default": '{"error": "Something went wrong"}',
-        }
+        problematic_responses = [
+            "invalid json response",
+            '{"error": "Something went wrong"}',
+        ]
 
-        problematic_client = MockOlmClient(responses=problematic_responses)
-        chain = SlideGenChain(llm=problematic_client)
+        problematic_client = MockOlmClientV1(responses=problematic_responses)
+        chain = SlideGenChain(client=problematic_client)
 
         script_content = "Test script for error handling"
 
         # The chain should handle errors gracefully
         with pytest.raises(Exception):
-            chain.invoke_slide_gen_chain(script_content, mock_template)
+            await chain.invoke_slide_gen_chain(script_content, mock_template)
 
     def test_chain_with_different_response_configurations(self, mock_template):
         """Test chain behavior with different mock response configurations"""
 
         # Test with minimal responses
-        minimal_responses = {"default": '{"result": "Minimal mock response"}'}
+        minimal_responses = ['{"result": "Minimal mock response"}']
 
-        minimal_client = MockOlmClient(responses=minimal_responses)
-        chain = SlideGenChain(llm=minimal_client)
+        minimal_client = MockOlmClientV1(responses=minimal_responses)
+        chain = SlideGenChain(client=minimal_client)
 
         # Verify chain can be created and has expected components
-        assert chain.llm is minimal_client
+        assert chain.client is minimal_client
         assert hasattr(chain, "slide_gen_chain")
 
     def test_concurrent_chain_usage(self, mock_responses, mock_template):
         """Test that multiple chain instances can work concurrently"""
 
         # Create multiple clients with same responses
-        client1 = MockOlmClient(responses=mock_responses)
-        client2 = MockOlmClient(responses=mock_responses)
+        client1 = MockOlmClientV1(responses=mock_responses)
+        client2 = MockOlmClientV1(responses=mock_responses)
 
-        chain1 = SlideGenChain(llm=client1)
-        chain2 = SlideGenChain(llm=client2)
+        chain1 = SlideGenChain(client=client1)
+        chain2 = SlideGenChain(client=client2)
 
         # Verify they are independent instances
-        assert chain1.llm is not chain2.llm
+        assert chain1.client is not chain2.client
         assert chain1 is not chain2
 
         # Both should work with the same mock responses
         script_content = "Test script for concurrent usage"
 
         # Note: Full execution would require more mocking, so we just test initialization
-        assert chain1.llm == client1
-        assert chain2.llm == client2
+        assert chain1.client == client1
+        assert chain2.client == client2
 
     def test_chain_steps_creation(self, slide_gen_chain):
         """Test that chain steps are created properly"""

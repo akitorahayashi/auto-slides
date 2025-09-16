@@ -1,13 +1,18 @@
 import inspect
 from typing import Callable, Dict, Optional
 
+import streamlit as st
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from olm_api_sdk.v1 import (
+    MockOlmClientV1,
+    OlmApiClientV1,
+    OlmClientV1Protocol,
+    OlmLocalClientV1,
+)
 
 from src.backend.models.slide_template import SlideTemplate
 from src.backend.services import JsonParser, PromptService, SlidesLoader
-from src.protocols.protocols.olm_client_protocol import OlmClientProtocol
 from src.protocols.slide_generation_protocol import SlideGenerationProtocol
 
 
@@ -16,17 +21,18 @@ class SlideGenChain(SlideGenerationProtocol):
 
     def __init__(
         self,
-        llm: OlmClientProtocol,
+        client: Optional[OlmClientV1Protocol] = None,
         progress_callback: Optional[Callable[[str, int, int], None]] = None,
     ):
         """
         Initialize slide generation chain.
 
         Args:
-            llm: Required OlmClientProtocol implementation for text generation
+            client: Optional olm-api SDK v1 client. If None, will be auto-configured based on secrets
             progress_callback: Optional callback function to report progress (stage, current, total)
         """
-        self.llm = llm
+        self.client = client or self._setup_client()
+        self.model = st.secrets.get("OLLAMA_MODEL", "qwen3:0.6b")
         self.json_parser = JsonParser()
         self.str_parser = StrOutputParser()
         self.prompt_service = PromptService()
@@ -35,6 +41,38 @@ class SlideGenChain(SlideGenerationProtocol):
         self.current_phase = 0
         self.total_phases = 3  # analyzing, composing, building
         self._setup_chains()
+
+    def _setup_client(self) -> OlmClientV1Protocol:
+        """Setup olm-api SDK client based on configuration"""
+        debug_value = st.secrets.get("DEBUG", "false")
+        if isinstance(debug_value, bool):
+            debug = debug_value
+        else:
+            debug = str(debug_value).lower() == "true"
+
+        if debug:
+            return MockOlmClientV1(
+                responses=[
+                    "Mock response for testing",
+                    "Debug mode active - using mock responses",
+                ]
+            )
+
+        use_local_value = st.secrets.get("USE_LOCAL_CLIENT", "false")
+        if isinstance(use_local_value, bool):
+            use_local = use_local_value
+        else:
+            use_local = str(use_local_value).lower() == "true"
+
+        if use_local:
+            return OlmLocalClientV1()
+        else:
+            api_endpoint = st.secrets.get("OLM_API_ENDPOINT")
+            if not api_endpoint:
+                # 本番相当では明示的に失敗させる
+                raise ValueError("OLM_API_ENDPOINT is not set and USE_LOCAL_CLIENT=false. Refusing to fall back to a mock in non-debug mode.")
+            else:
+                return OlmApiClientV1(api_endpoint)
 
     def _create_chain_step(self, prompt_builder_method):
         """Create a standardized chain step"""
@@ -49,10 +87,7 @@ class SlideGenChain(SlideGenerationProtocol):
                     ),
                 }
             )
-            | ChatPromptTemplate.from_template("{prompt}")
-            | self.llm
-            | RunnableLambda(self._log_llm_response)
-            | self.json_parser
+            | RunnableLambda(self._call_llm_with_json_parser)
         )
 
     def _create_string_chain_step(self, prompt_builder_method):
@@ -68,10 +103,7 @@ class SlideGenChain(SlideGenerationProtocol):
                     ),
                 }
             )
-            | ChatPromptTemplate.from_template("{prompt}")
-            | self.llm
-            | RunnableLambda(self._log_llm_response)
-            | self.str_parser
+            | RunnableLambda(self._call_llm_with_string_parser)
         )
 
     def _setup_chains(self):
@@ -114,7 +146,7 @@ class SlideGenChain(SlideGenerationProtocol):
             | RunnableLambda(lambda x: x["final_presentation"])
         )
 
-    def invoke_slide_gen_chain(
+    async def invoke_slide_gen_chain(
         self, script_content: str, template: SlideTemplate
     ) -> str:
         """Unified slide generation chain execution"""
@@ -128,7 +160,7 @@ class SlideGenChain(SlideGenerationProtocol):
                 f"🔍 Input data: script_length={len(script_content)}, template_id={template.id}"
             )
 
-            result = self.slide_gen_chain.invoke(input_data)
+            result = await self.slide_gen_chain.ainvoke(input_data)
             print("🎉 Agent: Presentation generated successfully!")
             print(f"🔍 Result length: {len(result) if result else 0}")
             return result
@@ -180,6 +212,24 @@ class SlideGenChain(SlideGenerationProtocol):
                 continue
 
         return "\n\n".join(template_parts)
+
+    async def _call_llm_with_json_parser(self, prompt_dict: Dict) -> Dict:
+        """Call LLM with SDK and parse JSON response"""
+        prompt = prompt_dict["prompt"]
+        response = await self.client.generate(prompt=prompt, model_name=self.model)
+        content = response["content"]
+        self._log_llm_response(content)
+        return self.json_parser.invoke(content)
+
+    async def _call_llm_with_string_parser(self, prompt_dict: Dict) -> str:
+        """Call LLM with SDK and return string response"""
+        prompt = prompt_dict["prompt"]
+        response = await self.client.generate(prompt=prompt, model_name=self.model)
+        if not isinstance(response, dict) or "content" not in response or response["content"] is None:
+            raise ValueError("Invalid LLM response: missing 'content'")
+        content = response["content"]
+        self._log_llm_response(content)
+        return self.str_parser.invoke(content)
 
     def _log_llm_response(self, response):
         """Log LLM response for debugging"""
