@@ -187,7 +187,8 @@ theme: default
             assert script_content in generated_markdown
             assert "marp: true" in generated_markdown
 
-    def test_real_slide_gen_chain_error_detection(self, mock_template):
+    @pytest.mark.asyncio
+    async def test_real_slide_gen_chain_error_detection(self, mock_template):
         """Test that real SlideGenChain errors are properly detected and fixed"""
         # Use a real SlideGenChain to test actual functionality
         # Create real components to test actual functionality
@@ -217,7 +218,7 @@ theme: default
 
                     # This should now work without the _truncate_prompt error
                     try:
-                        result = chain.invoke_slide_gen_chain(script_content, template)
+                        result = await chain.invoke_slide_gen_chain(script_content, template)
 
                         # Verify we got a result (even if it's a mock response)
                         assert isinstance(result, str)

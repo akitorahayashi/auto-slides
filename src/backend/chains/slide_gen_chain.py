@@ -69,10 +69,8 @@ class SlideGenChain(SlideGenerationProtocol):
         else:
             api_endpoint = st.secrets.get("OLM_API_ENDPOINT")
             if not api_endpoint:
-                print("Warning: OLM_API_ENDPOINT not set, using mock client")
-                return MockOlmClientV1(
-                    responses=["Mock API response - endpoint not configured"]
-                )
+                # 本番相当では明示的に失敗させる
+                raise ValueError("OLM_API_ENDPOINT is not set and USE_LOCAL_CLIENT=false. Refusing to fall back to a mock in non-debug mode.")
             else:
                 return OlmApiClientV1(api_endpoint)
 
@@ -227,6 +225,8 @@ class SlideGenChain(SlideGenerationProtocol):
         """Call LLM with SDK and return string response"""
         prompt = prompt_dict["prompt"]
         response = await self.client.generate(prompt=prompt, model_name=self.model)
+        if not isinstance(response, dict) or "content" not in response or response["content"] is None:
+            raise ValueError("Invalid LLM response: missing 'content'")
         content = response["content"]
         self._log_llm_response(content)
         return self.str_parser.invoke(content)
