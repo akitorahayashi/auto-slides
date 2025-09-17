@@ -18,14 +18,14 @@ def project_root():
 @pytest.fixture
 def test_template_dir(project_root):
     """Path to the test template directory"""
-    return project_root / "tests" / "templates" / "k2g4h1x9"
+    return project_root / "src" / "backend" / "templates" / "basic_presentation"
 
 
 @pytest.fixture
 def sample_template(test_template_dir):
     """Sample SlideTemplate instance using the test template"""
     return SlideTemplate(
-        id="k2g4h1x9",
+        id="basic_presentation",
         name="サンプルテンプレート",
         description="4トピック構成のベーシックなプレゼンテーション",
         template_dir=test_template_dir,
@@ -36,7 +36,9 @@ def sample_template(test_template_dir):
 @pytest.fixture
 def mock_template_repository_with_sample(project_root):
     """MockTemplateRepository with sample template"""
-    return MockTemplateRepository(templates_dir=project_root / "tests" / "templates")
+    return MockTemplateRepository(
+        templates_dir=project_root / "src" / "backend" / "templates"
+    )
 
 
 @pytest.fixture

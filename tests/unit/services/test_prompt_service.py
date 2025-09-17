@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -52,6 +53,7 @@ class TestPromptService:
         service = PromptService(custom_dir)
         assert service.template_dir == Path(custom_dir)
 
+    @patch("streamlit.secrets", {"ARGUMENT_FLOW_DIVISOR": 4})
     def test_build_analysis_prompt(self):
         """Test building analysis prompt"""
         input_dict = {"script_content": "This is a test script"}
@@ -63,6 +65,7 @@ class TestPromptService:
         expected_prompt = f"Analyze this script: This is a test script\nLimit: {expected_limit} characters"
         assert result["prompt"] == expected_prompt
 
+    @patch("streamlit.secrets", {"TARGET_SLIDE_COUNT": 3})
     def test_build_composition_prompt(self):
         """Test building composition prompt"""
         input_dict = {
@@ -124,6 +127,7 @@ class TestPromptService:
         assert "prompt" in result
         assert "Purpose: " in result["prompt"]
 
+    @patch("streamlit.secrets", {"ARGUMENT_FLOW_DIVISOR": 4})
     def test_build_prompt_preserves_input_dict(self):
         """Test that building prompts preserves original input dictionary"""
         original_input = {"script_content": "Test", "other_key": "value"}

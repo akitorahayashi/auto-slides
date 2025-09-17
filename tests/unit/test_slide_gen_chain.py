@@ -45,8 +45,17 @@ class TestSlideGenChainIntegration:
     @pytest.fixture
     def slide_gen_chain(self, mock_olm_client):
         """Create SlideGenChain instance with mock client"""
-        return SlideGenChain(client=mock_olm_client)
+        with patch(
+            "streamlit.secrets",
+            {
+                "OLLAMA_MODEL": "mock_model",
+                "ARGUMENT_FLOW_DIVISOR": 4,
+                "TARGET_SLIDE_COUNT": 10,
+            },
+        ):
+            yield SlideGenChain(client=mock_olm_client)
 
+    @patch("streamlit.secrets", {"OLLAMA_MODEL": "mock_model"})
     def test_slide_gen_chain_initialization(self, mock_olm_client):
         """Test that SlideGenChain initializes correctly with mock client"""
         chain = SlideGenChain(client=mock_olm_client)
@@ -143,6 +152,7 @@ class TestSlideGenChainIntegration:
         assert len(analysis_result["prompt"]) > 0
         assert "Test script content" in analysis_result["prompt"]
 
+    @patch("streamlit.secrets", {"OLLAMA_MODEL": "mock_model"})
     @pytest.mark.asyncio
     @patch(
         "src.backend.chains.slide_gen_chain.print"
@@ -165,6 +175,7 @@ class TestSlideGenChainIntegration:
         with pytest.raises(Exception):
             await chain.invoke_slide_gen_chain(script_content, mock_template)
 
+    @patch("streamlit.secrets", {"OLLAMA_MODEL": "mock_model"})
     def test_chain_with_different_response_configurations(self, mock_template):
         """Test chain behavior with different mock response configurations"""
 
@@ -178,6 +189,7 @@ class TestSlideGenChainIntegration:
         assert chain.client is minimal_client
         assert hasattr(chain, "slide_gen_chain")
 
+    @patch("streamlit.secrets", {"OLLAMA_MODEL": "mock_model"})
     def test_concurrent_chain_usage(self, mock_responses, mock_template):
         """Test that multiple chain instances can work concurrently"""
 
