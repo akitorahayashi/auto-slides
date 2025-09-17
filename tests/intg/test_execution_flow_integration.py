@@ -187,6 +187,7 @@ theme: default
             assert script_content in generated_markdown
             assert "marp: true" in generated_markdown
 
+    @patch("streamlit.secrets", {"DEBUG": "true", "OLLAMA_MODEL": "mock_model"})
     @pytest.mark.asyncio
     async def test_real_slide_gen_chain_error_detection(self, mock_template):
         """Test that real SlideGenChain errors are properly detected and fixed"""
@@ -218,7 +219,9 @@ theme: default
 
                     # This should now work without the _truncate_prompt error
                     try:
-                        result = await chain.invoke_slide_gen_chain(script_content, template)
+                        result = await chain.invoke_slide_gen_chain(
+                            script_content, template
+                        )
 
                         # Verify we got a result (even if it's a mock response)
                         assert isinstance(result, str)
@@ -236,6 +239,7 @@ theme: default
                             f"Other exception encountered (this is acceptable): {e}"
                         )
 
+    @patch("streamlit.secrets", {"OLLAMA_MODEL": "mock_model"})
     def test_progress_callback_integration(self, mock_session_state):
         """Test progress callback integration with UI updates"""
         progress_updates = []

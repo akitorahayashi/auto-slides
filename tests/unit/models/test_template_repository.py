@@ -41,7 +41,7 @@ class TestTemplateRepository:
 
         assert len(result) == 1
         template = result[0]
-        assert template.id == "k2g4h1x9"
+        assert template.id == "basic_presentation"
         assert template.name == "サンプルテンプレート"
         assert template.description == "4トピック構成のベーシックなプレゼンテーション"
         assert template.duration_minutes == 10
@@ -89,10 +89,12 @@ class TestTemplateRepository:
         self, mock_template_repository_with_sample
     ):
         """Test get_template_by_id with the real sample template"""
-        result = mock_template_repository_with_sample.get_template_by_id("k2g4h1x9")
+        result = mock_template_repository_with_sample.get_template_by_id(
+            "basic_presentation"
+        )
 
         assert result is not None
-        assert result.id == "k2g4h1x9"
+        assert result.id == "basic_presentation"
         assert result.name == "サンプルテンプレート"
 
         # Test with non-existent ID
